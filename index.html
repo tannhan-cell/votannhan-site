@@ -628,9 +628,11 @@ function createInvoice(){
 const { jsPDF } = window.jspdf
 const doc = new jsPDF()
 
+// ===== LOGO =====
 let logo = document.getElementById("logo-shop")
 doc.addImage(logo,"PNG",15,10,30,30)
 
+// ===== HEADER =====
 doc.setFont("Helvetica","bold")
 doc.setFontSize(20)
 doc.text("VOTANNHAN ELECTRONICS",105,20,{align:"center"})
@@ -639,6 +641,7 @@ doc.setFontSize(12)
 doc.setFont("Helvetica","normal")
 doc.text("Sales Invoice",105,28,{align:"center"})
 
+// ===== ORDER INFO =====
 let orderID="VN"+Math.floor(Math.random()*100000)
 
 let today=new Date()
@@ -647,6 +650,7 @@ let date=today.toLocaleString("vi-VN")
 doc.text("Order ID: "+orderID,20,50)
 doc.text("Date: "+date,20,57)
 
+// ===== CUSTOMER =====
 doc.setFont("Helvetica","bold")
 doc.text("Customer Information",20,70)
 
@@ -655,9 +659,10 @@ doc.setFont("Helvetica","normal")
 doc.text("Name: "+document.getElementById("custName").value,20,78)
 doc.text("Phone: "+document.getElementById("custPhone").value,20,84)
 
-let addr = document.getElementById("custAddr").value
+let addr=document.getElementById("custAddr").value
 doc.text("Address: "+addr,20,90)
 
+// ===== TABLE =====
 let y=105
 
 doc.setFont("Helvetica","bold")
@@ -691,6 +696,7 @@ y+=10
 
 })
 
+// ===== TOTAL =====
 doc.line(20,y,190,y)
 
 y+=10
@@ -700,9 +706,16 @@ doc.setFontSize(14)
 
 doc.text("TOTAL: "+total.toLocaleString()+"₫",190,y,{align:"right"})
 
+// ===== FOOTER =====
+doc.setFontSize(10)
+doc.setFont("Helvetica","normal")
+
+doc.text("Thank you for shopping at VOTANNHAN.SITE",105,280,{align:"center"})
+
 doc.save("invoice-"+orderID+".pdf")
 
 }
+
 
 </script>
 
