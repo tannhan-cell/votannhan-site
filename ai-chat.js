@@ -6,6 +6,7 @@ let html=`
 
 <div id="chat-header">
 AI hỗ trợ mua linh kiện
+<span id="chat-toggle" onclick="toggleChat()">⬇</span>
 </div>
 
 <div id="chat-messages"></div>
