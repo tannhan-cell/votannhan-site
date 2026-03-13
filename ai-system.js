@@ -29,7 +29,11 @@ content:message
 
 let data = await res.json()
 
+if(data.choices && data.choices.length>0){
 return data.choices[0].message.content
+}else{
+return "AI chưa trả lời được."
+}
 
 }catch(e){
 
@@ -38,4 +42,5 @@ return "AI đang bận, vui lòng thử lại."
 }
 
 }
+
 
