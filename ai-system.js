@@ -1,6 +1,6 @@
 const OPENAI_API="https://api.openai.com/v1/chat/completions"
 
-const OPENAI_KEY="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"
+const OPENAI_KEY="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"
 
 async function askAI(message){
 
@@ -29,18 +29,22 @@ content:message
 
 let data = await res.json()
 
-if(data.choices && data.choices.length>0){
-return data.choices[0].message.content
-}else{
-return "AI chưa trả lời được."
+if(!res.ok){
+return "AI lỗi API."
 }
 
+if(data.choices && data.choices.length>0){
+return data.choices[0].message.content
+}
+
+return "AI chưa trả lời được."
+
 }catch(e){
+
+console.error(e)
 
 return "AI đang bận, vui lòng thử lại."
 
 }
 
 }
-
-
