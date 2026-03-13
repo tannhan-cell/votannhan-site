@@ -2,8 +2,8 @@
 <html lang="vi">
 <head>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preload" href="style.css" as="style">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="preload" href="style.css" as="style">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VOTANNHAN.SITE - Linh Kiện Điện Tử Chuyên Nghiệp</title>
@@ -344,6 +344,7 @@ cursor:pointer;
                             
                             <div class="section-title" style="margin-top:30px;">HÓA ĐƠN</div>
                             <div id="checkoutProductList"></div>
+                            <button onclick="createInvoice()">Tạo hóa đơn PDF</button>
                             
                             <div class="coupon-box">
                                 <input type="text" placeholder="Mã giảm giá (nếu có)">
@@ -561,6 +562,7 @@ function removeItem(index) {
 
         function renderCheckoutSummary() {
     const list = document.getElementById('checkoutProductList');
+            
     // Tính tổng tiền: Đơn giá x Số lượng
     const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
     
@@ -574,7 +576,7 @@ function removeItem(index) {
                         <button type="button" onclick="changeQty(${idx}, -1)">-</button>
                         <span>${i.qty}</span>
                         <button type="button" onclick="changeQty(${idx}, 1)">+</button>
-                        <button onclick="createInvoice()">Tạo hóa đơn PDF</button>
+                    
                     </div>
                     <span>${(i.price * i.qty).toLocaleString()}₫</span>
                 </div>
@@ -656,7 +658,8 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
 </script>
-<script src="ai-system.js"></script>
+
+    
 
     <div id="chatbox">
 <div id="chat-header">🤖 Hỗ trợ AI</div>
@@ -666,7 +669,7 @@ const analytics = getAnalytics(app);
 <button onclick="send()">Gửi</button>
 </div>
 
-<script src="ai-chat.js"></script>
+
 
 <script>
 async function send(){
@@ -728,6 +731,7 @@ doc.save("invoice.pdf")
   
 </body>
 </html>
+
 
 
 
