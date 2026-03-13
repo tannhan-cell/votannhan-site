@@ -26,7 +26,6 @@ createChatbox()
 async function sendAI(){
 
 let input=document.getElementById("chat-input")
-
 let msg=input.value.trim()
 
 if(!msg) return
@@ -34,8 +33,6 @@ if(!msg) return
 let box=document.getElementById("chat-messages")
 
 box.insertAdjacentHTML("beforeend", `<p><b>Bạn:</b> ${msg}</p>`)
-  box.insertAdjacentHTML("beforeend", `<p><b>AI:</b> ${reply}</p>`)
-  
 
 input.value=""
 
@@ -47,12 +44,13 @@ reply=await askAI(msg)
 reply="AI đang bận, vui lòng thử lại."
 }
 
-document.addEventListener("keydown",e=>{
-if(e.key==="Enter"){
-sendAI()
+box.insertAdjacentHTML("beforeend", `<p><b>AI:</b> ${reply}</p>`)
+
+box.scrollTop=box.scrollHeight
 }
-})
-  function toggleChat(){
+  
+
+function toggleChat(){
 
 let box=document.getElementById("chatbox")
 
