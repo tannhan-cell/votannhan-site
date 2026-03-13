@@ -1,23 +1,21 @@
 async function sendAI(){
 
-let input = document.getElementById("ai-input")
-let chat = document.getElementById("ai-chat")
+let input=document.getElementById("ai-input")
+let chat=document.getElementById("ai-chat")
 
-let message = input.value.trim()
+let message=input.value.trim()
 
 if(message==="") return
 
-// hiển thị câu hỏi
-chat.innerHTML += "<div style='margin-bottom:5px'><b>Bạn:</b> "+message+"</div>"
+chat.innerHTML+="<div><b>Bạn:</b> "+message+"</div>"
 
 input.value=""
 
-// hiển thị đang trả lời
-chat.innerHTML += "<div id='ai-loading'>AI đang trả lời...</div>"
+chat.innerHTML+="<div id='ai-loading'>AI đang trả lời...</div>"
 
 try{
 
-let res = await fetch("http://localhost:3000/ai",{
+let res=await fetch("/ai",{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
@@ -27,20 +25,20 @@ message:message
 })
 })
 
-let data = await res.json()
+let data=await res.json()
 
 document.getElementById("ai-loading").remove()
 
-chat.innerHTML += "<div style='margin-bottom:10px;color:#0066cc'><b>AI:</b> "+data.reply+"</div>"
+chat.innerHTML+="<div style='color:#007bff'><b>AI:</b> "+data.reply+"</div>"
 
 }catch(e){
 
 document.getElementById("ai-loading").remove()
 
-chat.innerHTML += "<div style='color:red'>Không kết nối được AI server</div>"
+chat.innerHTML+="<div style='color:red'>Không kết nối được AI server</div>"
 
 }
 
-chat.scrollTop = chat.scrollHeight
+chat.scrollTop=chat.scrollHeight
 
 }
