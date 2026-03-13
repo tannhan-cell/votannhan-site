@@ -3,55 +3,89 @@ function createInvoice(){
 const { jsPDF } = window.jspdf
 const doc = new jsPDF()
 
-// tiêu đề
+// ===== HEADER =====
 doc.setFont("Helvetica","bold")
-doc.setFontSize(18)
+doc.setFontSize(20)
 doc.text("VOTANNHAN ELECTRONICS",105,20,null,null,"center")
 
 doc.setFontSize(12)
 doc.setFont("Helvetica","normal")
-doc.text("Hoa don ban hang",105,30,null,null,"center")
+doc.text("Sales Invoice",105,28,null,null,"center")
 
-// đường kẻ
-doc.line(20,35,190,35)
+// ===== ORDER INFO =====
+const orderID="VN"+Math.floor(Math.random()*100000)
 
-let y=50
-let total=0
+let today=new Date()
+
+let date=today.toLocaleDateString()+" "+today.toLocaleTimeString()
+
+doc.setFontSize(10)
+
+doc.text("Order ID: "+orderID,20,40)
+doc.text("Date: "+date,20,46)
+
+doc.line(20,50,190,50)
+
+// ===== TABLE HEADER =====
+
+let y=60
 
 doc.setFont("Helvetica","bold")
-doc.text("San pham",20,y)
-doc.text("SL",120,y)
-doc.text("Gia",150,y)
+
+doc.text("Product",20,y)
+doc.text("Qty",120,y)
+doc.text("Price",150,y)
+doc.text("Total",180,y,{align:"right"})
+
+doc.line(20,y+2,190,y+2)
 
 y+=10
 
 doc.setFont("Helvetica","normal")
 
+let total=0
+
+// ===== PRODUCTS =====
+
 cart.forEach(i=>{
 
-let price=i.qty*i.price
+let price=i.price
+let sum=i.qty*i.price
 
 doc.text(i.name,20,y)
+
 doc.text(String(i.qty),120,y)
+
 doc.text(price+" VND",150,y)
 
-total+=price
+doc.text(sum+" VND",190,y,{align:"right"})
+
+total+=sum
+
 y+=10
 
 })
 
-// đường kẻ
+// ===== TOTAL =====
+
 doc.line(20,y,190,y)
 
 y+=10
 
 doc.setFont("Helvetica","bold")
-doc.text("Tong cong: "+total+" VND",20,y)
+doc.setFontSize(14)
 
-// footer
+doc.text("TOTAL: "+total+" VND",190,y,{align:"right"})
+
+// ===== FOOTER =====
+
 doc.setFontSize(10)
-doc.text("Cam on quy khach da mua hang!",105,280,null,null,"center")
+doc.setFont("Helvetica","normal")
 
-doc.save("hoa-don-votannhan.pdf")
+doc.text("Thank you for shopping at VOTANNHAN!",105,270,null,null,"center")
+
+doc.text("Website: votannhan.site",105,276,null,null,"center")
+
+doc.save("votannhan-invoice.pdf")
 
 }
