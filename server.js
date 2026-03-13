@@ -8,7 +8,7 @@ app.use(cors())
 app.use(express.json())
 
 // API KEY
-const OPENAI_KEY = "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"
+const OPENAI_KEY = "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"
 
 // route AI
 app.post("/ai", async (req,res)=>{
