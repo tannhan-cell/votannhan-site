@@ -69,6 +69,48 @@
         .contact-item:hover { color: var(--blue); }
         .contact-item i { font-size: 24px; color: var(--blue); width: 30px; }
 
+        #chatbox{
+position:fixed;
+bottom:20px;
+right:20px;
+width:300px;
+background:white;
+border:1px solid #ddd;
+border-radius:10px;
+box-shadow:0 5px 20px rgba(0,0,0,0.2);
+overflow:hidden;
+z-index:99999;
+}
+
+#chat-header{
+background:#007bff;
+color:white;
+padding:10px;
+font-weight:bold;
+}
+
+#chat-messages{
+height:200px;
+overflow-y:auto;
+padding:10px;
+font-size:13px;
+}
+
+#chat-input{
+width:70%;
+padding:8px;
+border:none;
+border-top:1px solid #eee;
+}
+
+#chatbox button{
+width:30%;
+border:none;
+background:#007bff;
+color:white;
+cursor:pointer;
+}
+
         /* MODAL GIỎ HÀNG (TRANG 1) */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
         .modal-content { background: #fff; padding: 30px; border-radius: 8px; width: 550px; max-height: 90vh; overflow-y: auto; box-shadow: 0 5px 25px rgba(0,0,0,0.2); }
@@ -224,7 +266,7 @@
                         
                         <li onclick="filterCat('Màn hình LCD 0.96inch trắng')">Màn hình LCD 0.96inch trắng</li> 
                         <li onclick="filterCat('Màn hình LCD 0.96inch xanh lam')">Màn hình LCD 0.96inch xanh lam</li> 
-                        <li onclick="filterCat(Màn hình LCD 1.54inch')">Màn hình LCD 1.54inch</li>
+                        <li onclick="filterCat('Màn hình LCD 1.54inch')">Màn hình LCD 1.54inch</li>
                         <li onclick="filterCat('Màn hình LCD 1602 xanh lá 5V')">Màn hình LCD 1602 xanh lá 5V</li>
                         <li onclick="filterCat('Màn hình LCD 1602 xanh dương 5V')">Màn hình LCD 1602 xanh dương 5V</li>
                         <li onclick="filterCat('Màn hình TFT 1.3inch')">Màn hình TFT 1.3inch</li>
@@ -406,7 +448,7 @@
         function renderProducts(targetGrid, list) {
             targetGrid.innerHTML = list.map(p => `
                 <div class="product-card">
-                    <img src="${p.img}" alt="${p.name}">
+                    <img loading="lazy" src="${p.img}" alt="${p.name}">
                     <div class="product-name">${p.name}</div>
                     <div class="price">${p.price.toLocaleString()}₫</div>
                     <button class="btn-buy" onclick="addToCart(${p.id})"><i class="fas fa-cart-plus"></i> Thêm vào giỏ</button>
@@ -499,7 +541,7 @@ function removeItem(index) {
     }
 }
 
-        function removeItem(idx) { cart.splice(idx, 1); updateCart(); }
+       
         function toggleCart() { const m = document.getElementById('cartModal'); m.style.display = (m.style.display === 'flex') ? 'none' : 'flex'; }
 
         // --- HỆ THỐNG THANH TOÁN MỚI (MÀN HÌNH CHỈ TIẾT) ---
@@ -523,7 +565,7 @@ function removeItem(index) {
     
     list.innerHTML = cart.map((i, idx) => `
         <div class="checkout-item">
-            <img src="${i.img}" alt="${i.name}">
+            <img loading="lazy" src="${i.img}" alt="${i.name}">
             <div class="checkout-item-details">
                 <strong>${i.name}</strong><br>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
@@ -626,17 +668,26 @@ const analytics = getAnalytics(app);
 
 <script>
 async function send(){
+
 let input=document.getElementById("chat-input")
 let msg=input.value
 
 let div=document.getElementById("chat-messages")
-div.innerHTML+="<p><b>Bạn:</b>"+msg+"</p>"
 
-let ai=await askAI(msg)
+div.innerHTML += "<p><b>Bạn:</b> "+msg+"</p>"
 
-div.innerHTML+="<p><b>AI:</b>"+ai+"</p>"
+let ai = await askAI(msg)
+
+div.innerHTML += "<p><b>AI:</b> "+ai+"</p>"
+
+// tự gợi ý mua hàng
+if(msg.toLowerCase().includes("mua") || msg.toLowerCase().includes("giá")){
+div.innerHTML += "<p><b>AI:</b> Bạn có thể đặt trực tiếp trên web hoặc nhấn thêm vào giỏ hàng.</p>"
+}
 
 input.value=""
+div.scrollTop=div.scrollHeight
+
 }
 </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -644,4 +695,5 @@ input.value=""
   
 </body>
 </html>
+
 
