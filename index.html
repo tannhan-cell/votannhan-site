@@ -574,6 +574,7 @@ function removeItem(index) {
                         <button type="button" onclick="changeQty(${idx}, -1)">-</button>
                         <span>${i.qty}</span>
                         <button type="button" onclick="changeQty(${idx}, 1)">+</button>
+                        <button onclick="createInvoice()">Tạo hóa đơn PDF</button>
                     </div>
                     <span>${(i.price * i.qty).toLocaleString()}₫</span>
                 </div>
@@ -727,6 +728,7 @@ doc.save("invoice.pdf")
   
 </body>
 </html>
+
 
 
 
