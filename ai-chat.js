@@ -18,12 +18,15 @@ try{
 let res=await fetch("https://cornily-noncircular-ivan.ngrok-free.dev/ai",{
 method:"POST",
 headers:{
-"Content-Type":"application/json"
+"Content-Type":"application/json",
+"ngrok-skip-browser-warning":"true"
 },
-body:JSON.stringify({
-message:message
+body:JSON.stringify({message:message})
 })
-})
+
+if(!res.ok){
+throw new Error("Server error")
+}
 
 let data=await res.json()
 
