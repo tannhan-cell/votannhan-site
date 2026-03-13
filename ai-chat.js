@@ -32,32 +32,23 @@ sendAI()
 
 async function sendAI(){
 
-let input=document.getElementById("chat-input")
-let msg=input.value.trim()
+let input=document.getElementById("ai-input")
+
+let msg=input.value
 
 if(!msg) return
 
-let box=document.getElementById("chat-messages")
+let chat=document.getElementById("ai-chat")
 
-box.insertAdjacentHTML("beforeend", `<p><b>Bạn:</b> ${msg}</p>`)
+chat.innerHTML+=`<div class="user">${msg}</div>`
 
 input.value=""
 
-box.insertAdjacentHTML("beforeend", `<p id="ai-loading"><b>AI:</b> ...</p>`)
+let reply=await askAI(msg)
 
-let reply=""
+chat.innerHTML+=`<div class="ai">${reply}</div>`
 
-try{
-reply=await askAI(msg)
-}catch(e){
-reply="AI đang bận, vui lòng thử lại."
-}
-
-document.getElementById("ai-loading").remove()
-
-box.insertAdjacentHTML("beforeend", `<p><b>AI:</b> ${reply}</p>`)
-
-box.scrollTop=box.scrollHeight
+chat.scrollTop=chat.scrollHeight
 
 }
 
