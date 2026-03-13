@@ -1,22 +1,45 @@
-const API="https://api.openai.com/v1/chat/completions"
-const KEY="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"
+function createChatbox(){
 
-async function askAI(msg){
-let res=await fetch(API,{
-method:"POST",
-headers:{
-"Content-Type":"application/json",
-"Authorization":"Bearer "+KEY
-},
-body:JSON.stringify({
-model:"gpt-4o-mini",
-messages:[
-{role:"system",content:"Bạn là nhân viên bán linh kiện điện tử của votannhan.site"},
-{role:"user",content:msg}
-]
-})
-})
+let html=`
 
-let data=await res.json()
-return data.choices[0].message.content
+<div id="chatbox">
+
+<div id="chat-header">
+AI hỗ trợ mua linh kiện
+</div>
+
+<div id="chat-messages"></div>
+
+<input id="chat-input" placeholder="Hỏi AI về sản phẩm...">
+
+<button onclick="sendAI()">Gửi</button>
+
+</div>
+
+`
+
+document.body.insertAdjacentHTML("beforeend",html)
+
+}
+
+createChatbox()
+
+async function sendAI(){
+
+let input=document.getElementById("chat-input")
+
+let msg=input.value
+
+let box=document.getElementById("chat-messages")
+
+box.innerHTML+=`<p><b>Bạn:</b> ${msg}</p>`
+
+let reply=await askAI(msg)
+
+box.innerHTML+=`<p><b>AI:</b> ${reply}</p>`
+
+box.scrollTop=box.scrollHeight
+
+input.value=""
+
 }
