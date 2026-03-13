@@ -1,16 +1,10 @@
-function createInvoice(cart){
+function createInvoice(){
 
-const {jsPDF}=window.jspdf
-let doc=new jsPDF()
+const { jsPDF } = window.jspdf
+const doc = new jsPDF()
 
-doc.text("VOTANNHAN.SITE",20,20)
+doc.text("Hoa don VOTANNHAN",20,20)
 
-let y=40
+doc.save("invoice.pdf")
 
-cart.forEach(p=>{
-doc.text(p.name+" - "+p.price+"đ",20,y)
-y+=10
-})
-
-doc.save("hoadon.pdf")
 }
