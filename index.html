@@ -694,9 +694,39 @@ div.scrollTop=div.scrollHeight
     <script defer src="main.js"></script>
     <script defer src="ai-system.js"></script>
 <script defer src="ai-chat.js"></script>
+    <script>
+
+function createInvoice(){
+
+const { jsPDF } = window.jspdf
+
+let doc=new jsPDF()
+
+doc.text("HOA DON VOTANNHAN",20,20)
+
+let y=40
+
+cart.forEach(i=>{
+
+doc.text(
+i.name+" x"+i.qty+" = "+(i.qty*i.price)+"đ",
+20,
+y
+)
+
+y+=10
+
+})
+
+doc.save("invoice.pdf")
+
+}
+
+</script>
   
 </body>
 </html>
+
 
 
 
