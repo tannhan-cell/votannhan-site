@@ -1,5 +1,4 @@
 const express = require("express")
-const fetch = require("node-fetch")
 const cors = require("cors")
 
 const app = express()
@@ -7,10 +6,8 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-// API KEY
 const OPENAI_KEY = "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"
 
-// route AI
 app.post("/ai", async (req,res)=>{
 
 try{
@@ -46,11 +43,11 @@ if(data.choices && data.choices.length>0){
 reply = data.choices[0].message.content
 }
 
-res.json({
-reply:reply
-})
+res.json({reply:reply})
 
 }catch(e){
+
+console.log(e)
 
 res.json({
 reply:"AI đang bận, thử lại sau."
@@ -60,7 +57,6 @@ reply:"AI đang bận, thử lại sau."
 
 })
 
-// chạy server
 app.listen(3000,()=>{
 console.log("AI Server running at http://localhost:3000")
 })
