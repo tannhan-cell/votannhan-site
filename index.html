@@ -633,93 +633,119 @@ let logo = document.getElementById("logo-shop")
 doc.addImage(logo,"PNG",15,10,30,30)
 
 // ===== HEADER =====
-doc.setFont("Helvetica","bold")
 doc.setFontSize(20)
+doc.setFont("Helvetica","bold")
 doc.text("VOTANNHAN ELECTRONICS",105,20,{align:"center"})
 
 doc.setFontSize(12)
 doc.setFont("Helvetica","normal")
-doc.text("Sales Invoice",105,28,{align:"center"})
+doc.text("HÓA ĐƠN BÁN HÀNG",105,28,{align:"center"})
 
-// ===== ORDER INFO =====
+// ===== SHOP INFO =====
+doc.setFontSize(10)
+
+doc.text("Website: votannhan.site",150,15,{align:"right"})
+doc.text("Email: votannhan8@gmail.com",150,20,{align:"right"})
+doc.text("Hotline/Zalo: 0348026731",150,25,{align:"right"})
+
+// ===== ORDER =====
 let orderID="VN"+Math.floor(Math.random()*100000)
 
 let today=new Date()
 let date=today.toLocaleString("vi-VN")
 
-doc.text("Order ID: "+orderID,20,50)
-doc.text("Date: "+date,20,57)
+doc.text("Mã đơn hàng: "+orderID,20,50)
+doc.text("Ngày: "+date,20,56)
 
 // ===== CUSTOMER =====
 doc.setFont("Helvetica","bold")
-doc.text("Customer Information",20,70)
+doc.text("Thông tin khách hàng",20,70)
 
 doc.setFont("Helvetica","normal")
 
-doc.text("Name: "+document.getElementById("custName").value,20,78)
-doc.text("Phone: "+document.getElementById("custPhone").value,20,84)
-
+let name=document.getElementById("custName").value
+let phone=document.getElementById("custPhone").value
 let addr=document.getElementById("custAddr").value
-doc.text("Address: "+addr,20,90)
 
-// ===== TABLE =====
-let y=105
+doc.text("Tên: "+name,20,78)
+doc.text("SĐT: "+phone,20,84)
+doc.text("Địa chỉ: "+addr,20,90)
 
-doc.setFont("Helvetica","bold")
-
-doc.text("Product",20,y)
-doc.text("Qty",120,y)
-doc.text("Price",150,y)
-doc.text("Total",190,y,{align:"right"})
-
-y+=5
-doc.line(20,y,190,y)
-
-y+=10
-
-doc.setFont("Helvetica","normal")
-
+// ===== TABLE DATA =====
+let rows=[]
 let total=0
 
 cart.forEach(i=>{
 
 let sum=i.price*i.qty
 
-doc.text(i.name,20,y)
-doc.text(String(i.qty),120,y)
-doc.text(i.price.toLocaleString()+"₫",150,y)
-doc.text(sum.toLocaleString()+"₫",190,y,{align:"right"})
+rows.push([
+i.name,
+i.qty,
+i.price.toLocaleString()+" ₫",
+sum.toLocaleString()+" ₫"
+])
 
 total+=sum
 
-y+=10
+})
+
+// ===== TABLE =====
+doc.autoTable({
+
+startY:100,
+
+head:[["Sản phẩm","Số lượng","Đơn giá","Thành tiền"]],
+
+body:rows,
+
+theme:"grid",
+
+styles:{
+fontSize:10,
+halign:"center"
+},
+
+columnStyles:{
+0:{halign:"left"}
+}
 
 })
 
 // ===== TOTAL =====
-doc.line(20,y,190,y)
+let finalY = doc.lastAutoTable.finalY + 10
 
-y+=10
-
-doc.setFont("Helvetica","bold")
 doc.setFontSize(14)
+doc.setFont("Helvetica","bold")
 
-doc.text("TOTAL: "+total.toLocaleString()+"₫",190,y,{align:"right"})
+doc.text(
+"TỔNG CỘNG: "+total.toLocaleString()+" ₫",
+190,
+finalY,
+{align:"right"}
+)
 
 // ===== FOOTER =====
 doc.setFontSize(10)
 doc.setFont("Helvetica","normal")
 
-doc.text("Thank you for shopping at VOTANNHAN.SITE",105,280,{align:"center"})
+doc.text(
+"Cảm ơn bạn đã mua hàng tại VOTANNHAN.SITE!",
+105,
+280,
+{align:"center"}
+)
 
 doc.save("invoice-"+orderID+".pdf")
 
 }
 
 
+
 </script>
 
 <img id="logo-shop" src="https://sf-static.upanhlaylink.com/img/image_20260313810ed383f1985e185c7ae730f2ffb65c.jpg" style="display:none">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 </body>
 </html>
