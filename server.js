@@ -1,6 +1,6 @@
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
+const express = require("express");
+const fetch = require("node-fetch");
+const cors = require("cors");
 
 const app = express();
 
@@ -11,32 +11,31 @@ const OPENAI_KEY = "sk-proj-jfHzPHx5Jcce1Utq4nVd8rpHL03-pxgZnrN3XLeQlhDyb02CF2rg
 
 app.post("/ai", async (req, res) => {
 
-  try{
+  try {
 
-    const r = await fetch("https://api.openai.com/v1/chat/completions",{
-      method:"POST",
-      headers:{
-        "Authorization":"Bearer "+OPENAI_KEY,
-        "Content-Type":"application/json"
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + OPENAI_KEY,
+        "Content-Type": "application/json"
       },
-      body:JSON.stringify({
-        model:"gpt-4o-mini",
-        messages:req.body.messages
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: req.body.messages
       })
     });
 
     const data = await r.json();
-
     res.json(data);
 
-  }catch(e){
+  } catch (e) {
 
-    res.status(500).json({error:"AI error"});
+    res.status(500).json({ error: "AI error" });
 
   }
 
 });
 
-app.listen(3000,()=>{
-  console.log("AI server running");
+app.listen(3000, () => {
+  console.log("AI server running at http://localhost:3000");
 });
