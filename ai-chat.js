@@ -15,7 +15,7 @@ chat.innerHTML+="<div id='ai-loading'>AI đang trả lời...</div>"
 
 try{
 
-let res=await fetch("/ai",{
+let res=await fetch("https://cornily-noncircular-ivan.ngrok-free.dev/ai",{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
