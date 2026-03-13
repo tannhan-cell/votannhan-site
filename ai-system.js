@@ -1,6 +1,6 @@
 const OPENAI_API="https://api.openai.com/v1/chat/completions"
 
-const OPENAI_KEY="YOUR_OPENAI_KEY"
+const OPENAI_KEY="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"
 
 async function askAI(message){
 
@@ -38,3 +38,4 @@ return "AI đang bận, vui lòng thử lại."
 }
 
 }
+
