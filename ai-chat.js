@@ -28,18 +28,20 @@ async function sendAI(){
 
 let input=document.getElementById("chat-input")
 
-let msg=input.value
+let msg=input.value.trim()
+
+if(!msg) return
 
 let box=document.getElementById("chat-messages")
 
 box.innerHTML+=`<p><b>Bạn:</b> ${msg}</p>`
+
+input.value=""
 
 let reply=await askAI(msg)
 
 box.innerHTML+=`<p><b>AI:</b> ${reply}</p>`
 
 box.scrollTop=box.scrollHeight
-
-input.value=""
 
 }
