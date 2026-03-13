@@ -1,13 +1,9 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preload" href="style.css" as="style">
-
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOTANNHAN.SITE - Chuyên Sỉ Lẻ Linh Kiện Điện Tử </title>
+    <title>VOTANNHAN.SITE - Linh Kiện Điện Tử Chuyên Nghiệp</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --blue: #007bff; --dark-blue: #0056b3; --border: #ddd; --light-gray: #f9f9f9; }
@@ -71,7 +67,6 @@
         .contact-item:hover { color: var(--blue); }
         .contact-item i { font-size: 24px; color: var(--blue); width: 30px; }
 
-     
         /* MODAL GIỎ HÀNG (TRANG 1) */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
         .modal-content { background: #fff; padding: 30px; border-radius: 8px; width: 550px; max-height: 90vh; overflow-y: auto; box-shadow: 0 5px 25px rgba(0,0,0,0.2); }
@@ -87,7 +82,7 @@
         
         input, textarea { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; transition: 0.2s; }
         input:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 5px rgba(0,123,255,0.2); outline: none; }
-        label.radio-label { display: block; border: 1px solid var(--border); padding: 15px; border-radius:  6px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        label.radio-label { display: block; border: 1px solid var(--border); padding: 15px; border-radius:  radio; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
         label.radio-label:hover { border-color: var(--blue); background: var(--light-gray); }
         label.radio-label input[type="radio"] { width: auto; margin: 0 10px 0 0; }
 
@@ -156,7 +151,7 @@
             <li onclick="showHome()"><i class="fas fa-home"></i> Trang chủ</li>
             <li onclick="showAllProducts()">Sản phẩm</li>
             <li onclick="showContact()">Liên hệ</li>
-            <li style="margin-left: auto; background: rgba(0,0,0,0.1);"><i class="fas fa-phone-alt"></i> 0348026731</li>
+            <li style="margin-left: auto; background: rgba(0,0,0,0.1);"><i class="fas fa-phone-alt"></i> 0392733577</li>
         </ul>
     </nav>
 
@@ -227,7 +222,7 @@
                         
                         <li onclick="filterCat('Màn hình LCD 0.96inch trắng')">Màn hình LCD 0.96inch trắng</li> 
                         <li onclick="filterCat('Màn hình LCD 0.96inch xanh lam')">Màn hình LCD 0.96inch xanh lam</li> 
-                        <li onclick="filterCat('Màn hình LCD 1.54inch')">Màn hình LCD 1.54inch</li>
+                        <li onclick="filterCat(Màn hình LCD 1.54inch')">Màn hình LCD 1.54inch</li>
                         <li onclick="filterCat('Màn hình LCD 1602 xanh lá 5V')">Màn hình LCD 1602 xanh lá 5V</li>
                         <li onclick="filterCat('Màn hình LCD 1602 xanh dương 5V')">Màn hình LCD 1602 xanh dương 5V</li>
                         <li onclick="filterCat('Màn hình TFT 1.3inch')">Màn hình TFT 1.3inch</li>
@@ -304,7 +299,6 @@
                             
                             <div class="section-title" style="margin-top:30px;">HÓA ĐƠN</div>
                             <div id="checkoutProductList"></div>
-                         <button type="button" onclick="createInvoice()">Tạo hóa đơn PDF</button>
                             
                             <div class="coupon-box">
                                 <input type="text" placeholder="Mã giảm giá (nếu có)">
@@ -348,7 +342,7 @@
 
     <script>
         // Cấu hình Telegram (Điền Token và ID của bạn vào đây)
-        const TG_TOKEN = '8307118775:AAFnilkDdME-Kz0bxqBdDLLQlZ3yE3HGsmo';
+        const TG_TOKEN = '8307118775:AAHy3-S_8jG27VM2Scp3qG1w8CIjUX6PTfY';
         const TG_CHAT_ID = '6021357708';
 
         const allProducts = [
@@ -410,7 +404,7 @@
         function renderProducts(targetGrid, list) {
             targetGrid.innerHTML = list.map(p => `
                 <div class="product-card">
-                    <img loading="lazy" src="${p.img}" alt="${p.name}">
+                    <img src="${p.img}" alt="${p.name}">
                     <div class="product-name">${p.name}</div>
                     <div class="price">${p.price.toLocaleString()}₫</div>
                     <button class="btn-buy" onclick="addToCart(${p.id})"><i class="fas fa-cart-plus"></i> Thêm vào giỏ</button>
@@ -503,7 +497,7 @@ function removeItem(index) {
     }
 }
 
-       
+        function removeItem(idx) { cart.splice(idx, 1); updateCart(); }
         function toggleCart() { const m = document.getElementById('cartModal'); m.style.display = (m.style.display === 'flex') ? 'none' : 'flex'; }
 
         // --- HỆ THỐNG THANH TOÁN MỚI (MÀN HÌNH CHỈ TIẾT) ---
@@ -522,13 +516,12 @@ function removeItem(index) {
 
         function renderCheckoutSummary() {
     const list = document.getElementById('checkoutProductList');
-            
     // Tính tổng tiền: Đơn giá x Số lượng
     const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
     
     list.innerHTML = cart.map((i, idx) => `
         <div class="checkout-item">
-            <img loading="lazy" src="${i.img}" alt="${i.name}">
+            <img src="${i.img}" alt="${i.name}">
             <div class="checkout-item-details">
                 <strong>${i.name}</strong><br>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
@@ -536,7 +529,6 @@ function removeItem(index) {
                         <button type="button" onclick="changeQty(${idx}, -1)">-</button>
                         <span>${i.qty}</span>
                         <button type="button" onclick="changeQty(${idx}, 1)">+</button>
-                    
                     </div>
                     <span>${(i.price * i.qty).toLocaleString()}₫</span>
                 </div>
@@ -619,146 +611,5 @@ const analytics = getAnalytics(app);
 
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<script>
-
-function createInvoice(){
-
-const { jsPDF } = window.jspdf
-const doc = new jsPDF()
-
-// ===== LOGO =====
-let logo = document.getElementById("logo-shop")
-doc.addImage(logo,"PNG",15,10,30,30)
-
-// ===== HEADER =====
-doc.setFontSize(20)
-doc.setFont("Helvetica","bold")
-doc.text("VOTANNHAN ELECTRONICS",105,20,{align:"center"})
-
-doc.setFontSize(12)
-doc.setFont("Helvetica","normal")
-doc.text("HÓA ĐƠN BÁN HÀNG",105,28,{align:"center"})
-
-// ===== SHOP INFO =====
-doc.setFontSize(10)
-
-doc.text("Website: votannhan.site",150,15,{align:"right"})
-doc.text("Email: votannhan8@gmail.com",150,20,{align:"right"})
-doc.text("Hotline/Zalo: 0348026731",150,25,{align:"right"})
-
-// ===== ORDER =====
-let orderID="VN"+Math.floor(Math.random()*100000)
-
-let today=new Date()
-let date=today.toLocaleString("vi-VN")
-
-doc.text("Mã đơn hàng: "+orderID,20,50)
-doc.text("Ngày: "+date,20,56)
-
-// ===== CUSTOMER =====
-doc.setFont("Helvetica","bold")
-doc.text("Thông tin khách hàng",20,70)
-
-doc.setFont("Helvetica","normal")
-
-let name=document.getElementById("custName").value
-let phone=document.getElementById("custPhone").value
-let addr=document.getElementById("custAddr").value
-
-doc.text("Tên: "+name,20,78)
-doc.text("SĐT: "+phone,20,84)
-doc.text("Địa chỉ: "+addr,20,90)
-
-// ===== TABLE DATA =====
-let rows=[]
-let total=0
-
-cart.forEach(i=>{
-
-let sum=i.price*i.qty
-
-rows.push([
-i.name,
-i.qty,
-i.price.toLocaleString()+" ₫",
-sum.toLocaleString()+" ₫"
-])
-
-total+=sum
-
-})
-
-// ===== TABLE =====
-doc.autoTable({
-
-startY:100,
-
-head:[["Sản phẩm","Số lượng","Đơn giá","Thành tiền"]],
-
-body:rows,
-
-theme:"grid",
-
-styles:{
-fontSize:10,
-halign:"center"
-},
-
-columnStyles:{
-0:{halign:"left"}
-}
-
-})
-
-// ===== TOTAL =====
-let finalY = doc.lastAutoTable.finalY + 10
-
-doc.setFontSize(14)
-doc.setFont("Helvetica","bold")
-
-doc.text(
-"TỔNG CỘNG: "+total.toLocaleString()+" ₫",
-190,
-finalY,
-{align:"right"}
-)
-
-// ===== FOOTER =====
-doc.setFontSize(10)
-doc.setFont("Helvetica","normal")
-
-doc.text(
-"Cảm ơn bạn đã mua hàng tại VOTANNHAN.SITE!",
-105,
-280,
-{align:"center"}
-)
-
-doc.save("invoice-"+orderID+".pdf")
-
-}
-
-
-
-</script>
-
-<img id="logo-shop" src="https://sf-static.upanhlaylink.com/img/image_20260313810ed383f1985e185c7ae730f2ffb65c.jpg" style="display:none">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
