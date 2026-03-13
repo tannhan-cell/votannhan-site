@@ -127,7 +127,7 @@ cursor:pointer;
         
         input, textarea { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; transition: 0.2s; }
         input:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 5px rgba(0,123,255,0.2); outline: none; }
-        label.radio-label { display: block; border: 1px solid var(--border); padding: 15px; border-radius:  radio; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        label.radio-label { display: block; border: 1px solid var(--border); padding: 15px; border-radius:  6px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
         label.radio-label:hover { border-color: var(--blue); background: var(--light-gray); }
         label.radio-label input[type="radio"] { width: auto; margin: 0 10px 0 0; }
 
@@ -344,7 +344,7 @@ cursor:pointer;
                             
                             <div class="section-title" style="margin-top:30px;">HÓA ĐƠN</div>
                             <div id="checkoutProductList"></div>
-                            <button onclick="createInvoice()">Tạo hóa đơn PDF</button>
+                         <button type="button" onclick="createInvoice()">Tạo hóa đơn PDF</button>
                             
                             <div class="coupon-box">
                                 <input type="text" placeholder="Mã giảm giá (nếu có)">
@@ -661,76 +661,26 @@ const analytics = getAnalytics(app);
 
     
 
-    <div id="chatbox">
-<div id="chat-header">🤖 Hỗ trợ AI</div>
-<div id="chat-messages"></div>
-
-<input id="chat-input" placeholder="Hỏi về linh kiện...">
-<button onclick="send()">Gửi</button>
-</div>
 
 
 
 <script>
-async function send(){
 
-let input=document.getElementById("chat-input")
-let msg=input.value
-
-let div=document.getElementById("chat-messages")
-
-div.innerHTML += "<p><b>Bạn:</b> "+msg+"</p>"
-
-let ai = await askAI(msg)
-
-div.innerHTML += "<p><b>AI:</b> "+ai+"</p>"
-
-// tự gợi ý mua hàng
-if(msg.toLowerCase().includes("mua") || msg.toLowerCase().includes("giá")){
-div.innerHTML += "<p><b>AI:</b> Bạn có thể đặt trực tiếp trên web hoặc nhấn thêm vào giỏ hàng.</p>"
-}
-
-input.value=""
-div.scrollTop=div.scrollHeight
-
-}
 </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="invoice.js"></script>
     <script defer src="main.js"></script>
     <script defer src="ai-system.js"></script>
-<script defer src="ai-chat.js"></script>
-    <script>
+    <script defer src="ai-chat.js"></script>
+    
 
-function createInvoice(){
 
-const { jsPDF } = window.jspdf
 
-let doc=new jsPDF()
 
-doc.text("HOA DON VOTANNHAN",20,20)
-
-let y=40
-
-cart.forEach(i=>{
-
-doc.text(
-i.name+" x"+i.qty+" = "+(i.qty*i.price)+"đ",
-20,
-y
-)
-
-y+=10
-
-})
-
-doc.save("invoice.pdf")
-
-}
-
-</script>
   
 </body>
 </html>
+
 
 
 
