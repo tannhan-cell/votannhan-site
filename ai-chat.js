@@ -1,65 +1,46 @@
-function createChatbox(){
-
-let html=`
-
-<div id="chatbox" class="min">
-
-<div id="chat-header" onclick="toggleChat()">
-AI hỗ trợ mua linh kiện ⬆
-</div>
-
-<div id="chat-messages"></div>
-
-<input id="chat-input" placeholder="Hỏi AI về sản phẩm...">
-
-<button onclick="sendAI()">Gửi</button>
-
-</div>
-
-`
-
-document.body.insertAdjacentHTML("beforeend",html)
-
-}
-
-createChatbox()
-
-document.getElementById("chat-input").addEventListener("keydown",e=>{
-if(e.key==="Enter"){
-sendAI()
-}
-})
-
 async function sendAI(){
 
-let input=document.getElementById("ai-input")
+let input = document.getElementById("ai-input")
+let chat = document.getElementById("ai-chat")
 
-let msg=input.value
+let message = input.value.trim()
 
-if(!msg) return
+if(message==="") return
 
-let chat=document.getElementById("ai-chat")
-
-chat.innerHTML+=`<div class="user">${msg}</div>`
+// hiển thị câu hỏi
+chat.innerHTML += "<div style='margin-bottom:5px'><b>Bạn:</b> "+message+"</div>"
 
 input.value=""
 
-let reply=await askAI(msg)
+// hiển thị đang trả lời
+chat.innerHTML += "<div id='ai-loading'>AI đang trả lời...</div>"
 
-chat.innerHTML+=`<div class="ai">${reply}</div>`
+try{
 
-chat.scrollTop=chat.scrollHeight
+let res = await fetch("http://localhost:3000/ai",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+message:message
+})
+})
+
+let data = await res.json()
+
+document.getElementById("ai-loading").remove()
+
+chat.innerHTML += "<div style='margin-bottom:10px;color:#0066cc'><b>AI:</b> "+data.reply+"</div>"
+
+}catch(e){
+
+document.getElementById("ai-loading").remove()
+
+chat.innerHTML += "<div style='color:red'>Không kết nối được AI server</div>"
 
 }
 
-function toggleChat(){
-
-let box=document.getElementById("chatbox")
-
-if(box.classList.contains("min")){
-box.classList.remove("min")
-}else{
-box.classList.add("min")
-}
+chat.scrollTop = chat.scrollHeight
 
 }
