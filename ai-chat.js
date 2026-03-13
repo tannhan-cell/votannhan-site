@@ -38,10 +38,10 @@ box.innerHTML+=`<p><b>Bạn:</b> ${msg}</p>`
 
 input.value=""
 
-let reply=await askAI(msg)
+let reply=""
 
-box.innerHTML+=`<p><b>AI:</b> ${reply}</p>`
-
-box.scrollTop=box.scrollHeight
-
+try{
+reply=await askAI(msg)
+}catch(e){
+reply="AI đang bận, vui lòng thử lại."
 }
