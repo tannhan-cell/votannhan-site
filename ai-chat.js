@@ -34,7 +34,9 @@ if(!msg) return
 
 let box=document.getElementById("chat-messages")
 
-box.innerHTML+=`<p><b>Bạn:</b> ${msg}</p>`
+box.insertAdjacentHTML("beforeend", `<p><b>Bạn:</b> ${msg}</p>`)
+  box.insertAdjacentHTML("beforeend", `<p><b>AI:</b> ${reply}</p>`)
+  
 
 input.value=""
 
