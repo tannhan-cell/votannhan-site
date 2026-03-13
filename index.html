@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preload" href="style.css" as="style">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VOTANNHAN.SITE - Linh Kiện Điện Tử Chuyên Nghiệp</title>
@@ -611,6 +613,35 @@ const analytics = getAnalytics(app);
 
 </script>
 <script src="ai-system.js"></script>
+
+    <div id="chatbox">
+<div id="chat-header">🤖 Hỗ trợ AI</div>
+<div id="chat-messages"></div>
+
+<input id="chat-input" placeholder="Hỏi về linh kiện...">
+<button onclick="send()">Gửi</button>
+</div>
+
+<script src="ai-chat.js"></script>
+
+<script>
+async function send(){
+let input=document.getElementById("chat-input")
+let msg=input.value
+
+let div=document.getElementById("chat-messages")
+div.innerHTML+="<p><b>Bạn:</b>"+msg+"</p>"
+
+let ai=await askAI(msg)
+
+div.innerHTML+="<p><b>AI:</b>"+ai+"</p>"
+
+input.value=""
+}
+</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script defer src="main.js"></script>
   
 </body>
 </html>
+
