@@ -7,6 +7,7 @@ let html=`
 <div id="chat-header" onclick="toggleChat()">
 AI hỗ trợ mua linh kiện ⬆
 </div>
+
 <div id="chat-messages"></div>
 
 <input id="chat-input" placeholder="Hỏi AI về sản phẩm...">
@@ -23,6 +24,12 @@ document.body.insertAdjacentHTML("beforeend",html)
 
 createChatbox()
 
+document.getElementById("chat-input").addEventListener("keydown",e=>{
+if(e.key==="Enter"){
+sendAI()
+}
+})
+
 async function sendAI(){
 
 let input=document.getElementById("chat-input")
@@ -36,6 +43,8 @@ box.insertAdjacentHTML("beforeend", `<p><b>Bạn:</b> ${msg}</p>`)
 
 input.value=""
 
+box.insertAdjacentHTML("beforeend", `<p id="ai-loading"><b>AI:</b> ...</p>`)
+
 let reply=""
 
 try{
@@ -44,11 +53,13 @@ reply=await askAI(msg)
 reply="AI đang bận, vui lòng thử lại."
 }
 
+document.getElementById("ai-loading").remove()
+
 box.insertAdjacentHTML("beforeend", `<p><b>AI:</b> ${reply}</p>`)
 
 box.scrollTop=box.scrollHeight
+
 }
-  
 
 function toggleChat(){
 
