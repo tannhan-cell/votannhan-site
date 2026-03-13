@@ -1,78 +1,616 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOTANNHAN.SITE - Linh Kiện Điện Tử Chuyên Nghiệp</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --blue: #007bff; --dark-blue: #0056b3; --border: #ddd; --light-gray: #f9f9f9; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #f4f4f4; color: #333; font-size: 14px; }
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+        /* Header & Logo */
+        header { background: #fff; padding: 10px 5%; border-bottom: 1px solid var(--border); }
+        .top-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+        .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--blue); }
+        .logo i { font-size: 32px; }
+        .logo-text { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
 
-<title>VOTANNHAN.SITE - Linh Kiện Điện Tử</title>
+        .search-bar { display: flex; flex: 0.5; border: 2px solid var(--blue); border-radius: 4px; overflow: hidden; }
+        .search-bar input { width: 100%; padding: 10px; border: none; outline: none; }
+        .search-bar button { background: var(--blue); color: white; border: none; padding: 0 15px; cursor: pointer; }
 
-<meta name="description" content="Cửa hàng linh kiện điện tử Arduino ESP32 giá rẻ tại Việt Nam">
+        .cart-box { cursor: pointer; display: flex; align-items: center; gap: 8px; background: var(--light-gray); padding: 5px 15px; border-radius: 20px; transition: 0.2s; }
+        .cart-box:hover { background: #f0f0f0; }
+        .cart-count { background: #ff4757; color: white; border-radius: 50%; padding: 2px 7px; font-size: 12px; font-weight: bold; }
 
-<link rel="stylesheet" href="style.css">
+        /* Navigation */
+        nav { background: var(--blue); color: white; padding: 0 5%; height: 45px; }
+        nav ul { display: flex; list-style: none; align-items: center; height: 100%; }
+        nav ul li { padding: 0 15px; cursor: pointer; font-weight: 600; font-size: 13px; text-transform: uppercase; transition: 0.3s; }
+        nav ul li:hover { background: var(--dark-blue); }
 
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        /* Layout */
+        .container { display: flex; padding: 20px 5%; gap: 20px; }
+        aside { width: 260px; flex-shrink: 0; }
+        main { flex: 1; min-width: 0; }
 
+        /* Sidebar Menu */
+        .sidebar-title { background: var(--blue); color: white; padding: 12px; font-weight: bold; font-size: 13px; border-radius: 4px 4px 0 0; }
+        .sidebar-menu { list-style: none; background: white; border: 1px solid var(--border); border-radius: 0 0 4px 4px; }
+        .sidebar-menu > li { border-bottom: 1px solid #eee; position: relative; }
+        .sidebar-menu > li > a { display: block; padding: 12px; text-decoration: none; color: #444; font-size: 13px; font-weight: 500; }
+        .sidebar-menu > li:hover > a { background: #f0f7ff; color: var(--blue); }
+        
+        /* Menu Con (Submenu) */
+        .submenu { list-style: none; background: #fff; display: none; padding: 5px 0 5px 20px; border-top: 1px solid #eee; }
+        .submenu li { padding: 8px; font-size: 12px; color: #666; cursor: pointer; border-bottom: 1px dotted #eee; }
+        .submenu li:hover { color: var(--blue); text-decoration: underline; }
+        .sidebar-menu > li:hover .submenu { display: block; }
+
+        /* Products Grid */
+        .banner-box img { width: 100%; border-radius: 4px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .section-header { background: white; padding: 12px; border-left: 4px solid var(--blue); font-weight: bold; text-transform: uppercase; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .product-card { background: white; padding: 15px; text-align: center; border: 1px solid #eee; border-radius: 4px; transition: 0.3s; }
+        .product-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--blue); }
+        .product-card img { width: 100%; height: 140px; object-fit: contain; }
+        .product-name { font-size: 13px; font-weight: 600; height: 36px; overflow: hidden; margin: 10px 0; color: #333; }
+        .price { color: #d63031; font-weight: bold; font-size: 16px; margin-bottom: 12px; }
+        .btn-buy { background: #fff; border: 1.5px solid var(--blue); color: var(--blue); padding: 8px; width: 100%; cursor: pointer; font-size: 12px; border-radius: 3px; font-weight: bold; transition: 0.2s; }
+        .btn-buy:hover { background: var(--blue); color: #fff; }
+
+        /* Contact Page */
+        .contact-info { background: white; padding: 30px; border-radius: 8px; }
+        .contact-item { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; text-decoration: none; color: #333; font-size: 16px; transition: 0.2s; }
+        .contact-item:hover { color: var(--blue); }
+        .contact-item i { font-size: 24px; color: var(--blue); width: 30px; }
+
+        /* MODAL GIỎ HÀNG (TRANG 1) */
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 8px; width: 550px; max-height: 90vh; overflow-y: auto; box-shadow: 0 5px 25px rgba(0,0,0,0.2); }
+        .cart-item { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 10px 0; align-items: center; }
+        .cart-item-name { flex: 1; padding-right: 15px; font-weight: 500; }
+        .cart-item-price { font-weight: bold; color: #d63031; }
+        
+        /* GIAO DIỆN THANH TOÁN (TRANG 2) - BẢN NÂNG CẤP CHUYÊN NGHIỆP */
+        .checkout-layout { display: flex; gap: 30px; }
+        .checkout-main { flex: 1; }
+        .checkout-sidebar { width: 350px; background: white; padding: 20px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #333; padding-bottom: 10px; border-bottom: 2px solid var(--blue); }
+        
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; transition: 0.2s; }
+        input:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 5px rgba(0,123,255,0.2); outline: none; }
+        label.radio-label { display: block; border: 1px solid var(--border); padding: 15px; border-radius:  radio; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        label.radio-label:hover { border-color: var(--blue); background: var(--light-gray); }
+        label.radio-label input[type="radio"] { width: auto; margin: 0 10px 0 0; }
+
+        .checkout-item { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .checkout-item img { width: 50px; height: 50px; object-fit: contain; }
+        .checkout-item-details { flex: 1; }
+        .coupon-box { display: flex; gap: 10px; margin: 15px 0; }
+        .coupon-box input { margin: 0; flex: 1; }
+        .coupon-box button { background: #6c757d; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
+        .summary-line { display: flex; justify-content: space-between; margin-bottom: 10px; color: #666; }
+        .summary-total { font-weight: 800; color: #d63031; font-size: 22px; }
+        .btn-order-final { background: var(--blue); color: white; border: none; padding: 15px; width: 100%; cursor: pointer; border-radius: 4px; font-size: 16px; font-weight: bold; transition: 0.3s; }
+        .btn-order-final:hover { background: var(--dark-blue); }
+        
+        /* Style bộ tăng giảm số lượng */
+.qty-input { 
+    display: flex; 
+    align-items: center; 
+    border: 1px solid #ddd; 
+    border-radius: 4px; 
+    width: fit-content; 
+    background: #fff; 
+    margin: 5px 0; 
+}
+.qty-input button { 
+    background: #f8f9fa; 
+    border: none; 
+    padding: 3px 10px; 
+    cursor: pointer; 
+    font-weight: bold; 
+    transition: 0.2s;
+}
+.qty-input button:hover { background: #e9ecef; }
+.qty-input span { 
+    padding: 0 12px; 
+    font-size: 14px; 
+    min-width: 30px; 
+    text-align: center; 
+    font-weight: bold;
+}
+
+        
+    </style>
 </head>
-
 <body>
 
-<!-- HEADER -->
-<header>
-<div class="top-row">
+    <header>
+        <div class="top-row">
+            <a href="javascript:void(0)" onclick="showHome()" class="logo">
+                <i class="fas fa-microchip"></i> <span class="logo-text">VOTANNHAN<span style="color:#333">.SITE</span></span>
+            </a>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Tìm tên linh kiện..." onkeyup="searchProducts()">
+                <button onclick="searchProducts()"><i class="fas fa-search"></i></button>
+            </div>
+            <div class="cart-box" id="cartBox" onclick="toggleCart()">
+                <i class="fas fa-shopping-basket" style="font-size: 22px; color: #555;"></i>
+                <span class="cart-count" id="cartCount">0</span>
+            </div>
+        </div>
+    </header>
 
-<a href="#" class="logo" onclick="showHome()">
-<i class="fas fa-microchip"></i>
-<span class="logo-text">VOTANNHAN<span style="color:#333">.SITE</span></span>
-</a>
+    <nav>
+        <ul>
+            <li onclick="showHome()"><i class="fas fa-home"></i> Trang chủ</li>
+            <li onclick="showAllProducts()">Sản phẩm</li>
+            <li onclick="showContact()">Liên hệ</li>
+            <li style="margin-left: auto; background: rgba(0,0,0,0.1);"><i class="fas fa-phone-alt"></i> 0392733577</li>
+        </ul>
+    </nav>
 
-<div class="search-bar">
-<input id="searchInput" placeholder="Tìm linh kiện...">
-<button onclick="searchProducts()">
-<i class="fas fa-search"></i>
-</button>
-</div>
+    <div class="container">
+        <aside id="sidebarArea">
+            <div class="sidebar-title"><i class="fas fa-bars"></i> DANH MỤC LINH KIỆN</div>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="javascript:void(0)" onclick="filterCat('Điện trở')" style="font-weight:700">ĐIỆN TRỞ <i class="fas fa-chevron-right" style="float:right; font-size:10px; margin-top:3px"></i></a>
+                    <ul class="submenu">
+                        <li onclick="filterCat('Điện trở 100R 1/4W')">Điện trở 100R 1/4W</li>
+                        <li onclick="filterCat('Điện trở 1K 1/4W')">Điện trở 1K 1/4W</li>
+                        <li onclick="filterCat('Điện trở 10K 1/4W')">Điện trở 10K 1/4W</li>
+                        <li onclick="filterCat('Điện trở 100K 1/4W')">Điện trở 100K 1/4W</li>
+                        <li onclick="filterCat('Điện trở 220R 1/4W')">Điện trở 220R 1/4W</li>
+                        <li onclick="filterCat('Điện trở 2.2K 1/4W')">Điện trở 2.2K 1/4W</li>
+                        <li onclick="filterCat('Điện trở 22K 1/4W')">Điện trở 22K 1/4W</li>
+                        <li onclick="filterCat('Điện trở 220K 1/4W')">Điện trở 220K 1/4W</li>
+                        <li onclick="filterCat('Điện trở 330R 1/4W')">Điện trở 330R 1/4W</li>
+                        <li onclick="filterCat('Điện trở 3.3K 1/4W')">Điện trở 3.3K 1/4W</li>
+                        <li onclick="filterCat('Điện trở 33K 1/4W')">Điện trở 33K 1/4W</li>
+                        <li onclick="filterCat('Điện trở 470R 1/4W')">Điện trở 470R 1/4W</li>
+                        <li onclick="filterCat('Điện trở 4.7K 1/4W')">Điện trở 4.7K 1/4W</li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="javascript:void(0)" onclick="filterCat('Nút nhấn')" style="font-weight:700">NÚT NHẤN <i class="fas fa-chevron-right" style="float:right; font-size:10px; margin-top:3px"></i></a>
+                    <ul class="submenu">
+                        <li onclick="filterCat('Nút nhấn nhả')">Nút nhấn nhả</li>
+                        <li onclick="filterCat('Nút nhấn giữ')">Nút nhấn giữ</li>
+                        <li onclick="filterCat('Nút nhấn tròn 2 chân')">Nút nhấn tròn 2 chân</li>
+                        <li onclick="filterCat('Nút Nhấn 6X6X5MM 2 Chân Cắm')">Nút Nhấn 6X6X5MM 2 Chân Cắm</li>
+                        <li onclick="filterCat('Nút Nhấn 6X6X5MM 4 Chân Cắm')">Nút Nhấn 6X6X5MM 4 Chân Cắm</li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="javascript:void(0)" onclick="filterCat('Công tắc')" style="font-weight:700">CÔNG TẮC <i class="fas fa-chevron-right" style="float:right; font-size:10px; margin-top:3px"></i></a>
+                    <ul class="submenu">
+                        <li onclick="filterCat('Công tắc gạt SS12D00')">Công tắc gạt SS12D00</li>
+                        <li onclick="filterCat('Công tắc KCD1-21 màu đỏ')">Công tắc KCD1-21 màu đỏ</li>
+                        <li onclick="filterCat('Công tắc KCD1 23MM màu đỏ')">Công tắc KCD1 23MM màu đỏ</li> 
+                    </ul>
+                </li>
 
-<div class="cart-box" onclick="toggleCart()">
-<i class="fas fa-shopping-basket"></i>
-<span id="cartCount">0</span>
-</div>
+                <li>
+                    <a href="javascript:void(0)" onclick="filterCat('Led')" style="font-weight:700">LED <i class="fas fa-chevron-right" style="float:right; font-size:10px; margin-top:3px"></i></a>
+                    <ul class="submenu">
+                        <li onclick="filterCat('Led trong 3mm màu trắng')">Led trong 3mm màu trắng</li>
+                        <li onclick="filterCat('Led đục 3mm màu đỏ')">Led đục 3mm màu đỏ</li>
+                        <li onclick="filterCat('Led đục 3mm màu vàng')">Led đục 3mm màu vàng</li>
+                        <li onclick="filterCat('Led đục 3mm màu xanh dương')">Led đục 3mm màu xanh dương</li>
+                        <li onclick="filterCat('Led đục 3mm màu xanh lá')">Led đục 3mm màu xanh lá</li>
+                    </ul>
+                </li>
 
-</div>
-</header>
+                <li>
+                    <a href="javascript:void(0)" onclick="filterCat('Jack')" style="font-weight:700">JACK CẮM <i class="fas fa-chevron-right" style="float:right; font-size:10px; margin-top:3px"></i></a>
+                    <ul class="submenu">
+                        <li onclick="filterCat('Jack đầu Cắm Nguồn Cái DC-005')">Jack đầu Cắm Nguồn Cái DC-005</li>
+                        <li onclick="filterCat('Jack nguồn DC022 5.5*2.1MM')">Jack nguồn DC022 5.5*2.1MM</li> 
+                        <li onclick="filterCat('Jack DC 5.5X2.1 DC Male')">Jack DC 5.5X2.1 DC Male</li>
+                    </ul>
+                </li>
 
-<!-- NAV -->
-<nav>
-<ul>
-<li onclick="showHome()">Trang chủ</li>
-<li onclick="showAllProducts()">Sản phẩm</li>
-<li onclick="showContact()">Liên hệ</li>
-</ul>
-</nav>
+                <li>
+                    <a href="javascript:void(0)" onclick="filterCat('Màn hình')" style="font-weight:700">MÀN HÌNH <i class="fas fa-chevron-right" style="float:right; font-size:10px; margin-top:3px"></i></a>
+                    <ul class="submenu">
+                        
+                        <li onclick="filterCat('Màn hình LCD 0.96inch trắng')">Màn hình LCD 0.96inch trắng</li> 
+                        <li onclick="filterCat('Màn hình LCD 0.96inch xanh lam')">Màn hình LCD 0.96inch xanh lam</li> 
+                        <li onclick="filterCat(Màn hình LCD 1.54inch')">Màn hình LCD 1.54inch</li>
+                        <li onclick="filterCat('Màn hình LCD 1602 xanh lá 5V')">Màn hình LCD 1602 xanh lá 5V</li>
+                        <li onclick="filterCat('Màn hình LCD 1602 xanh dương 5V')">Màn hình LCD 1602 xanh dương 5V</li>
+                        <li onclick="filterCat('Màn hình TFT 1.3inch')">Màn hình TFT 1.3inch</li>
+                        <li onclick="filterCat('Màn hình TFT 1.44inch')">Màn hình TFT 1.44inch</li>
+                        <li onclick="filterCat('Màn hình TFT 1.8inch')">Màn hình TFT 1.8inch</li>
+                        
+                    </ul>
+                </li>
 
-<!-- CONTENT -->
-<main>
+            </ul>
+        </aside>
 
-<div id="homePage">
+        <main id="mainContent">
+            <div id="homePage">
+                <div class="banner-box">
+                    <img src="https://sf-static.upanhlaylink.com/img/image_20260310d7bb729b1a5c8b6489a053f67bd621b5.jpg" alt="Banner">
+                </div>
+                <div class="section-header">Sản phẩm mới cập nhật</div>
+                <div class="grid" id="newProductsGrid"></div>
+            </div>
 
-<h2>Sản phẩm mới</h2>
+            <div id="allProductsPage" style="display:none;">
+                <div class="section-header" id="allCatTitle">Tất cả sản phẩm</div>
+                <div class="grid" id="allProductsGrid"></div>
+            </div>
 
-<div class="grid" id="newProductsGrid"></div>
+            <div id="contactPage" style="display:none;">
+                <div class="section-header">Hỗ trợ khách hàng</div>
+                <div class="contact-info">
+                    <a href="https://zalo.me/0392733577" class="contact-item" target="_blank">
+                        <i class="fas fa-comment-dots"></i> Zalo Admin: 0392733577 (Võ Tấn Nhân)
+                    </a>
+                    <a href="https://www.facebook.com/nhan.votan.395" class="contact-item" target="_blank">
+                        <i class="fab fa-facebook-square"></i> Facebook: Võ Tấn Nhân 
+                    </a>
+                    <a href="mailto:votannhan8@gmail.com" class="contact-item">
+                        <i class="fas fa-envelope"></i> Email: votannhan8@gmail.com
+                    </a>
+                </div>
+            </div>
 
-</div>
+            <div id="checkoutPage" style="display:none;">
+                <form id="checkoutForm">
+                    <div class="checkout-layout">
+                        <div class="checkout-main">
+                            <div class="section-title">THÔNG TIN NHẬN HÀNG</div>
+                            <input type="text" id="custName" placeholder="Họ và tên khách hàng *" required>
+                            <input type="tel" id="custPhone" placeholder="Số điện thoại(zalo) *" required>
+                            <input type="email" id="custEmail" placeholder="Email (không bắt buộc)">
+                            <textarea id="custAddr" rows="3" placeholder="Địa chỉ giao hàng chi tiết (Tên đường, phường/xã, quận/huyện, tỉnh/thành phố) *" required></textarea>
+                            <textarea id="custNote" rows="2" placeholder="Ghi chú đơn hàng (không bắt buộc)"></textarea>
+                            
+                            <div class="section-title" style="margin-top:30px;">THANH TOÁN (SHIP COD)</div>
+                            <label class="radio-label">
+                                <input type="radio" name="payment" value="Ship COD" checked required>
+                                <strong>Ship COD</strong> - Vui lòng chuyển khoản trước khi nhận hàng(Admin sẽ nhắn stk qua zalo cho bạn)
+                            </label>
+                        </div>
+                        
+                        <div class="checkout-sidebar">
+                            <div class="section-title">VẬN CHUYỂN</div>
+                            <label class="radio-label">
+                                <input type="radio" name="shipping" value="Giao tận nơi" data-price="29000" onclick="updateTotal()">
+                                Giao tận nơi (toàn quốc) - 29.000₫
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="shipping" value="Nhận tại cửa hàng" data-price="0" onclick="updateTotal()" checked>
+                                Nhận hàng tại cửa hàng(H1 - KTX KHU A ĐHQG TPHCM) - Miễn phí
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="shipping" value="Giao siêu tốc" data-price="99000" onclick="updateTotal()">
+                                Giao siêu tốc (TP.HCM) - 99.000₫(Tùy vào vị trí cụ thể)
+                            </label>
+                            
+                            <div class="section-title" style="margin-top:30px;">HÓA ĐƠN</div>
+                            <div id="checkoutProductList"></div>
+                            
+                            <div class="coupon-box">
+                                <input type="text" placeholder="Mã giảm giá (nếu có)">
+                                <button type="button">Áp dụng</button>
+                            </div>
+                            
+                            <hr style="border:none; border-top:1px solid #eee; margin:15px 0;">
+                            
+                            <div class="summary-line">
+                                <span>Tạm tính (Sản phẩm):</span>
+                                <span id="checkoutSubtotal">0₫</span>
+                            </div>
+                            <div class="summary-line">
+                                <span>Phí vận chuyển:</span>
+                                <span id="checkoutShippingFee">0₫</span>
+                            </div>
+                            <div class="summary-line" style="margin-top:15px; border-top:2px solid #eee; padding-top:10px;">
+                                <span style="font-weight:bold; color:#333; font-size:16px;">TỔNG CỘNG:</span>
+                                <span class="summary-total" id="checkoutFinalTotal">0₫</span>
+                            </div>
+                            
+                            <button type="submit" class="btn-order-final">📦 ĐẶT HÀNG NGAY</button>
+                            <button type="button" onclick="showHome()" style="width:100%; border:none; background:none; margin-top:15px; color:#666; cursor:pointer;">Quay về Trang chủ</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
 
-<div id="allProductsPage" style="display:none">
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <h3 style="border-bottom: 2px solid var(--blue); padding-bottom: 10px; margin-bottom: 15px;">CHI TIẾT ĐƠN HÀNG</h3>
+            <div id="cartList"></div>
+            <div style="font-weight:bold; font-size:18px; color:#d63031; text-align:right; margin: 15px 0;" id="totalPrice">Tổng: 0₫</div>
+            
+            <button type="button" class="btn-buy" style="background:var(--blue); color:white; padding:15px; font-size:15px; font-weight:bold; margin-bottom:10px;" onclick="goToCheckout()">TIẾP TỤC THANH TOÁN CHỈ TIẾT</button>
+            <button type="button" onclick="toggleCart()" style="width:100%; background:none; border:none; color:gray; margin-top:10px; cursor:pointer;">Tiếp tục mua hàng</button>
+        </div>
+    </div>
 
-<h2 id="allCatTitle">Tất cả sản phẩm</h2>
+    <script>
+        // Cấu hình Telegram (Điền Token và ID của bạn vào đây)
+        const TG_TOKEN = '8307118775:AAHy3-S_8jG27VM2Scp3qG1w8CIjUX6PTfY';
+        const TG_CHAT_ID = '6021357708';
 
-<div class="grid" id="allProductsGrid"></div>
+        const allProducts = [
+            // --- GIỮ NGUYÊN FULL SẢN PHẨM & GIÁ CỦA BẠN ---
+            // --- ĐIỆN TRỞ ---
+            { id: 1, cat: 'Điện trở 100R 1/4W', name: 'Điện trở 100R 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 2, cat: 'Điện trở 1K 1/4W', name: 'Điện trở 1K 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 3, cat: 'Điện trở 10K 1/4W', name: 'Điện trở 10K 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 4, cat: 'Điện trở 100K 1/4W', name: 'Điện trở 100K 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 5, cat: 'Điện trở 220R 1/4W', name: 'Điện trở 220R 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 6, cat: 'Điện trở 2.2K 1/4W', name: 'Điện trở 2.2K 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 7, cat: 'Điện trở 22K 1/4W', name: 'Điện trở 22K 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 8, cat: 'Điện trở 220K 1/4W', name: 'Điện trở 220K 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 9, cat: 'Điện trở 330R 1/4W', name: 'Điện trở 330R 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 10, cat: 'Điện trở 3.3K 1/4W', name: 'Điện trở 3.3K 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 11, cat: 'Điện trở 33K 1/4W', name: 'Điện trở 33K 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 12, cat: 'Điện trở 470R 1/4W', name: 'Điện trở 470R 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
+            { id: 13, cat: 'Điện trở 4.7K 1/4W', name: 'Điện trở 4.7K 1/4W', price: 500, img: 'https://sf-static.upanhlaylink.com/img/image_202603106445ba88e6fdce1abdfedb3afa547882.jpg' },
 
-</div>
+            // --- NÚT NHẤN ---
+            { id: 14, cat: 'Nút nhấn nhả', name: 'Nút nhấn nhả 6x6x5mm', price: 3000, img: 'https://sf-static.upanhlaylink.com/img/image_202603104867f96e5246d8d486975a32a8d51291.jpg' },
+            { id: 15, cat: 'Nút nhấn giữ', name: 'Nút nhấn giữ 6x6x5mm', price: 2000, img: 'https://sf-static.upanhlaylink.com/img/image_202603104867f96e5246d8d486975a32a8d51291.jpg' },
+            { id: 16, cat: 'Nút nhấn tròn 2 chân', name: 'Nút nhấn tròn đỏ 2 chân', price: 1500, img: 'https://sf-static.upanhlaylink.com/img/image_20260310f21896a17c9b2cb5b6d3c28a1334df29.jpg' },
+            { id: 17, cat: 'Nút Nhấn 6X6X5MM 2 Chân Cắm', name: 'Nút Nhấn 6X6X5MM 2 Chân Cắm', price: 1000, img: 'https://sf-static.upanhlaylink.com/img/image_20260310832265522ac3bdd4f1f765abad1c131f.jpg' },
+            { id: 18, cat: 'Nút Nhấn 6X6X5MM 4 Chân Cắm', name: 'Nút Nhấn 6X6X5MM 4 Chân Cắm', price: 1000, img: 'https://sf-static.upanhlaylink.com/img/image_202603103f63a56d568526e4fad896e98807d688.jpg' },
 
-</main>
+            // --- CÔNG TẮC ---
+            { id: 19, cat: 'Công tắc gạt SS12D00', name: 'Công tắc gạt SS12D00', price: 1500, img: 'https://sf-static.upanhlaylink.com/img/image_20260310c60a6ca984cbd02f6de35d70f644522a.jpg' },
+            { id: 20, cat: 'Công tắc KCD1-21 màu đỏ', name: 'Công tắc KCD1-21 màu đỏ', price: 4000, img: 'https://sf-static.upanhlaylink.com/img/image_20260310b94098175f808c46196fb87e4339e4f4.jpg' },
+            { id: 21, cat: 'Công tắc KCD1 23MM màu đỏ', name: 'Công tắc KCD1 23MM màu đỏ', price: 8000, img: 'https://sf-static.upanhlaylink.com/img/image_20260310ff74123e6a49bce14cbd6a2bbd2fde0d.jpg' },
 
-<script src="script.js"></script>
+            // --- LED ---
+            {id: 22, cat: 'Led trong 3mm màu trắng', name: 'Led trong 3mm màu trắng', price: 1000, img: 'https://sf-static.upanhlaylink.com/img/image_20260310873d0ac61919330b223cdf69d23eeefd.jpg' },
+            {id: 23, cat: 'Led đục 3mm màu đỏ', name: 'Led đục 3mm màu đỏ', price: 1000, img: 'https://sf-static.upanhlaylink.com/img/image_20260310962877bc32a2740ee02da483655a6bd6.jpg' },
+            {id: 24, cat: 'Led đục 3mm màu vàng', name: 'Led đục 3mm màu vàng', price: 1000, img: 'https://sf-static.upanhlaylink.com/img/image_20260310962877bc32a2740ee02da483655a6bd6.jpg' },
+            {id: 25, cat: 'Led đục 3mm màu xanh dương', name: 'Led đục 3mm màu xanh dương', price: 1000, img: 'https://sf-static.upanhlaylink.com/img/image_20260310962877bc32a2740ee02da483655a6bd6.jpg' },
+            {id: 26, cat: 'Led đục 3mm màu xanh lá', name: 'Led đục 3mm màu xanh lá', price: 1000, img: 'https://sf-static.upanhlaylink.com/img/image_20260310962877bc32a2740ee02da483655a6bd6.jpg' },
 
+            // --- JACK ---
+            {id: 27, cat: 'Jack đầu Cắm Nguồn Cái DC-005', name: 'Jack đầu Cắm Nguồn Cái DC-005', price: 3500, img: 'https://sf-static.upanhlaylink.com/img/image_20260310600cf25dc2dca321a58e7762feef3e41.jpg' },
+            {id: 28, cat: 'Jack nguồn DC022 5.5*2.1MM', name: 'Jack nguồn DC022 5.5*2.1MM', price: 2500, img: 'https://sf-static.upanhlaylink.com/img/image_20260310afbd29f0a22911801c84cee1afaf1621.jpg' },
+            {id: 29, cat: 'Jack DC 5.5X2.1 DC Male', name: 'Jack DC 5.5X2.1 DC Male', price: 4000, img: 'https://sf-static.upanhlaylink.com/img/image_20260310939ddbe2a48ac57e2543eb4d3cf14730.jpg' },
+
+            // --- MÀN HÌNH ---
+            {id: 30, cat: 'Màn hình LCD 0.96inch trắng', name: 'Màn hình LCD 0.96inch trắng', price: 68000, img: 'https://sf-static.upanhlaylink.com/img/image_202603117ab1558f195892f05836ce12d2493f8b.jpg' },
+            {id: 31, cat: 'Màn hình LCD 0.96inch xanh lam', name: 'Màn hình LCD 0.96inch xanh lam', price: 68000, img: 'https://sf-static.upanhlaylink.com/img/image_202603118f367cdbaa9baab50fb650a0544dc6a6.jpg' },
+            {id: 32, cat: 'Màn hình LCD 1.54inch', name: 'Màn hình LCD 1.54inch', price: 88000, img: 'https://sf-static.upanhlaylink.com/img/image_20260311bf0902cdaa6c35aaa89bbb418c4ebc6f.jpg' },
+            {id: 33, cat: 'Màn hình LCD 1602 xanh lá 5V', name: 'Màn hình LCD 1602 xanh lá 5V', price: 38000, img: 'https://sf-static.upanhlaylink.com/img/image_2026031135030154017728abb3e8c24bf10a099d.jpg' },
+            {id: 34, cat: 'Màn hình LCD 1602 xanh dương 5V', name: 'Màn hình LCD 1602 xanh dương 5V', price: 48000, img: 'https://sf-static.upanhlaylink.com/img/image_202603113a71f22a6c761d301c1146be92b40fa2.jpg' },
+    
+            {id: 35, cat: 'Màn hình TFT 1.3inch', name: 'Màn hình TFT 1.3inch', price: 78000, img: 'https://sf-static.upanhlaylink.com/img/image_202603116eb210b2613b6945d272ae683710a946.jpg' },
+            {id: 36, cat: 'Màn hình TFT 1.44inch', name: 'Màn hình TFT 1.44inch', price: 88000, img: 'https://sf-static.upanhlaylink.com/img/image_20260311a2fd54ae4bf559091e3d4f298e3d9424.jpg' },
+            {id: 37, cat: 'Màn hình TFT 1.8inch', name: 'Màn hình TFT 1.8inch', price: 98000, img: 'https://sf-static.upanhlaylink.com/img/image_202603110388948cfc9daece9b78e8b2efb6332e.jpg' },
+
+        ];
+
+        let cart = [];
+
+        function renderProducts(targetGrid, list) {
+            targetGrid.innerHTML = list.map(p => `
+                <div class="product-card">
+                    <img src="${p.img}" alt="${p.name}">
+                    <div class="product-name">${p.name}</div>
+                    <div class="price">${p.price.toLocaleString()}₫</div>
+                    <button class="btn-buy" onclick="addToCart(${p.id})"><i class="fas fa-cart-plus"></i> Thêm vào giỏ</button>
+                </div>
+            `).join('');
+        }
+
+        // Các hàm tìm kiếm & điều hướng trang cơ bản
+        function searchProducts() {
+            const val = document.getElementById('searchInput').value.toLowerCase();
+            showAllProducts();
+            const res = allProducts.filter(p => p.name.toLowerCase().includes(val));
+            renderProducts(document.getElementById('allProductsGrid'), res);
+            document.getElementById('allCatTitle').innerText = "Kết quả tìm kiếm: " + val;
+        }
+
+        function showHome() { hidePages(); document.getElementById('homePage').style.display = 'block'; document.getElementById('sidebarArea').style.display='block'; }
+        function showAllProducts() { hidePages(); document.getElementById('allProductsPage').style.display = 'block'; document.getElementById('sidebarArea').style.display='block'; renderProducts(document.getElementById('allProductsGrid'), allProducts); }
+        function showContact() { hidePages(); document.getElementById('contactPage').style.display = 'block'; document.getElementById('sidebarArea').style.display='block'; }
+        function hidePages() { ['homePage','allProductsPage','contactPage','checkoutPage'].forEach(id => document.getElementById(id).style.display='none'); }
+
+        // --- FIX LỖI CHỌN DANH MỤC LỚN ---
+        function filterCat(name) {
+            hidePages();
+            document.getElementById('allProductsPage').style.display = 'block';
+            document.getElementById('sidebarArea').style.display = 'block';
+            // Sử dụng toLowerCase().includes() để so sánh danh mục chính xác
+            const res = allProducts.filter(p => p.cat.toLowerCase().includes(name.toLowerCase()));
+            renderProducts(document.getElementById('allProductsGrid'), res);
+            document.getElementById('allCatTitle').innerText = "Danh mục: " + name;
+        }
+
+        
+        // Thêm vào giỏ hàng (Có kiểm tra trùng sản phẩm)
+function addToCart(id) {
+    const item = allProducts.find(p => p.id === id);
+    const existingItem = cart.find(p => p.id === id);
+    
+    if (existingItem) {
+        existingItem.qty += 1; // Nếu có rồi thì tăng số lượng lên 1
+    } else {
+        cart.push({ ...item, qty: 1 }); // Nếu chưa có thì thêm mới và đặt qty = 1
+    }
+    
+    updateCart();
+    alert("Đã thêm " + item.name + " vào giỏ!");
+}
+
+        // Cập nhật giao diện giỏ hàng (Trang 1)
+        function updateCart() {
+    // Cập nhật số lượng hiển thị trên biểu tượng giỏ hàng
+    document.getElementById('cartCount').innerText = cart.reduce((s, i) => s + i.qty, 0);
+    
+    // Tính tổng tiền
+    const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    document.getElementById('totalPrice').innerText = "Tổng: " + total.toLocaleString() + "₫";
+    
+    // Hiển thị danh sách sản phẩm kèm nút tăng giảm
+    document.getElementById('cartList').innerHTML = cart.map((item, index) => `
+        <div class="cart-item">
+            <span class="cart-item-name">${item.name}</span>
+            <div class="qty-input">
+                <button onclick="changeQty(${index}, -1)">-</button>
+                <span>${item.qty}</span>
+                <button onclick="changeQty(${index}, 1)">+</button>
+            </div>
+            <span class="cart-item-price">${(item.price * item.qty).toLocaleString()}₫</span>
+            <i class="fas fa-trash" onclick="removeItem(${index})" style="color:red; cursor:pointer; margin-left:15px"></i>
+        </div>
+    `).join('');
+    }
+    // Hàm tăng giảm số lượng
+function changeQty(index, delta) {
+    if (cart[index].qty + delta > 0) {
+        cart[index].qty += delta;
+        updateCart();
+        // Cập nhật lại hóa đơn nếu đang đứng ở trang thanh toán
+        if(document.getElementById('checkoutPage').style.display === 'block') renderCheckoutSummary();
+    } else {
+        removeItem(index); // Nếu giảm về 0 thì hỏi xóa
+    }
+}
+
+// Hàm xóa sản phẩm
+function removeItem(index) {
+    if(confirm("Bạn muốn xóa sản phẩm này khỏi đơn hàng?")) {
+        cart.splice(index, 1);
+        updateCart();
+        if(document.getElementById('checkoutPage').style.display === 'block') renderCheckoutSummary();
+    }
+}
+
+        function removeItem(idx) { cart.splice(idx, 1); updateCart(); }
+        function toggleCart() { const m = document.getElementById('cartModal'); m.style.display = (m.style.display === 'flex') ? 'none' : 'flex'; }
+
+        // --- HỆ THỐNG THANH TOÁN MỚI (MÀN HÌNH CHỈ TIẾT) ---
+        function goToCheckout() {
+            if (cart.length === 0) {
+                alert("Giỏ hàng đang trống!");
+                return;
+            }
+            toggleCart(); // Đóng giỏ hàng
+            hidePages(); // Ẩn các trang khác
+            document.getElementById('sidebarArea').style.display='none'; // Ẩn sidebar danh mục
+            document.getElementById('checkoutPage').style.display = 'block'; // Hiện trang thanh toán
+            window.scrollTo(0, 0);
+            renderCheckoutSummary();
+        }
+
+        function renderCheckoutSummary() {
+    const list = document.getElementById('checkoutProductList');
+    // Tính tổng tiền: Đơn giá x Số lượng
+    const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    
+    list.innerHTML = cart.map((i, idx) => `
+        <div class="checkout-item">
+            <img src="${i.img}" alt="${i.name}">
+            <div class="checkout-item-details">
+                <strong>${i.name}</strong><br>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                    <div class="qty-input">
+                        <button type="button" onclick="changeQty(${idx}, -1)">-</button>
+                        <span>${i.qty}</span>
+                        <button type="button" onclick="changeQty(${idx}, 1)">+</button>
+                    </div>
+                    <span>${(i.price * i.qty).toLocaleString()}₫</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('checkoutSubtotal').innerText = subtotal.toLocaleString() + "₫";
+    updateTotal();
+}
+
+
+        function updateTotal() {
+    // Sửa dòng này:
+    const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0); 
+    
+    const shippingRadio = document.querySelector('input[name="shipping"]:checked');
+    const shippingFee = parseInt(shippingRadio.getAttribute('data-price'));
+    const finalTotal = subtotal + shippingFee;
+    
+    document.getElementById('checkoutShippingFee').innerText = shippingRadio.value + " (" + (shippingFee === 0 ? "Miễn phí" : shippingFee.toLocaleString() + "₫") + ")";
+    document.getElementById('checkoutFinalTotal').innerText = finalTotal.toLocaleString() + "₫";
+}
+
+
+        // Xử lý gửi đơn hàng (tích hợp Telegram)
+        document.getElementById('checkoutForm').onsubmit = async function(e) {
+            e.preventDefault();
+            if(cart.length === 0) return alert("Giỏ hàng đang trống!");
+            
+            const shippingRadio = document.querySelector('input[name="shipping"]:checked');
+            const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const shippingFee = parseInt(shippingRadio.getAttribute('data-price'));
+            const finalTotal = subtotal + shippingFee;
+            const paymentType = document.querySelector('input[name="payment"]:checked').value;
+
+            const custInfo = `👤 Khách hàng:\n- Họ tên: ${document.getElementById('custName').value}\n- SĐT: ${document.getElementById('custPhone').value}\n- Email: ${document.getElementById('custEmail').value || 'Không có'}\n- Địa chỉ: ${document.getElementById('custAddr').value}`;
+            const productList = cart.map(i => `- ${i.name} (Số lượng: ${i.qty}) = ${(i.price * i.qty).toLocaleString()}₫`).join('\n');
+            const billingInfo = `💰 Thanh toán:\n- Tạm tính: ${subtotal.toLocaleString()}₫\n- Vận chuyển: ${shippingRadio.value} (+${(shippingFee === 0 ? "Miễn phí" : shippingFee.toLocaleString() + "₫")})\n- Hình thức: ${paymentType}\n- TỔNG THU: ${finalTotal.toLocaleString()}₫`;
+            const note = document.getElementById('custNote').value ? `\n📝 Ghi chú: ${document.getElementById('custNote').value}` : '';
+
+            const msg = `🔔 ĐƠN HÀNG MỚI (VOTANNHAN.SITE)\n--------------------\n${custInfo}\n\n📦 Sản phẩm:\n${productList}\n\n--------------------\n${billingInfo}${note}`;
+            
+            try {
+                // Gửi thông báo đến Telegram
+                await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({chat_id: TG_CHAT_ID, text: msg})
+                });
+                alert("Đơn hàng đã được gửi đến Admin thành công! Chúng tôi sẽ gọi xác nhận trong thời gian sớm nhất.");
+                // Reset giỏ hàng và về trang chủ
+                cart = []; updateCart(); showHome();
+            } catch {
+                alert("Gửi đơn thất bại, vui lòng liên hệ Zalo!");
+            }
+        };
+
+        // Khởi tạo trang: Hiển thị 8 sản phẩm đầu tiên
+        window.onload = () => renderProducts(document.getElementById('newProductsGrid'), allProducts.slice(0, 37));
+    </script>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDKfcPAUeXyEVRjpXmGUWp8ZehmNVU8DAg",
+  authDomain: "votannhan-shop.firebaseapp.com",
+  projectId: "votannhan-shop",
+  storageBucket: "votannhan-shop.firebasestorage.app",
+  messagingSenderId: "112895518426",
+  appId: "1:112895518426:web:239ccbdf9c6d75ab33e7e3",
+  measurementId: "G-FX65FBC4TD"
+};
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+</script>
+<script src="ai-system.js"></script>
+  
 </body>
 </html>
