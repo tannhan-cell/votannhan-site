@@ -4,11 +4,9 @@ let html=`
 
 <div id="chatbox" class="min">
 
-<div id="chat-header">
-AI hỗ trợ mua linh kiện
-<span id="chat-toggle" onclick="toggleChat()">⬇</span>
+<div id="chat-header" onclick="toggleChat()">
+AI hỗ trợ mua linh kiện ⬆
 </div>
-
 <div id="chat-messages"></div>
 
 <input id="chat-input" placeholder="Hỏi AI về sản phẩm...">
@@ -54,3 +52,14 @@ if(e.key==="Enter"){
 sendAI()
 }
 })
+  function toggleChat(){
+
+let box=document.getElementById("chatbox")
+
+if(box.classList.contains("min")){
+box.classList.remove("min")
+}else{
+box.classList.add("min")
+}
+
+}
