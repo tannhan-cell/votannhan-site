@@ -1,41 +1,66 @@
-const express = require("express");
-const fetch = require("node-fetch");
-const cors = require("cors");
+const express = require("express")
+const fetch = require("node-fetch")
+const cors = require("cors")
 
-const app = express();
+const app = express()
 
-app.use(cors());
-app.use(express.json());
+app.use(cors())
+app.use(express.json())
 
-const OPENAI_KEY = "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";
+// API KEY
+const OPENAI_KEY = "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"
 
-app.post("/ai", async (req, res) => {
+// route AI
+app.post("/ai", async (req,res)=>{
 
-  try {
+try{
 
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + OPENAI_KEY,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: req.body.messages
-      })
-    });
+let message = req.body.message
 
-    const data = await r.json();
-    res.json(data);
+let response = await fetch("https://api.openai.com/v1/chat/completions",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"Authorization":"Bearer "+OPENAI_KEY
+},
+body:JSON.stringify({
+model:"gpt-4o-mini",
+messages:[
+{
+role:"system",
+content:"Bạn là nhân viên tư vấn bán linh kiện điện tử của votannhan.site. Hãy tư vấn thân thiện và ngắn gọn."
+},
+{
+role:"user",
+content:message
+}
+]
+})
+})
 
-  } catch (e) {
+let data = await response.json()
 
-    res.status(500).json({ error: "AI error" });
+let reply="AI chưa trả lời được"
 
-  }
+if(data.choices && data.choices.length>0){
+reply = data.choices[0].message.content
+}
 
-});
+res.json({
+reply:reply
+})
 
-app.listen(3000, () => {
-  console.log("AI server running at http://localhost:3000");
-});
+}catch(e){
+
+res.json({
+reply:"AI đang bận, thử lại sau."
+})
+
+}
+
+})
+
+// chạy server
+app.listen(3000,()=>{
+console.log("AI Server running at http://localhost:3000")
+})
