@@ -10,7 +10,7 @@ let total=0
 
 cart.forEach(i=>{
 
-let line = i.name+" x"+i.qty+" = "+(i.qty*i.price)+"đ"
+let line = i.name+" x"+i.qty+" = "+(i.qty*i.price)+" VND"
 
 doc.text(line,20,y)
 
