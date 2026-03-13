@@ -2,7 +2,7 @@ function createChatbox(){
 
 let html=`
 
-<div id="chatbox">
+<div id="chatbox" class="min">
 
 <div id="chat-header">
 AI hỗ trợ mua linh kiện
