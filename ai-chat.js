@@ -45,3 +45,9 @@ reply=await askAI(msg)
 }catch(e){
 reply="AI đang bận, vui lòng thử lại."
 }
+
+document.addEventListener("keydown",e=>{
+if(e.key==="Enter"){
+sendAI()
+}
+})
