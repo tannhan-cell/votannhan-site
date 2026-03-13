@@ -35,7 +35,7 @@ el.innerHTML=""
 
 cart.forEach((i,idx)=>{
 
-el.innerHTML+=`
+el.innerHTML += `
 <div>
 ${i.name} x${i.qty}
 <button onclick="removeItem(${idx})">❌</button>
