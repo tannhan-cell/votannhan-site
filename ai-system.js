@@ -3,9 +3,9 @@ VOTANNHAN AI SYSTEM
 AI bán hàng + SEO + Dashboard
 ========================= */
 
-const OPENAI_KEY="YOUR_OPENAI_KEY"
-const TELEGRAM_BOT="YOUR_BOT_TOKEN"
-const TELEGRAM_CHAT="YOUR_CHAT_ID"
+const OPENAI_KEY="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"
+const TELEGRAM_BOT="8307118775:AAG_VxDxxgl2ofF00dZxua3miIQ2f4U26R0"
+const TELEGRAM_CHAT="6021357708"
 
 /* =========================
 AI CHATBOT
@@ -250,3 +250,4 @@ document.querySelectorAll("img")
 optimizeSpeed()
 
 console.log("AI SYSTEM LOADED")
+
