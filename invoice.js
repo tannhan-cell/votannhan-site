@@ -1,7 +1,14 @@
-function createInvoice(){
+function createInvoice(customer){
 
 const { jsPDF } = window.jspdf
 const doc = new jsPDF()
+
+// ===== LOGO =====
+let logo=document.getElementById("logo-shop")
+
+if(logo){
+doc.addImage(logo,"PNG",20,10,25,25)
+}
 
 // ===== HEADER =====
 doc.setFont("Helvetica","bold")
@@ -16,29 +23,44 @@ doc.text("Sales Invoice",105,28,{align:"center"})
 const orderID="VN"+Math.floor(Math.random()*100000)
 
 let today=new Date()
-
 let date=today.toLocaleString("vi-VN")
 
 doc.setFontSize(10)
 
-doc.text("Order ID: "+orderID,20,40)
-doc.text("Date: "+date,20,46)
+doc.text("Order ID: "+orderID,20,45)
+doc.text("Date: "+date,20,51)
 
-doc.line(20,50,190,50)
+// ===== CUSTOMER =====
+doc.setFont("Helvetica","bold")
+doc.text("Customer Information",20,65)
+
+doc.setFont("Helvetica","normal")
+
+doc.text("Name: "+customer.name,20,72)
+doc.text("Phone: "+customer.phone,20,78)
+doc.text("Address: "+customer.address,20,84)
+
+doc.line(20,90,190,90)
 
 // ===== TABLE HEADER =====
-let y=60
+
+let y=100
+
+doc.setFillColor(240,240,240)
+doc.rect(20,y-6,170,8,"F")
 
 doc.setFont("Helvetica","bold")
 
-doc.text("Product",20,y)
+doc.text("Product",25,y)
 doc.text("Qty",120,y)
-doc.text("Price",150,y)
-doc.text("Total",190,y,{align:"right"})
+doc.text("Price",145,y)
+doc.text("Total",185,y,{align:"right"})
 
-doc.line(20,y+2,190,y+2)
+y+=6
 
-y+=10
+doc.line(20,y,190,y)
+
+y+=8
 
 doc.setFont("Helvetica","normal")
 
@@ -47,19 +69,17 @@ let total=0
 // ===== PRODUCTS =====
 cart.forEach(i=>{
 
-let price=i.price
 let sum=i.qty*i.price
 
-// tránh lỗi text quá dài
-let productName = doc.splitTextToSize(i.name,90)
+let name=doc.splitTextToSize(i.name,90)
 
-doc.text(productName,20,y)
+doc.text(name,25,y)
 
 doc.text(String(i.qty),120,y)
 
-doc.text(price.toLocaleString()+" đ",150,y)
+doc.text(i.price.toLocaleString()+" đ",145,y)
 
-doc.text(sum.toLocaleString()+" đ",190,y,{align:"right"})
+doc.text(sum.toLocaleString()+" đ",185,y,{align:"right"})
 
 total+=sum
 
@@ -68,6 +88,7 @@ y+=10
 })
 
 // ===== TOTAL =====
+
 doc.line(20,y,190,y)
 
 y+=10
@@ -75,15 +96,16 @@ y+=10
 doc.setFont("Helvetica","bold")
 doc.setFontSize(14)
 
-doc.text("TOTAL: "+total.toLocaleString()+" đ",190,y,{align:"right"})
+doc.text("TOTAL: "+total.toLocaleString()+" đ",185,y,{align:"right"})
 
 // ===== FOOTER =====
+
 doc.setFontSize(10)
 doc.setFont("Helvetica","normal")
 
-doc.text("Thank you for shopping at VOTANNHAN.SITE!",105,270,{align:"center"})
+doc.text("Thank you for shopping at VOTANNHAN.SITE",105,270,{align:"center"})
 doc.text("Website: votannhan.site",105,276,{align:"center"})
 
-doc.save("hoadon.pdf")
+doc.save("HoaDon.pdf")
 
 }
