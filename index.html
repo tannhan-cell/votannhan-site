@@ -426,7 +426,7 @@ function removeItem(index) {
     
     list.innerHTML = cart.map((i, idx) => `
         <div class="checkout-item">
-            html <img src="${i.img}" alt="${i.name}" loading="lazy">
+            <img src="${i.img}" alt="${i.name}" loading="lazy">
             <div class="checkout-item-details">
                 <strong>${i.name}</strong><br>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
@@ -495,10 +495,9 @@ function removeItem(index) {
         // Khởi tạo trang: Hiển thị 8 sản phẩm đầu tiên
         window.onload = () => renderProducts(document.getElementById('newProductsGrid'), allProducts.slice(0, 37));
     </script>
-<script type="module">
+    <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDKfcPAUeXyEVRjpXmGUWp8ZehmNVU8DAg",
@@ -506,33 +505,40 @@ function removeItem(index) {
         projectId: "votannhan-shop",
         storageBucket: "votannhan-shop.firebasestorage.app",
         messagingSenderId: "112895518426",
-        appId: "1:112895518426:web:239ccbdf9c6d75ab33e7e3",
-        measurementId: "G-FX65FBC4TD"
+        appId: "1:112895518426:web:239ccbdf9c6d75ab33e7e3"
     };
 
-    // Khởi tạo Firebase đúng thứ tự
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const db = getDatabase(app);
-    const productsRef = ref(db, 'products');
+    const pRef = ref(db, 'products');
+
+    // Tạo biến toàn cục để các hàm khác (lọc, tìm kiếm) sử dụng
+    window.allProducts = [];
 
     // Lắng nghe dữ liệu từ Firebase
-    onValue(productsRef, (snapshot) => {
+    onValue(pRef, (snapshot) => {
         const data = snapshot.val();
+        window.allProducts = [];
+        
         if (data) {
-            const productsArray = Object.keys(data).map(key => ({
-                id: key,
-                ...data[key]
-            }));
+            // Chuyển đổi dữ liệu từ Firebase thành mảng
+            Object.keys(data).forEach(key => {
+                window.allProducts.push({
+                    id: key,
+                    ...data[key]
+                });
+            });
 
-            // Đổ dữ liệu ra trang chủ
-            renderProducts(document.getElementById('newProductsGrid'), productsArray);
+            // Sau khi lấy được dữ liệu, hiển thị ra trang chủ và trang sản phẩm
+            const newGrid = document.getElementById('newProductsGrid');
+            const allGrid = document.getElementById('allProductsGrid');
             
-            // Cập nhật biến toàn cục để Tìm kiếm & Giỏ hàng hoạt động
-            window.allProducts = productsArray; 
-            window.currentProducts = productsArray; 
+            // Hiển thị 8 sản phẩm mới nhất lên trang chủ
+            renderProducts(newGrid, window.allProducts.slice(-8).reverse());
+            // Hiển thị tất cả lên trang sản phẩm
+            renderProducts(allGrid, window.allProducts);
         } else {
-            document.getElementById('newProductsGrid').innerHTML = "<p>Đang cập nhật sản phẩm...</p>";
+            document.getElementById('newProductsGrid').innerHTML = "<p style='padding:20px'>Chưa có sản phẩm nào.</p>";
         }
     });
 </script>
