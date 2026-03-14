@@ -250,7 +250,7 @@
                 <div class="banner-box">
                     <img src="https://sf-static.upanhlaylink.com/img/image_20260310d7bb729b1a5c8b6489a053f67bd621b5.jpg" alt="Banner">
                 </div>
-                <div class="section-header">Sản phẩm mới cập nhật</div>
+                <h1 class="section-header">Linh kiện điện tử giá rẻ mới cập nhật</h1>
                 <div class="grid" id="newProductsGrid"></div>
             </div>
 
@@ -414,7 +414,7 @@
         function renderProducts(targetGrid, list) {
             targetGrid.innerHTML = list.map(p => `
                 <div class="product-card">
-                    <img src="${p.img}" alt="${p.name}">
+                    <img src="${p.img}" alt="Linh kiện ${p.name} giá rẻ tại VOTANNHAN.SITE">
                     <div class="product-name">${p.name}</div>
                     <div class="price">${p.price.toLocaleString()}₫</div>
                     <button class="btn-buy" onclick="addToCart(${p.id})"><i class="fas fa-cart-plus"></i> Thêm vào giỏ</button>
@@ -619,6 +619,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
+</script>
+
+    <script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "Store",
+ "name": "VOTANNHAN.SITE",
+ "url": "https://votannhan.site",
+ "logo": "https://sf-static.upanhlaylink.com/img/image_20260310d7bb729b1a5c8b6489a053f67bd621b5.jpg",
+ "description": "Cửa hàng linh kiện điện tử giá rẻ",
+ "address": {
+   "@type": "PostalAddress",
+   "addressLocality": "TPHCM",
+   "addressCountry": "VN"
+ },
+ "telephone": "0392733577"
+}
 </script>
 
 </body>
