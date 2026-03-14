@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Trị - VOTANNHAN.SITE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        
+        /* Form Card */
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        h2 { color: #333; margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-add { background: var(--primary); color: white; }
+        .btn-add:hover { background: #0056b3; }
+
+        /* Table Area */
+        .product-list { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #666; }
+        .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        .btn-del { background: var(--danger); color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; width: auto; }
+        
+        @media (max-width: 600px) {
+            th:nth-child(2), td:nth-child(2) { display: none; } /* Ẩn cột danh mục trên mobile */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2><i class="fas fa-plus-circle"></i> Thêm Sản Phẩm Mới</h2>
+        <div class="form-group">
+            <label>Tên sản phẩm</label>
+            <input type="text" id="pName" placeholder="VD: Điện trở 10k 1/4W">
+        </div>
+        <div class="form-group">
+            <label>Danh mục</label>
+            <select id="pCat">
+                <option value="Điện trở">Điện trở</option>
+                <option value="Nút nhấn">Nút nhấn</option>
+                <option value="Công tắc">Công tắc</option>
+                <option value="Led">Led</option>
+                <option value="Màn hình">Màn hình</option>
+                <option value="Cảm biến">Cảm biến</option>
+                <option value="Dịch vụ MXH">Dịch vụ MXH (VotannhanPro)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Giá bán (VNĐ)</label>
+            <input type="number" id="pPrice" placeholder="VD: 500">
+        </div>
+        <div class="form-group">
+            <label>Link ảnh sản phẩm</label>
+            <input type="text" id="pImg" placeholder="Dán link ảnh vào đây">
+        </div>
+        <button class="btn-add" onclick="saveProduct()">XÁC NHẬN THÊM</button>
+    </div>
+
+    <div class="product-list">
+        <h2 style="padding: 20px 20px 0 20px;"><i class="fas fa-list"></i> Danh sách đã đăng</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Ảnh</th>
+                    <th>Danh mục</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Giá</th>
+                    <th>Xóa</th>
+                </tr>
+            </thead>
+            <tbody id="productTableBody">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // Cấu hình Firebase của VOTANNHAN-SHOP
+    const firebaseConfig = {
+        apiKey: "AIzaSyDKfcPAUeXyEVRjpXmGUWp8ZehmNVU8DAg",
+        authDomain: "votannhan-shop.firebaseapp.com",
+        projectId: "votannhan-shop",
+        storageBucket: "votannhan-shop.firebasestorage.app",
+        messagingSenderId: "112895518426",
+        appId: "1:112895518426:web:239ccbdf9c6d75ab33e7e3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const pRef = ref(db, 'products');
+
+    // Hàm Lưu sản phẩm
+    window.saveProduct = function() {
+        const name = document.getElementById('pName').value;
+        const cat = document.getElementById('pCat').value;
+        const price = document.getElementById('pPrice').value;
+        const img = document.getElementById('pImg').value;
+
+        if(!name || !price || !img) {
+            alert("Vui lòng nhập đầy đủ thông tin!");
+            return;
+        }
+
+        push(pRef, {
+            name: name,
+            cat: cat,
+            price: parseInt(price),
+            img: img,
+            date: new Date().toLocaleString()
+        }).then(() => {
+            alert("Thêm thành công!");
+            document.getElementById('pName').value = "";
+            document.getElementById('pPrice').value = "";
+            document.getElementById('pImg').value = "";
+        });
+    }
+
+    // Hàm Load danh sách sản phẩm ra bảng
+    onValue(pRef, (snapshot) => {
+        const data = snapshot.val();
+        const tbody = document.getElementById('productTableBody');
+        tbody.innerHTML = "";
+
+        if(data) {
+            Object.keys(data).forEach(key => {
+                const p = data[key];
+                tbody.innerHTML += `
+                    <tr>
+                        <td><img src="${p.img}" class="img-preview"></td>
+                        <td>${p.cat}</td>
+                        <td><strong>${p.name}</strong></td>
+                        <td>${p.price.toLocaleString()}đ</td>
+                        <td><button class="btn-del" onclick="deleteProduct('${key}')">Xóa</button></td>
+                    </tr>
+                `;
+            });
+        } else {
+            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>Chưa có sản phẩm nào</td></tr>";
+        }
+    });
+
+    // Hàm Xóa sản phẩm
+    window.deleteProduct = function(id) {
+        if(confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) {
+            remove(ref(db, 'products/' + id));
+        }
+    }
+</script>
+
+</body>
+</html>
