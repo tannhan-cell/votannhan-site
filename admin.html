@@ -85,11 +85,10 @@
     </div>
 </div>
 
-<script type="module">
+    <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // Cấu hình Firebase của VOTANNHAN-SHOP
     const firebaseConfig = {
         apiKey: "AIzaSyDKfcPAUeXyEVRjpXmGUWp8ZehmNVU8DAg",
         authDomain: "votannhan-shop.firebaseapp.com",
@@ -99,12 +98,11 @@
         appId: "1:112895518426:web:239ccbdf9c6d75ab33e7e3"
     };
 
-    // --- FIX LỖI: Khởi tạo app trước khi tạo db ---
+    // KHỞI TẠO ĐÚNG THỨ TỰ: app -> db -> ref
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const pRef = ref(db, 'products');
 
-    // Hàm Lưu sản phẩm
     window.saveProduct = function() {
         const name = document.getElementById('pName').value;
         const cat = document.getElementById('pCat').value;
@@ -123,45 +121,32 @@
             img: img,
             date: new Date().toLocaleString()
         }).then(() => {
-            alert("Thêm thành công!");
+            alert("Đã thêm sản phẩm thành công!");
             document.getElementById('pName').value = "";
             document.getElementById('pPrice').value = "";
             document.getElementById('pImg').value = "";
-        }).catch(err => {
-            alert("Lỗi kết nối: " + err.message);
-        });
+        }).catch(e => alert("Lỗi: " + e.message));
     }
 
-    // Hàm Load danh sách sản phẩm ra bảng
     onValue(pRef, (snapshot) => {
         const data = snapshot.val();
         const tbody = document.getElementById('productTableBody');
         tbody.innerHTML = "";
-
         if(data) {
             Object.keys(data).forEach(key => {
                 const p = data[key];
-                tbody.innerHTML += `
-                    <tr>
-                        <td><img src="${p.img}" class="img-preview" style="width:50px;height:50px;object-fit:contain"></td>
-                        <td>${p.cat}</td>
-                        <td><strong>${p.name}</strong></td>
-                        <td>${p.price.toLocaleString()}đ</td>
-                        <td><button class="btn-del" onclick="deleteProduct('${key}')" style="background:red;color:white;border:none;padding:5px;cursor:pointer">Xóa</button></td>
-                    </tr>
-                `;
+                tbody.innerHTML += `<tr>
+                    <td><img src="${p.img}" class="img-preview" style="width:40px"></td>
+                    <td>${p.cat}</td>
+                    <td>${p.name}</td>
+                    <td>${p.price.toLocaleString()}đ</td>
+                    <td><button onclick="deleteProduct('${key}')" style="color:red">Xóa</button></td>
+                </tr>`;
             });
-        } else {
-            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>Chưa có sản phẩm nào</td></tr>";
         }
     });
 
-    // Hàm Xóa sản phẩm
-    window.deleteProduct = function(id) {
-        if(confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) {
-            remove(ref(db, 'products/' + id));
-        }
-    }
+    window.deleteProduct = (id) => { if(confirm("Xóa sản phẩm này?")) remove(ref(db, 'products/' + id)); }
 </script>
 
 </body>
