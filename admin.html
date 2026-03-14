@@ -84,6 +84,9 @@
         </table>
     </div>
 </div>
+
+
+
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -97,12 +100,11 @@
         appId: "1:112895518426:web:239ccbdf9c6d75ab33e7e3"
     };
 
-    // --- PHẢI KHỞI TẠO THEO THỨ TỰ NÀY ---
-    const app = initializeApp(firebaseConfig); // Tạo app trước
-    const db = getDatabase(app);               // Sau đó mới tạo db từ app
-    const pRef = ref(db, 'products');          // Cuối cùng là tạo đường dẫn lưu
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const pRef = ref(db, 'products');
 
-    // Đưa hàm ra ngoài window để nút HTML có thể gọi được
+    // HÀM LƯU SẢN PHẨM
     window.saveProduct = function() {
         const name = document.getElementById('pName').value;
         const cat = document.getElementById('pCat').value;
@@ -114,7 +116,7 @@
             return;
         }
 
-        // Đoạn này sẽ chạy nếu đã nhập đủ thông tin
+        // Dòng push này PHẢI nằm trong dấu ngoặc của hàm saveProduct
         push(pRef, {
             name: name,
             cat: cat,
@@ -123,18 +125,16 @@
             date: new Date().toLocaleString()
         }).then(() => {
             alert("✅ Chúc mừng! Đã thêm sản phẩm thành công.");
-            // Xóa trắng ô nhập để nhập món tiếp theo
             document.getElementById('pName').value = "";
             document.getElementById('pPrice').value = "";
             document.getElementById('pImg').value = "";
-            document.getElementById('pName').focus(); // Thêm dòng này vào sau khi xóa trắng ô input
+            document.getElementById('pName').focus(); 
         }).catch((error) => {
-            console.error(error);
-            alert("❌ Lỗi rồi Nhân ơi: " + error.message);
+            alert("❌ Lỗi: " + error.message);
         });
-    };
+    }; // Kết thúc hàm saveProduct
 
-    // Hiển thị danh sách sản phẩm bên dưới để kiểm tra
+    // HÀM HIỂN THỊ DANH SÁCH
     onValue(pRef, (snapshot) => {
         const data = snapshot.val();
         const tbody = document.getElementById('productTableBody');
@@ -145,21 +145,25 @@
                 const p = data[key];
                 tbody.innerHTML += `
                     <tr>
-                        <td><img src="${p.img}" style="width:50px"></td>
+                        <td><img src="${p.img}" style="width:50px; height:50px; object-fit:cover"></td>
                         <td>${p.cat}</td>
                         <td>${p.name}</td>
                         <td>${p.price.toLocaleString()}đ</td>
-                        <td><button onclick="deleteProduct('${key}')" style="color:red; cursor:pointer">Xóa</button></td>
+                        <td><button class="btn-del" onclick="deleteProduct('${key}')">Xóa</button></td>
                     </tr>`;
             });
         }
     });
 
+    // HÀM XÓA SẢN PHẨM
     window.deleteProduct = function(id) {
-        if(confirm("Xóa thật nhé?")) {
+        if(confirm("Bạn có chắc chắn muốn xóa không?")) {
             remove(ref(db, 'products/' + id));
         }
     };
 </script>
+
+    
+    
 </body>
 </html>
