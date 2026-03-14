@@ -47,13 +47,13 @@
         <div class="form-group">
             <label>Danh mục</label>
             <select id="pCat">
-                <option value="Điện trở">Điện trở</option>
-                <option value="Nút nhấn">Nút nhấn</option>
-                <option value="Công tắc">Công tắc</option>
-                <option value="Led">Led</option>
-                <option value="Màn hình">Màn hình</option>
-                <option value="Cảm biến">Cảm biến</option>
-                <option value="Dịch vụ MXH">Dịch vụ MXH (VotannhanPro)</option>
+                <option value="ĐIỆN TRỞ">ĐIỆN TRỞ</option>
+                <option value="NÚT NHẤN">NÚT NHẤN</option>
+                <option value="CÔNG TẮC">CÔNG TẮC</option>
+                <option value="LED">LED</option>
+                <option value="JACK CẮM">JACK CẮM</option>
+                <option value="MÀN HÌNH">MÀN HÌNH</option>
+                
             </select>
         </div>
         <div class="form-group">
@@ -99,6 +99,7 @@
         appId: "1:112895518426:web:239ccbdf9c6d75ab33e7e3"
     };
 
+    // --- FIX LỖI: Khởi tạo app trước khi tạo db ---
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const pRef = ref(db, 'products');
@@ -126,6 +127,8 @@
             document.getElementById('pName').value = "";
             document.getElementById('pPrice').value = "";
             document.getElementById('pImg').value = "";
+        }).catch(err => {
+            alert("Lỗi kết nối: " + err.message);
         });
     }
 
@@ -140,11 +143,11 @@
                 const p = data[key];
                 tbody.innerHTML += `
                     <tr>
-                        <td><img src="${p.img}" class="img-preview"></td>
+                        <td><img src="${p.img}" class="img-preview" style="width:50px;height:50px;object-fit:contain"></td>
                         <td>${p.cat}</td>
                         <td><strong>${p.name}</strong></td>
                         <td>${p.price.toLocaleString()}đ</td>
-                        <td><button class="btn-del" onclick="deleteProduct('${key}')">Xóa</button></td>
+                        <td><button class="btn-del" onclick="deleteProduct('${key}')" style="background:red;color:white;border:none;padding:5px;cursor:pointer">Xóa</button></td>
                     </tr>
                 `;
             });
