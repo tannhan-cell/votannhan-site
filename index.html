@@ -493,7 +493,11 @@ function removeItem(index) {
         };
 
         // Khởi tạo trang: Hiển thị 8 sản phẩm đầu tiên
-        window.onload = () => renderProducts(document.getElementById('newProductsGrid'), allProducts.slice(0, 37));
+      window.onload = () => {
+    if (window.allProducts && window.allProducts.length > 0) {
+        renderProducts(document.getElementById('newProductsGrid'), window.allProducts.slice(0, 37));
+    }
+};
     </script>
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
