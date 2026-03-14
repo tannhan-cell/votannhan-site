@@ -64,7 +64,7 @@
             <label>Link ảnh sản phẩm</label>
             <input type="text" id="pImg" placeholder="Dán link ảnh vào đây">
         </div>
-        <button class="btn-add" onclick="saveProduct()">XÁC NHẬN THÊM</button>
+        <button type="button" class="btn-add" onclick="saveProduct()">XÁC NHẬN THÊM</button>
     </div>
 
     <div class="product-list">
@@ -84,7 +84,6 @@
         </table>
     </div>
 </div>
-
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -98,11 +97,12 @@
         appId: "1:112895518426:web:239ccbdf9c6d75ab33e7e3"
     };
 
-    // KHỞI TẠO ĐÚNG THỨ TỰ: app -> db -> ref
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const pRef = ref(db, 'products');
+    // --- PHẢI KHỞI TẠO THEO THỨ TỰ NÀY ---
+    const app = initializeApp(firebaseConfig); // Tạo app trước
+    const db = getDatabase(app);               // Sau đó mới tạo db từ app
+    const pRef = ref(db, 'products');          // Cuối cùng là tạo đường dẫn lưu
 
+    // Đưa hàm ra ngoài window để nút HTML có thể gọi được
     window.saveProduct = function() {
         const name = document.getElementById('pName').value;
         const cat = document.getElementById('pCat').value;
@@ -114,6 +114,7 @@
             return;
         }
 
+        // Đoạn này sẽ chạy nếu đã nhập đủ thông tin
         push(pRef, {
             name: name,
             cat: cat,
@@ -121,33 +122,44 @@
             img: img,
             date: new Date().toLocaleString()
         }).then(() => {
-            alert("Đã thêm sản phẩm thành công!");
+            alert("✅ Chúc mừng! Đã thêm sản phẩm thành công.");
+            // Xóa trắng ô nhập để nhập món tiếp theo
             document.getElementById('pName').value = "";
             document.getElementById('pPrice').value = "";
             document.getElementById('pImg').value = "";
-        }).catch(e => alert("Lỗi: " + e.message));
-    }
+            document.getElementById('pName').focus(); // Thêm dòng này vào sau khi xóa trắng ô input
+        }).catch((error) => {
+            console.error(error);
+            alert("❌ Lỗi rồi Nhân ơi: " + error.message);
+        });
+    };
 
+    // Hiển thị danh sách sản phẩm bên dưới để kiểm tra
     onValue(pRef, (snapshot) => {
         const data = snapshot.val();
         const tbody = document.getElementById('productTableBody');
+        if(!tbody) return; 
         tbody.innerHTML = "";
         if(data) {
             Object.keys(data).forEach(key => {
                 const p = data[key];
-                tbody.innerHTML += `<tr>
-                    <td><img src="${p.img}" class="img-preview" style="width:40px"></td>
-                    <td>${p.cat}</td>
-                    <td>${p.name}</td>
-                    <td>${p.price.toLocaleString()}đ</td>
-                    <td><button onclick="deleteProduct('${key}')" style="color:red">Xóa</button></td>
-                </tr>`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td><img src="${p.img}" style="width:50px"></td>
+                        <td>${p.cat}</td>
+                        <td>${p.name}</td>
+                        <td>${p.price.toLocaleString()}đ</td>
+                        <td><button onclick="deleteProduct('${key}')" style="color:red; cursor:pointer">Xóa</button></td>
+                    </tr>`;
             });
         }
     });
 
-    window.deleteProduct = (id) => { if(confirm("Xóa sản phẩm này?")) remove(ref(db, 'products/' + id)); }
+    window.deleteProduct = function(id) {
+        if(confirm("Xóa thật nhé?")) {
+            remove(ref(db, 'products/' + id));
+        }
+    };
 </script>
-
 </body>
 </html>
