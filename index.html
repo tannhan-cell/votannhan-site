@@ -3,13 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Dịch Vụ Mạng Xã Hội Chuyên Nghiệp</title>
+    <title>Hệ Thống Dịch Vụ Mạng Xã Hội Chuyên Nghiệp - SocialPRO</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
         :root {
-            --primary-color: #007bff;
+            --primary-color: #007bff; /* Màu xanh chủ đạo */
             --secondary-color: #6c757d;
             --dark-color: #343a40;
             --light-color: #f8f9fa;
+            /* Màu sắc thương hiệu */
+            --facebook-color: #1877F2;
+            --tiktok-color: #010101;
+            --instagram-color: #E4405F;
+            --youtube-color: #FF0000;
         }
 
         body {
@@ -18,6 +26,7 @@
             line-height: 1.6;
             color: var(--dark-color);
             background-color: #fff;
+            scroll-behavior: smooth; /* Cuộn mượt mà */
         }
 
         /* Header & Navigation */
@@ -38,6 +47,9 @@
             font-weight: bold;
             color: var(--primary-color);
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         nav a {
@@ -45,87 +57,151 @@
             text-decoration: none;
             color: var(--dark-color);
             font-weight: 500;
+            transition: 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--primary-color);
         }
 
         /* Hero Section */
         .hero {
             background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
             color: white;
-            padding: 80px 5%;
+            padding: 100px 5%;
             text-align: center;
         }
 
         .hero h1 {
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             margin-bottom: 20px;
         }
 
         .hero p {
             font-size: 1.2rem;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             opacity: 0.9;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .btn-main {
-            background: #ffc107;
+            background: #ffc107; /* Màu vàng nổi bật */
             color: #212529;
-            padding: 12px 30px;
+            padding: 15px 35px;
             text-decoration: none;
-            border-radius: 5px;
+            border-radius: 50px; /* Bo tròn nhiều hơn */
             font-weight: bold;
+            font-size: 1.1rem;
             transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .btn-main:hover {
             background: #e0a800;
+            transform: scale(1.05); /* Phóng to nhẹ khi di chuột */
         }
 
         /* Services Section */
         .services {
-            padding: 60px 5%;
+            padding: 80px 5%;
             text-align: center;
         }
 
         .services h2 {
-            margin-bottom: 40px;
+            font-size: 2.2rem;
+            margin-bottom: 50px;
             position: relative;
             display: inline-block;
         }
 
         .services h2::after {
             content: '';
-            width: 50px;
-            height: 3px;
+            width: 60px;
+            height: 4px;
             background: var(--primary-color);
             position: absolute;
-            bottom: -10px;
+            bottom: -15px;
             left: 50%;
             transform: translateX(-50%);
+            border-radius: 2px;
         }
 
         .service-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
             margin-top: 20px;
         }
 
         .service-card {
-            background: var(--light-color);
-            padding: 30px;
-            border-radius: 10px;
-            transition: transform 0.3s;
+            background: #fff;
+            padding: 40px 30px;
+            border-radius: 15px;
+            transition: 0.3s;
             border: 1px solid #eee;
+            position: relative;
+            overflow: hidden;
         }
 
         .service-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border-color: transparent;
         }
 
-        .service-card i {
-            font-size: 40px;
-            color: var(--primary-color);
+        /* Style cho Logo nền tảng trong card */
+        .platform-icon {
+            font-size: 50px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        /* Màu riêng cho từng logo khi hover vào card */
+        .service-card.fb:hover .platform-icon { color: var(--facebook-color); }
+        .service-card.tt:hover .platform-icon { color: var(--tiktok-color); }
+        .service-card.ins:hover .platform-icon { color: var(--instagram-color); }
+        .service-card.yt:hover .platform-icon { color: var(--youtube-color); }
+
+        .service-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            margin-top: 0;
+        }
+
+        .service-card p {
+            color: var(--secondary-color);
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        /* Tại sao chọn chúng tôi Section */
+        .why-us {
+            background-color: var(--light-color);
+            padding: 80px 5%;
+            text-align: center;
+        }
+
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .why-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+
+        .why-card i {
+            font-size: 35px;
+            color: #28a745; /* Màu xanh lá cho sự uy tín */
             margin-bottom: 15px;
         }
 
@@ -133,78 +209,100 @@
         footer {
             background: var(--dark-color);
             color: white;
-            padding: 40px 5%;
+            padding: 50px 5%;
             text-align: center;
         }
 
         .footer-links {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .footer-links a {
-            color: #ccc;
-            margin: 0 10px;
+            color: #bbb;
+            margin: 0 12px;
             text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: white;
         }
 
         @media (max-width: 768px) {
-            .hero h1 { font-size: 1.8rem; }
-            nav { display: none; } /* Đơn giản hóa cho mobile */
+            .hero h1 { font-size: 2rem; }
+            .hero padding: 60px 5%;
+            nav { display: none; } /* Ẩn menu trên mobile để đơn giản */
         }
     </style>
 </head>
 <body>
 
     <header>
-        <a href="#" class="logo">SocialPRO</a>
+        <a href="#" class="logo">
+            <i class="fa-solid fa-rocket"></i> SocialPRO
+        </a>
         <nav>
             <a href="#home">Trang chủ</a>
             <a href="#services">Dịch vụ</a>
-            <a href="#about">Về chúng tôi</a>
-            <a href="https://votannhanpro.site" target="_blank">Đăng nhập</a>
+            <a href="#why-us">Tại sao chọn chúng tôi</a>
         </nav>
     </header>
 
     <section class="hero" id="home">
         <h1>Tăng Trưởng Mạng Xã Hội Vượt Trội</h1>
-        <p>Giải pháp tăng Follow, Like, View uy tín và an toàn hàng đầu Việt Nam.</p>
-        <a href="https://votannhanpro.site" class="btn-main">Bắt Đầu Ngay</a>
+        <p>Hệ thống cung cấp giải pháp tăng Follow, Like, View, Comment uy tín, an toàn và bảo mật hàng đầu Việt Nam.</p>
+        
+        <a href="ĐIỀN_LINK_FACEBOOK_CỦA_BẠN_VÀO_ĐÂY" target="_blank" class="btn-main">
+            <i class="fa-brands fa-facebook-messenger"></i> Bắt Đầu Ngay
+        </a>
     </section>
 
     <section class="services" id="services">
         <h2>Dịch Vụ Của Chúng Tôi</h2>
         <div class="service-grid">
-            <div class="service-card">
-                <h3>Facebook</h3>
+            
+            <div class="service-card fb">
+                <i class="fa-brands fa-facebook platform-icon"></i>
+                <h3>Dịch vụ Facebook</h3>
                 <p>Tăng Like bài viết, theo dõi trang cá nhân, tăng thành viên group và mắt xem livestream.</p>
             </div>
-            <div class="service-card">
-                <h3>TikTok</h3>
+
+            <div class="service-card tt">
+                <i class="fa-brands fa-tiktok platform-icon"></i>
+                <h3>Dịch vụ TikTok</h3>
                 <p>Tăng tim, tăng follow, đẩy xu hướng video và tăng lượt xem live cực nhanh.</p>
             </div>
-            <div class="service-card">
-                <h3>Instagram</h3>
+
+            <div class="service-card ins">
+                <i class="fa-brands fa-instagram platform-icon"></i>
+                <h3>Dịch vụ Instagram</h3>
                 <p>Tăng người theo dõi thực, lượt thích hình ảnh và lượt xem story hiệu quả.</p>
             </div>
-            <div class="service-card">
-                <h3>YouTube</h3>
+
+            <div class="service-card yt">
+                <i class="fa-brands fa-youtube platform-icon"></i>
+                <h3>Dịch vụ YouTube</h3>
                 <p>Dịch vụ tăng sub, tăng giờ xem và lượt view giúp kênh đạt điều kiện bật kiếm tiền.</p>
             </div>
+
         </div>
     </section>
 
-    <section class="services" style="background-color: #fcfcfc;">
-        <h2>Tại Sao Chọn Chúng Tôi?</h2>
-        <div class="service-grid">
-            <div class="service-card" style="background: white;">
+    <section class="why-us" id="why-us">
+        <h2>Tại Sao Chọn SocialPRO?</h2>
+        <div class="why-grid">
+            <div class="why-card">
+                <i class="fa-solid fa-shield-halved"></i>
                 <h4>Bảo Mật Tuyệt Đối</h4>
                 <p>Không yêu cầu mật khẩu, an toàn cho tài khoản của khách hàng.</p>
             </div>
-            <div class="service-card" style="background: white;">
+            <div class="why-card">
+                <i class="fa-solid fa-bolt"></i>
                 <h4>Hệ Thống Tự Động</h4>
                 <p>Hoạt động 24/7, đơn hàng được xử lý ngay lập tức sau khi tạo.</p>
             </div>
-            <div class="service-card" style="background: white;">
+            <div class="why-card">
+                <i class="fa-solid fa-tags"></i>
                 <h4>Giá Cả Cạnh Tranh</h4>
                 <p>Mức giá tốt nhất thị trường đi kèm chất lượng dịch vụ ổn định.</p>
             </div>
@@ -213,11 +311,11 @@
 
     <footer>
         <div class="footer-links">
-            <a href="#">Điều khoản dịch vụ</a> | 
-            <a href="#">Chính sách bảo mật</a> | 
-            <a href="#">Liên hệ hỗ trợ</a>
+            <a href="#">Điều khoản</a> | 
+            <a href="#">Bảo mật</a> | 
+            <a href="#">Liên hệ</a>
         </div>
-        <p>&copy; 2026 SocialPRO. Cung cấp bởi <a href="https://votannhanpro.site" style="color: #ffc107; text-decoration: none;">votannhanpro.site</a></p>
+        <p>&copy; 2026 SocialPRO. Tất cả quyền được bảo lưu.</p>
     </footer>
 
 </body>
