@@ -3,35 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SocialMedia - Dịch Vụ Mạng Xã Hội & Mở Khóa Tài Khoản</title>
+    <title>SocialMedia - Dịch Vụ MXH & Mở Khóa Tài Khoản</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         :root {
-            --primary-color: #00a8ff;
-            --accent-color: #fbc531;
-            --dark-bg: #1e272e;
-            --card-bg: #ffffff;
-            --text-main: #2f3640;
+            --primary-color: #007bff;
+            --unlock-color: #dc3545; /* Màu đỏ cho dịch vụ mở khóa */
+            --dark-color: #343a40;
+            --light-bg: #f8f9fa;
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            color: var(--text-main);
             line-height: 1.6;
+            color: var(--dark-color);
+            background-color: #fff;
             scroll-behavior: smooth;
         }
 
-        /* Navigation */
+        /* Header */
         header {
             background: #fff;
-            padding: 15px 7%;
+            padding: 1rem 5%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
             z-index: 1000;
@@ -39,142 +39,118 @@
 
         .logo {
             font-size: 1.6rem;
-            font-weight: 800;
+            font-weight: bold;
             color: var(--primary-color);
             text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         nav a {
-            margin-left: 25px;
+            margin-left: 20px;
             text-decoration: none;
-            color: var(--text-main);
-            font-weight: 600;
-            font-size: 0.95rem;
+            color: var(--dark-color);
+            font-weight: 500;
+            transition: 0.3s;
         }
+
+        nav a:hover { color: var(--primary-color); }
 
         /* Hero Section */
         .hero {
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
-                        url('https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=1920');
-            background-size: cover;
-            background-position: center;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
             color: white;
-            padding: 120px 7% 100px;
+            padding: 100px 5%;
             text-align: center;
         }
 
-        .hero h1 {
-            font-size: 3.2rem;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
+        .hero h1 { font-size: 2.8rem; margin-bottom: 20px; }
+        .hero p { font-size: 1.2rem; margin-bottom: 40px; opacity: 0.9; }
 
-        .hero p {
-            font-size: 1.25rem;
-            margin-bottom: 40px;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .btn-cta {
-            background: var(--accent-color);
-            color: #000;
-            padding: 18px 40px;
+        .btn-main {
+            background: #ffc107;
+            color: #212529;
+            padding: 15px 40px;
             text-decoration: none;
-            border-radius: 8px;
-            font-weight: 700;
+            border-radius: 50px;
+            font-weight: bold;
             font-size: 1.1rem;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             display: inline-flex;
             align-items: center;
-            gap: 12px;
-            transition: all 0.3s ease;
+            gap: 10px;
         }
 
-        .btn-cta:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(251, 197, 49, 0.4);
-            background: #f1b70e;
+        .btn-main:hover {
+            background: #e0a800;
+            transform: scale(1.05);
         }
 
-        /* Services Grid */
-        .container {
-            padding: 80px 7%;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .section-title h2 {
+        /* Container & Titles */
+        .container { padding: 80px 5%; text-align: center; }
+        
+        h2.section-title {
             font-size: 2.2rem;
-            color: var(--dark-bg);
+            margin-bottom: 50px;
+            position: relative;
+            display: inline-block;
         }
 
-        .grid {
+        h2.section-title::after {
+            content: '';
+            width: 60px;
+            height: 4px;
+            background: var(--primary-color);
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        /* Service Grid */
+        .service-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 30px;
         }
 
         .card {
-            background: var(--card-bg);
+            background: #fff;
             padding: 40px 30px;
-            border-radius: 16px;
-            border: 1px solid #f0f0f0;
-            text-align: center;
-            transition: all 0.3s ease;
+            border-radius: 15px;
+            transition: 0.3s;
+            border: 1px solid #eee;
         }
 
         .card:hover {
-            border-color: var(--primary-color);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
         }
 
-        .card i {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            display: block;
-        }
-
-        /* Icon Colors */
+        .card i { font-size: 50px; margin-bottom: 20px; transition: 0.3s; }
+        
+        /* Colors for Icons */
         .icon-fb { color: #1877F2; }
-        .icon-tt { color: #000000; }
-        .icon-unlock { color: #eb4d4b; }
-        .icon-check { color: #2ecc71; }
+        .icon-tt { color: #010101; }
+        .icon-ins { color: #E4405F; }
+        .icon-unlock { color: var(--unlock-color); }
 
-        .card h3 {
-            margin-bottom: 15px;
-            font-size: 1.4rem;
-        }
-
-        .card p {
-            color: #7f8c8d;
-            font-size: 0.95rem;
-        }
+        .card h3 { font-size: 1.5rem; margin-bottom: 15px; }
+        .card p { color: #6c757d; font-size: 0.95rem; }
 
         /* Footer */
         footer {
-            background: var(--dark-bg);
-            color: #fff;
-            padding: 60px 7% 30px;
+            background: var(--dark-color);
+            color: white;
+            padding: 50px 5%;
             text-align: center;
         }
 
-        .footer-brand {
-            font-size: 1.8rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            display: block;
-        }
-
         @media (max-width: 768px) {
-            .hero h1 { font-size: 2.2rem; }
+            .hero h1 { font-size: 2rem; }
             nav { display: none; }
         }
     </style>
@@ -182,96 +158,75 @@
 <body>
 
     <header>
-        <a href="#" class="logo">SocialMedia</a>
+        <a href="#" class="logo">
+            <i class="fa-solid fa-share-nodes"></i> SocialMedia
+        </a>
         <nav>
-            <a href="#dich-vu">Dịch Vụ</a>
+            <a href="#dich-vu">Tương Tác</a>
             <a href="#mo-khoa">Mở Khóa</a>
-            <a href="#ve-chung-toi">Về Chúng Tôi</a>
+            <a href="#ve-chung-toi">Liên Hệ</a>
         </nav>
     </header>
 
     <section class="hero">
-        <h1>Giải Pháp Mạng Xã Hội Toàn Diện</h1>
-        <p>Tăng tương thưởng mạnh mẽ và hỗ trợ lấy lại tài khoản bị khóa nhanh chóng, an toàn nhất.</p>
+        <h1>Hệ Thống SocialMedia Chuyên Nghiệp</h1>
+        <p>Cung cấp giải pháp tăng trưởng tương tác và hỗ trợ khôi phục tài khoản bị khóa nhanh chóng.</p>
         
-        <a href="https://www.facebook.com/YOUR_PROFILE" target="_blank" class="btn-cta">
-            <i class="fa-brands fa-facebook-messenger"></i> LIÊN HỆ HỖ TRỢ NGAY
+        <a href="https://www.facebook.com/YOUR_PROFILE" target="_blank" class="btn-main">
+            <i class="fa-brands fa-facebook-messenger"></i> Bắt Đầu Ngay
         </a>
     </section>
 
     <div class="container" id="dich-vu">
-        <div class="section-title">
-            <h2>Dịch Vụ Tương Tác</h2>
-            <p>Đẩy mạnh thương hiệu cá nhân và doanh nghiệp</p>
-        </div>
-        
-        <div class="grid">
+        <h2 class="section-title">Dịch Vụ Tương Tác</h2>
+        <div class="service-grid">
             <div class="card">
                 <i class="fa-brands fa-facebook icon-fb"></i>
                 <h3>Facebook Marketing</h3>
-                <p>Tăng Like, Follow, Share, Member Group và mắt xem Livestream chuyên nghiệp.</p>
+                <p>Tăng Like, Follow, Thành viên nhóm, Chia sẻ và Mắt xem Livestream cực nhanh.</p>
             </div>
             <div class="card">
                 <i class="fa-brands fa-tiktok icon-tt"></i>
                 <h3>TikTok Growth</h3>
-                <p>Tăng tim, follow, lượt xem video xu hướng và dịch vụ TikTok Shop toàn diện.</p>
+                <p>Tăng tim, follow, đẩy xu hướng video và tăng mắt xem live giúp kênh phát triển.</p>
             </div>
             <div class="card">
-                <i class="fa-brands fa-instagram icon-unlock" style="color: #E4405F;"></i>
-                <h3>Instagram</h3>
-                <p>Tăng tương tác thật, giúp profile của bạn trở nên uy tín và thu hút hơn.</p>
+                <i class="fa-brands fa-instagram icon-ins"></i>
+                <h3>Instagram Service</h3>
+                <p>Tăng tương tác hình ảnh, người theo dõi thực giúp tài khoản uy tín hơn.</p>
             </div>
         </div>
     </div>
 
-    <div class="container" id="mo-khoa" style="background-color: #f9f9f9; border-radius: 30px;">
-        <div class="section-title">
-            <h2>Dịch Vụ Mở Khóa (Unlock)</h2>
-            <p>Hỗ trợ khôi phục tài khoản bị vô hiệu hóa, vi phạm chính sách</p>
-        </div>
-        
-        <div class="grid">
+    <div class="container" id="mo-khoa" style="background-color: var(--light-bg);">
+        <h2 class="section-title" style="color: var(--unlock-color);">Dịch Vụ Mở Khóa (Unlock)</h2>
+        <div class="service-grid" style="margin-top: 20px;">
             <div class="card">
                 <i class="fa-solid fa-lock-open icon-unlock"></i>
                 <h3>Mở Khóa Facebook</h3>
-                <p>Lấy lại tài khoản bị checkpoint 956, 282, bị hack, đổi pass hoặc bị khóa trình tạo mã.</p>
+                <p>Hỗ trợ lấy lại tài khoản bị khóa 956, 282, bị Hack, trình tạo mã hoặc vô hiệu hóa.</p>
             </div>
             <div class="card">
-                <i class="fa-solid fa-key icon-unlock"></i>
+                <i class="fa-solid fa-shield-heart icon-unlock"></i>
                 <h3>Mở Khóa TikTok</h3>
-                <p>Khôi phục tài khoản bị đình chỉ, vi phạm cộng đồng hoặc bị cấm live không rõ lý do.</p>
+                <p>Khôi phục tài khoản bị đình chỉ, vi phạm chính sách hoặc cấm livestream.</p>
             </div>
             <div class="card">
-                <i class="fa-solid fa-shield-virus icon-unlock"></i>
+                <i class="fa-solid fa-user-shield icon-unlock"></i>
                 <h3>Bảo Mật Tài Khoản</h3>
-                <p>Dịch vụ chống hack, bảo mật 2 lớp và hỗ trợ lấy lại quyền quản trị viên Fanpage.</p>
+                <p>Dịch vụ chống Hack, cài đặt bảo mật 2 lớp và bảo vệ bản quyền nội dung.</p>
             </div>
         </div>
     </div>
 
-    <div class="container">
-        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-            <div style="text-align: center;">
-                <i class="fa-solid fa-user-shield icon-check" style="font-size: 2.5rem;"></i>
-                <h4>Uy Tín</h4>
-            </div>
-            <div style="text-align: center;">
-                <i class="fa-solid fa-bolt icon-check" style="font-size: 2.5rem;"></i>
-                <h4>Tốc Độ</h4>
-            </div>
-            <div style="text-align: center;">
-                <i class="fa-solid fa-headset icon-check" style="font-size: 2.5rem;"></i>
-                <h4>Hỗ Trợ 24/7</h4>
-            </div>
+    <footer id="ve-chung-toi">
+        <p style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;">SocialMedia</p>
+        <p>Uy tín - Tốc độ - Bảo mật thông tin khách hàng tuyệt đối.</p>
+        <div style="margin: 20px 0;">
+            <a href="#" style="color: #ccc; margin: 0 10px; text-decoration: none;">Điều khoản</a> | 
+            <a href="#" style="color: #ccc; margin: 0 10px; text-decoration: none;">Hỗ trợ</a>
         </div>
-    </div>
-
-    <footer>
-        <span class="footer-brand">SocialMedia</span>
-        <p>Uy tín tạo nên thương hiệu. Luôn đồng hành cùng sự phát triển của bạn.</p>
-        <div style="margin-top: 20px; opacity: 0.6;">
-            &copy; 2026 SocialMedia. Designed by You.
-        </div>
+        <p style="opacity: 0.6;">&copy; 2026 SocialMedia. All rights reserved.</p>
     </footer>
 
 </body>
