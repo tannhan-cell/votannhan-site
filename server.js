@@ -1,80 +1,72 @@
 const express = require("express");
-const http = require("http");
-const WebSocket = require("ws");
+const fs = require("fs");
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const app = express();
 app.use(express.json());
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-
-// ===== CONFIG =====
 const BOT_TOKEN = "8553903282:AAEjaRU2bFoT04fWAFrUF2cUOeSXmXP4How";
 
-// ===== DATA =====
-let users = [];
-let currentData = { sys: 0, dia: 0, hr: 0 };
+// ===== LOAD DATA =====
+let db = {
+users: [],
+data: []
+};
 
-// ===== WEBSOCKET =====
-let clients = [];
-wss.on("connection", ws=>{
-clients.push(ws);
-ws.on("close", ()=>clients = clients.filter(c=>c!==ws));
-});
-
-function broadcast(data){
-clients.forEach(c=>c.send(JSON.stringify(data)));
+if(fs.existsSync("db.json")){
+db = JSON.parse(fs.readFileSync("db.json"));
 }
 
-// ===== ESP32 GỬI DATA =====
+// ===== SAVE =====
+function save(){
+fs.writeFileSync("db.json", JSON.stringify(db,null,2));
+}
+
+// ===== ESP32 gửi =====
 app.post("/api/data", async (req,res)=>{
-currentData = req.body;
+let d = req.body;
 
-console.log("DATA:", currentData);
+d.time = new Date().toISOString();
 
-// realtime web
-broadcast({type:"data", data: currentData});
+db.data.push(d);
+save();
 
-// gửi telegram
-for(let u of users){
-try{
+// gửi telegram cho user tương ứng
+let u = db.users.find(x=>x.id == d.user_id);
+
+if(u){
 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body: JSON.stringify({
 chat_id: u.chat_id,
 text:`📊 ${u.name}
-SYS: ${currentData.sys}
-DIA: ${currentData.dia}
-HR: ${currentData.hr}`
+SYS:${d.sys}
+DIA:${d.dia}
+HR:${d.hr}`
 })
 });
-}catch(e){
-console.log("Telegram error");
-}
 }
 
 res.send("OK");
 });
 
-// ===== GET =====
-app.get("/api/users",(req,res)=>res.json(users));
-
-// ===== TELEGRAM WEBHOOK =====
+// ===== TELEGRAM =====
 app.post("/telegram",(req,res)=>{
-const msg = req.body.message;
+let msg = req.body.message;
 
 if(msg){
-const chat_id = msg.chat.id;
-const name = msg.from.first_name;
+let chat_id = msg.chat.id;
+let name = msg.from.first_name;
 
 ```
-console.log("User:", name);
-
-if(!users.find(u=>u.chat_id==chat_id)){
-  users.push({name, chat_id});
-  broadcast({type:"users", data:users});
+if(!db.users.find(u=>u.chat_id==chat_id)){
+  db.users.push({
+    id: Date.now(),
+    name,
+    chat_id
+  });
+  save();
 }
 ```
 
@@ -83,4 +75,8 @@ if(!users.find(u=>u.chat_id==chat_id)){
 res.send("OK");
 });
 
-server.listen(3000, ()=>console.log("Server OK"));
+// ===== API =====
+app.get("/api/users",(req,res)=>res.json(db.users));
+app.get("/api/data",(req,res)=>res.json(db.data));
+
+app.listen(3000,()=>console.log("Server OK"));
