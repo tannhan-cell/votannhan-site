@@ -2,42 +2,53 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>ICU Admin Panel</title>
+    <title>Hệ thống ICU Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #0ea5e9; }
         body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         #login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .login-box { background: var(--card); padding: 40px; border-radius: 15px; text-align: center; width: 450px; }
-        .login-box input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
-        .login-box button { width: 95%; padding: 12px; background: var(--accent); border: none; color: white; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .sidebar { width: 300px; background: var(--card); border-right: 1px solid #334155; display: flex; flex-direction: column; }
-        .user-item { padding: 15px; background: #334155; margin: 10px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .user-item.active { background: var(--accent); }
         .main { flex: 1; padding: 25px; overflow-y: auto; }
+        .user-item { padding: 15px; background: #334155; margin: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .user-item.active { background: var(--accent); }
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
         .stat-box { background: #020617; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid var(--accent); }
-        .stat-box h1 { margin: 5px 0; color: var(--accent); font-size: 35px; }
+        .stat-box h1 { margin: 5px 0; color: var(--accent); }
         table { width: 100%; border-collapse: collapse; background: var(--card); }
         th, td { padding: 12px; border-bottom: 1px solid #334155; text-align: center; }
+        .btn-logout { width: 90%; margin: 10px auto; padding: 10px; background: #ef4444; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-edit {
+    background: #f59e0b;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
     </style>
 </head>
 <body>
+
 <div id="login-screen">
-    <div class="login-box">
-        <h2>ICU System Login</h2>
-        <input id="u" placeholder="Admin">
-        <input id="p" type="password" placeholder="Mật khẩu">
-        <button onclick="login()">ĐĂNG NHẬP</button>
+    <div style="background: var(--card); padding: 30px; border-radius: 15px; text-align: center;">
+        <h2>ICU Login</h2>
+        <input id="u" placeholder="Admin" style="padding: 10px; margin: 5px;"><br>
+        <input id="p" type="password" placeholder="Mật khẩu" style="padding: 10px; margin: 5px;"><br>
+        <button onclick="login()" style="padding: 10px 20px; background: var(--accent); border: none; color: white; margin-top: 10px;">Vào hệ thống</button>
     </div>
 </div>
+
 <div class="sidebar">
-    <button style="margin:10px; padding:10px; background:#ef4444; color:white; border:none; border-radius:5px; cursor:pointer;" onclick="logout()">Đăng Xuất</button>
+    <button class="btn-logout" onclick="logout()">Đăng Xuất</button>
     <div id="user-list"></div>
 </div>
+
 <div class="main">
     <div id="dashboard" style="display:none;">
-        <h2 id="patient-name">Danh sách bệnh nhân</h2>
+        <h2 id="patient-name">Bệnh nhân</h2>
         <div class="stats-grid">
             <div class="stat-box">Tâm thu <h1 id="avg-sys">0</h1> mmHg</div>
             <div class="stat-box">Tâm trương <h1 id="avg-dia">0</h1> mmHg</div>
@@ -50,67 +61,138 @@
         </table>
     </div>
 </div>
+
 <script>
-    const API = "https://doanvdk-10.onrender.com"; 
+    const API = "https://doanvdk-8.onrender.com";
     let TOKEN = "", selectedId = null, timer = null;
+
     const chart = new Chart(document.getElementById('chart'), {
         type: 'line',
         data: { labels: [], datasets: [{ label: 'SYS (mmHg)', data: [], borderColor: '#0ea5e9', tension: 0.3 }] },
         options: { animation: false }
     });
+
     window.onload = () => {
-        const saved = localStorage.getItem("icu_token");
-        if (saved) { TOKEN = saved; document.getElementById("login-screen").style.display = "none"; loadUsers(); }
+        if (localStorage.getItem("icu_token")) {
+            TOKEN = localStorage.getItem("icu_token");
+            document.getElementById("login-screen").style.display = "none";
+            loadUsers();
+        }
     };
+
     function login() {
         fetch(API+"/api/login", {
             method:"POST",
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({username: u.value, password: p.value})
         }).then(r => r.json()).then(d => {
-            if(d.token) { TOKEN = d.token; localStorage.setItem("icu_token", TOKEN); location.reload(); }
+            if(d.token) {
+                TOKEN = d.token;
+                localStorage.setItem("icu_token", TOKEN);
+                document.getElementById("login-screen").style.display = "none";
+                loadUsers();
+            }
         });
     }
+
     function logout() { localStorage.clear(); location.reload(); }
+
     function loadUsers() {
-        fetch(API+"/api/users", {headers:{Authorization: TOKEN}})
-        .then(r => r.json()).then(data => {
-            document.getElementById("user-list").innerHTML = data.map(usr => `
-                <div class="user-item ${selectedId == usr[0] ? 'active' : ''}" id="item-${usr[0]}" onclick="selectPatient('${usr[0]}', '${usr[1]}')">
-                    <span>${usr[1]}</span>
-                    <button style="font-size:10px; padding:3px;" onclick="event.stopPropagation(); changeName('${usr[0]}','${usr[1]}')">Sửa</button>
-                </div>
-            `).join('');
-        });
-    }
-    function changeName(id, old) {
-        const n = prompt("Tên mới:", old);
-        if (n) {
-            fetch(API+"/api/update_name", {
-                method:"POST",
-                headers:{'Content-Type':'application/json', Authorization: TOKEN},
-                body: JSON.stringify({id: id, new_name: n})
-            }).then(() => loadUsers());
+    fetch(API + "/api/users", { headers: { Authorization: TOKEN } })
+    .then(r => r.json())
+    .then(data => {
+        const list = document.getElementById("user-list");
+        list.innerHTML = data.map(usr => `
+            <div class="user-item ${selectedId == usr[0] ? 'active' : ''}" id="item-${usr[0]}" onclick="selectPatient('${usr[0]}', '${usr[1]}')">
+                <span id="name-text-${usr[0]}">${usr[1]}</span>
+                <button class="btn-edit" onclick="event.stopPropagation(); changeName('${usr[0]}', '${usr[1]}')">Sửa</button>
+            </div>
+        `).join('');
+    });
+}
+
+function changeName(id, oldName) {
+    const newName = prompt("Nhập tên mới cho bệnh nhân:", oldName);
+    
+    // Nếu người dùng nhấn Cancel hoặc để trống thì không làm gì
+    if (newName === null || newName.trim() === "") return;
+
+    fetch(API + "/api/update_name", {
+        method: "POST",
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': TOKEN 
+        },
+        body: JSON.stringify({ id: id, new_name: newName.trim() })
+    })
+    .then(r => {
+        if (r.ok) {
+            alert("Đã cập nhật tên thành công!");
+            loadUsers(); // Tải lại danh sách để hiện tên mới
+            // Nếu đang xem chính bệnh nhân đó thì cập nhật tiêu đề luôn
+            if (selectedId === id) {
+                document.getElementById("patient-name").innerText = "Bệnh nhân: " + newName;
+            }
+        } else {
+            alert("Lỗi khi cập nhật tên!");
         }
+    })
+    .catch(err => console.error("Error:", err));
+}
+
+    // HÀM QUAN TRỌNG: Xóa sạch dữ liệu cũ khi chuyển người
+    function resetDashboard() {
+        document.getElementById("avg-sys").innerText = "0";
+        document.getElementById("avg-dia").innerText = "0";
+        document.getElementById("avg-hr").innerText = "0";
+        document.getElementById("table-body").innerHTML = "<tr><td colspan='5'>Đang tải...</td></tr>";
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.update();
     }
+
     function selectPatient(id, name) {
+        if(selectedId === id) return;
         selectedId = id;
+        
+        // Cập nhật giao diện ngay lập tức
+        document.querySelectorAll('.user-item').forEach(e => e.classList.remove('active'));
+        document.getElementById(`item-${id}`).classList.add('active');
         document.getElementById("dashboard").style.display = "block";
         document.getElementById("patient-name").innerText = "Bệnh nhân: " + name;
+
+        resetDashboard(); // Xóa sạch dữ liệu của người cũ trước khi tải người mới
+
         if(timer) clearInterval(timer);
         refreshData();
         timer = setInterval(refreshData, 5000);
     }
+
     function refreshData() {
+        if(!selectedId) return;
         fetch(API + `/api/history?user_id=${selectedId}`, {headers:{Authorization: TOKEN}})
-        .then(r => r.json()).then(logs => {
-            if(logs.length === 0) return;
+        .then(r => r.json())
+        .then(logs => {
+            const table = document.getElementById("table-body");
+            if(logs.length === 0) {
+                table.innerHTML = "<tr><td colspan='5'>Chưa có dữ liệu</td></tr>";
+                document.getElementById("avg-sys").innerText = "0";
+                document.getElementById("avg-dia").innerText = "0";
+                document.getElementById("avg-hr").innerText = "0";
+                chart.data.labels = [];
+                chart.data.datasets[0].data = [];
+                chart.update();
+                return;
+            }
+
             document.getElementById("avg-sys").innerText = (logs.reduce((a,b)=>a+b[0],0)/logs.length).toFixed(1);
             document.getElementById("avg-dia").innerText = (logs.reduce((a,b)=>a+b[1],0)/logs.length).toFixed(1);
             document.getElementById("avg-hr").innerText = (logs.reduce((a,b)=>a+b[2],0)/logs.length).toFixed(1);
-            document.getElementById("table-body").innerHTML = logs.slice(0, 15).map(l => 
+
+            table.innerHTML = logs.slice(0, 15).map(l => 
                 `<tr><td>${l[3]}</td><td>${l[0]}</td><td>${l[1]}</td><td>${l[2]}</td><td>${l[4]}</td></tr>`
             ).join('');
+
             const pts = logs.slice(0, 10).reverse();
             chart.data.labels = pts.map(p => p[3].split(' ')[1]);
             chart.data.datasets[0].data = pts.map(p => p[0]);
