@@ -1,78 +1,26 @@
 <!DOCTYPE html>
+
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Medical Pro</title>
+<title>Medical Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:Segoe UI;
-  background:#f1f5f9;
-}
-
-#loginBox{
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-.box{
-  background:white;
-  padding:30px;
-  border-radius:15px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.1);
-}
-
-.container{display:flex}
-
-.sidebar{
-  width:220px;
-  background:white;
-  height:100vh;
-  padding:20px;
-}
-
-.btn{
-  width:100%;
-  padding:12px;
-  margin:10px 0;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:bold;
-}
-
-.btn-blue{background:#3b82f6;color:white;}
-.btn-green{background:#10b981;color:white;}
-.btn-red{background:#ef4444;color:white;}
-
-.main{
-  flex:1;
-  padding:20px;
-}
-
-.card{
-  background:white;
-  padding:20px;
-  border-radius:15px;
-  margin:10px;
-  display:inline-block;
-  width:200px;
-  text-align:center;
-}
-
+body{margin:0;font-family:Segoe UI;background:#f1f5f9}
+.sidebar{width:220px;background:white;height:100vh;padding:20px;float:left}
+.btn{width:100%;padding:12px;margin:10px 0;border:none;border-radius:10px;font-weight:bold;cursor:pointer}
+.btn-blue{background:#3b82f6;color:white}
+.btn-green{background:#10b981;color:white}
+.btn-red{background:#ef4444;color:white}
+.main{margin-left:240px;padding:20px}
+.card{background:white;padding:20px;border-radius:15px;display:inline-block;width:200px;margin:10px;text-align:center}
 .value{font-size:40px;font-weight:bold}
-
-.user{
-  background:white;
-  padding:15px;
-  margin:10px;
-  border-radius:10px;
-}
+.user{background:white;padding:15px;margin:10px;border-radius:10px}
+#loginBox{display:flex;justify-content:center;align-items:center;height:100vh}
+.box{background:white;padding:30px;border-radius:15px}
 </style>
+
 </head>
 
 <body>
@@ -81,13 +29,11 @@ body{
 <div class="box">
 <h2>Admin Login</h2>
 <input id="pass" type="password"><br><br>
-<button onclick="doLogin()">Login</button>
+<button onclick="login()">Login</button>
 </div>
 </div>
 
 <div id="app" style="display:none">
-<div class="container">
-
 <div class="sidebar">
 <button class="btn btn-blue" onclick="show('dash')">Dashboard</button>
 <button class="btn btn-green" onclick="show('users')">Users</button>
@@ -102,13 +48,12 @@ body{
 <div class="card">HR<div id="hr" class="value">0</div></div>
 
 <canvas id="chart"></canvas>
+
 </div>
 
 <div id="users" style="display:none">
-<h2>User list</h2>
+<h2>Users</h2>
 <div id="list"></div>
-</div>
-
 </div>
 
 </div>
@@ -116,23 +61,21 @@ body{
 
 <script>
 
-const API = "http://localhost:3000";
-const ws = new WebSocket("ws://localhost:3000");
+const ws = new WebSocket("wss://votannhan.site");
 
-function doLogin(){
+function login(){
   if(pass.value==="123456"){
-    localStorage.setItem("login","true");
+    localStorage.setItem("login","1");
+    location.reload();
+  }
+}
+
+window.onload=()=>{
+  if(localStorage.getItem("login")){
     loginBox.style.display="none";
     app.style.display="block";
   }
 }
-
-window.onload = ()=>{
-  if(localStorage.getItem("login")==="true"){
-    loginBox.style.display="none";
-    app.style.display="block";
-  }
-};
 
 function logout(){
   localStorage.removeItem("login");
@@ -151,18 +94,17 @@ let chart = new Chart(document.getElementById("chart"),{
   data:{labels:[],datasets:[{data:[]}]}
 });
 
-// ===== WEBSOCKET =====
-ws.onmessage = (e)=>{
+// ===== WS =====
+ws.onmessage=(e)=>{
   let msg = JSON.parse(e.data);
 
   if(msg.type==="data"){
-    let d = msg.data;
-    sys.innerText=d.sys;
-    dia.innerText=d.dia;
-    hr.innerText=d.hr;
+    sys.innerText=msg.data.sys;
+    dia.innerText=msg.data.dia;
+    hr.innerText=msg.data.hr;
 
     chart.data.labels.push(new Date().toLocaleTimeString());
-    chart.data.datasets[0].data.push(d.sys);
+    chart.data.datasets[0].data.push(msg.data.sys);
 
     if(chart.data.labels.length>20){
       chart.data.labels.shift();
@@ -173,22 +115,12 @@ ws.onmessage = (e)=>{
   }
 
   if(msg.type==="users"){
-    renderUsers(msg.data);
+    list.innerHTML="";
+    msg.data.forEach(u=>{
+      list.innerHTML+=`<div class="user">${u.name}</div>`;
+    });
   }
-};
-
-// ===== USERS =====
-function renderUsers(u){
-  list.innerHTML="";
-  u.forEach(x=>{
-    list.innerHTML+=`<div class="user">${x.name}</div>`;
-  });
 }
-
-// load users
-fetch(API+"/api/users")
-.then(r=>r.json())
-.then(renderUsers);
 
 </script>
 
