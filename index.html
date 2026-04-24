@@ -7,95 +7,38 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#eaf0f6}
-.header{background:#3b82f6;color:white;padding:15px;font-size:20px}
-.sidebar{width:220px;background:white;height:100vh;float:left;padding:20px}
-.main{margin-left:240px;padding:20px}
-.btn{width:100%;padding:12px;margin:10px 0;border:none;border-radius:10px;font-weight:bold;cursor:pointer}
-.blue{background:#3b82f6;color:white}
-.green{background:#10b981;color:white}
-.card{background:white;padding:20px;border-radius:15px;display:inline-block;width:200px;margin:10px;text-align:center}
-.value{font-size:40px}
-.user{background:white;padding:15px;margin:10px;border-radius:10px;cursor:pointer}
-.popup{
- position:fixed;top:20px;right:20px;background:red;color:white;
- padding:15px;border-radius:10px;display:none
-}
+body{margin:0;font-family:Segoe UI;background:#eef3f8}
+.header{background:#2563eb;color:white;padding:15px;font-size:22px}
+.card{background:white;padding:20px;border-radius:15px;margin:10px;display:inline-block;width:180px;text-align:center}
+.value{font-size:35px;font-weight:bold}
+.popup{position:fixed;top:20px;right:20px;background:red;color:white;padding:15px;border-radius:10px;display:none}
 </style>
 
 </head>
 
 <body>
 
-<div class="header">🏥 Medical Admin</div>
+<div class="header">🏥 Smart Blood Pressure System</div>
 
-<div class="sidebar">
-<button class="btn blue" onclick="showDash()">Dashboard</button>
-<button class="btn green" onclick="loadUsers()">Users</button>
-</div>
-
-<div class="main">
-
-<div id="dash">
+<div>
 <div class="card">SYS<div id="sys" class="value">0</div></div>
 <div class="card">DIA<div id="dia" class="value">0</div></div>
 <div class="card">HR<div id="hr" class="value">0</div></div>
+</div>
 
 <canvas id="chart"></canvas>
-
-</div>
-
-<div id="users" style="display:none">
-<h2>Users</h2>
-<div id="list"></div>
-</div>
-
-</div>
 
 <div id="alert" class="popup"></div>
 
 <script>
 
-const API="https://your-server.com";
+const API="https://doanvdk.onrender.com";
 
 let chart=new Chart(document.getElementById("chart"),{
  type:"line",
- data:{labels:[],datasets:[{data:[]}]}
+ data:{labels:[],datasets:[{label:"SYS",data:[]}]}
 });
 
-function showDash(){
- dash.style.display="block";
- users.style.display="none";
-}
-
-function loadUsers(){
- dash.style.display="none";
- users.style.display="block";
-
- fetch(API+"/api/users")
- .then(r=>r.json())
- .then(data=>{
-  list.innerHTML="";
-  data.forEach(u=>{
-   list.innerHTML+=`
-   <div class="user">
-     ${u.name}
-     <button onclick="editUser(${u.id})">✏️</button>
-   </div>`;
-  });
- });
-}
-
-function editUser(id){
- let name=prompt("Nhập tên mới:");
- fetch(API+"/api/updateUser",{
-  method:"POST",
-  headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({id,name})
- }).then(loadUsers);
-}
-
-// ===== REALTIME =====
 setInterval(()=>{
  fetch(API+"/api/data")
  .then(r=>r.json())
@@ -103,12 +46,12 @@ setInterval(()=>{
   if(data.length){
     let d=data[data.length-1];
 
-    sys.innerText=d.sys;
-    dia.innerText=d.dia;
-    hr.innerText=d.hr;
+    sys.innerText=d[0];
+    dia.innerText=d[1];
+    hr.innerText=d[2];
 
     chart.data.labels.push(new Date().toLocaleTimeString());
-    chart.data.datasets[0].data.push(d.sys);
+    chart.data.datasets[0].data.push(d[0]);
 
     if(chart.data.labels.length>20){
       chart.data.labels.shift();
@@ -117,11 +60,10 @@ setInterval(()=>{
 
     chart.update();
 
-    // popup alert
-    if(d.sys>140){
-      alertBox.innerText="⚠️ HUYẾT ÁP CAO!";
-      alertBox.style.display="block";
-      setTimeout(()=>alertBox.style.display="none",3000);
+    if(d[0]>140){
+      alert.innerText="⚠️ HUYẾT ÁP CAO!";
+      alert.style.display="block";
+      setTimeout(()=>alert.style.display="none",3000);
     }
   }
  });
