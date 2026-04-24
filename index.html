@@ -3,41 +3,28 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Medical Dashboard</title>
+<title>Medical Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#f1f5f9}
+body{margin:0;font-family:Segoe UI;background:#eef2f7}
 .sidebar{width:220px;background:white;height:100vh;padding:20px;float:left}
 .btn{width:100%;padding:12px;margin:10px 0;border:none;border-radius:10px;font-weight:bold;cursor:pointer}
 .btn-blue{background:#3b82f6;color:white}
 .btn-green{background:#10b981;color:white}
-.btn-red{background:#ef4444;color:white}
 .main{margin-left:240px;padding:20px}
 .card{background:white;padding:20px;border-radius:15px;display:inline-block;width:200px;margin:10px;text-align:center}
 .value{font-size:40px;font-weight:bold}
-.user{background:white;padding:15px;margin:10px;border-radius:10px}
-#loginBox{display:flex;justify-content:center;align-items:center;height:100vh}
-.box{background:white;padding:30px;border-radius:15px}
+.user{background:white;padding:15px;margin:10px;border-radius:10px;cursor:pointer}
 </style>
 
 </head>
 
 <body>
 
-<div id="loginBox">
-<div class="box">
-<h2>Admin Login</h2>
-<input id="pass" type="password"><br><br>
-<button onclick="login()">Login</button>
-</div>
-</div>
-
-<div id="app" style="display:none">
 <div class="sidebar">
-<button class="btn btn-blue" onclick="show('dash')">Dashboard</button>
-<button class="btn btn-green" onclick="show('users')">Users</button>
-<button class="btn btn-red" onclick="logout()">Logout</button>
+<button class="btn btn-blue" onclick="showDash()">Dashboard</button>
+<button class="btn btn-green" onclick="loadUsers()">Users</button>
 </div>
 
 <div class="main">
@@ -57,70 +44,67 @@ body{margin:0;font-family:Segoe UI;background:#f1f5f9}
 </div>
 
 </div>
-</div>
 
 <script>
 
-const ws = new WebSocket("wss://votannhan.site");
+const API = "https://your-server.com";
 
-function login(){
-  if(pass.value==="123456"){
-    localStorage.setItem("login","1");
-    location.reload();
-  }
-}
-
-window.onload=()=>{
-  if(localStorage.getItem("login")){
-    loginBox.style.display="none";
-    app.style.display="block";
-  }
-}
-
-function logout(){
-  localStorage.removeItem("login");
-  location.reload();
-}
-
-function show(p){
-  dash.style.display="none";
-  users.style.display="none";
-  document.getElementById(p).style.display="block";
-}
-
-// ===== CHART =====
 let chart = new Chart(document.getElementById("chart"),{
   type:"line",
-  data:{labels:[],datasets:[{data:[]}]}
+  data:{labels:[],datasets:[{label:"SYS",data:[]}]}
 });
 
-// ===== WS =====
-ws.onmessage=(e)=>{
-  let msg = JSON.parse(e.data);
+function showDash(){
+  dash.style.display="block";
+  users.style.display="none";
+}
 
-  if(msg.type==="data"){
-    sys.innerText=msg.data.sys;
-    dia.innerText=msg.data.dia;
-    hr.innerText=msg.data.hr;
+function loadUsers(){
+  dash.style.display="none";
+  users.style.display="block";
 
-    chart.data.labels.push(new Date().toLocaleTimeString());
-    chart.data.datasets[0].data.push(msg.data.sys);
+  fetch(API+"/api/users")
+  .then(r=>r.json())
+  .then(data=>{
+    list.innerHTML="";
+    data.forEach(u=>{
+      list.innerHTML+=`<div class="user" onclick="loadUser(${u.id})">${u.name}</div>`;
+    });
+  });
+}
 
-    if(chart.data.labels.length>20){
-      chart.data.labels.shift();
-      chart.data.datasets[0].data.shift();
-    }
+function loadUser(id){
+  fetch(API+"/api/data")
+  .then(r=>r.json())
+  .then(data=>{
+    let userData = data.filter(x=>x.user_id==id);
+
+    chart.data.labels=[];
+    chart.data.datasets[0].data=[];
+
+    userData.forEach(d=>{
+      chart.data.labels.push(d.time);
+      chart.data.datasets[0].data.push(d.sys);
+    });
 
     chart.update();
-  }
-
-  if(msg.type==="users"){
-    list.innerHTML="";
-    msg.data.forEach(u=>{
-      list.innerHTML+=`<div class="user">${u.name}</div>`;
-    });
-  }
+  });
 }
+
+// realtime polling
+setInterval(()=>{
+  fetch(API+"/api/data")
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.length){
+      let d = data[data.length-1];
+
+      sys.innerText=d.sys;
+      dia.innerText=d.dia;
+      hr.innerText=d.hr;
+    }
+  });
+},1000);
 
 </script>
 
