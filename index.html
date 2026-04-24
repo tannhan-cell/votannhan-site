@@ -1,278 +1,140 @@
 <!DOCTYPE html>
 
-<html lang="vi">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Medical Admin Pro</title>
+<title>Medical Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:'Segoe UI';
-  background:linear-gradient(135deg,#0f172a,#1e293b);
-  color:white;
-}
-
-/* LOGIN */
-#login{
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-.box{
-  background:#1e293b;
-  padding:30px;
-  border-radius:15px;
-  box-shadow:0 0 30px black;
-}
-
-/* APP */
-#app{display:none;}
-.container{display:flex;height:100vh;}
-
-/* SIDEBAR */
-.sidebar{
-  width:250px;
-  background:#020617;
-  padding:20px;
-}
-.btn{
-  width:100%;
-  padding:12px;
-  margin:10px 0;
-  border:none;
-  border-radius:10px;
-  background:#1e293b;
-  color:white;
-  cursor:pointer;
-}
-.btn:hover{
-  background:#3b82f6;
-}
-
-/* MAIN */
-.main{
-  flex:1;
-  padding:20px;
-}
-
-/* CARD */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:20px;
-}
-.card{
-  background:#1e293b;
-  padding:20px;
-  border-radius:15px;
-  text-align:center;
-}
-.value{font-size:40px;}
-
-/* USER LIST */
-.user{
-  background:#1e293b;
-  padding:10px;
-  margin:10px 0;
-  border-radius:10px;
-  cursor:pointer;
-}
-.user:hover{background:#334155;}
-
-.page{display:none;}
-.active{display:block;}
+body{margin:0;background:#0f172a;color:white;font-family:sans-serif}
+#login{display:flex;justify-content:center;align-items:center;height:100vh}
+.box{background:#1e293b;padding:30px;border-radius:10px}
+#app{display:none}
+.sidebar{width:200px;background:#020617;height:100vh;padding:20px;float:left}
+.main{margin-left:220px;padding:20px}
+.card{background:#1e293b;padding:20px;border-radius:10px;margin:10px}
+.user{cursor:pointer;padding:10px;background:#1e293b;margin:5px}
 </style>
 
 </head>
 
 <body>
 
-<!-- LOGIN -->
-
 <div id="login">
-  <div class="box">
-    <h2>🔐 Admin Login</h2>
-    <input type="password" id="pass" placeholder="Password"><br>
-    <button class="btn" onclick="login()">Login</button>
-  </div>
+<div class="box">
+<h2>Login</h2>
+<input id="pass" type="password"><br>
+<button onclick="doLogin()">Login</button>
+</div>
 </div>
 
-<!-- APP -->
-
 <div id="app">
-<div class="container">
-
 <div class="sidebar">
-  <h2>🏥 MED PRO</h2>
-  <button class="btn" onclick="showPage('dashboard')">Dashboard</button>
-  <button class="btn" onclick="showPage('users')">Users</button>
+<button onclick="show('dash')">Dashboard</button>
+<button onclick="show('users')">Users</button>
 </div>
 
 <div class="main">
 
-<!-- DASHBOARD -->
-
-<div id="dashboard" class="page active">
-  <h1>Dashboard</h1>
-
-  <div class="grid">
-    <div class="card">
-      <h3>SYS</h3>
-      <div class="value" id="sys">--</div>
-    </div>
-    <div class="card">
-      <h3>DIA</h3>
-      <div class="value" id="dia">--</div>
-    </div>
-    <div class="card">
-      <h3>HR</h3>
-      <div class="value" id="hr">--</div>
-    </div>
-  </div>
-
-<canvas id="mainChart"></canvas>
-
+<div id="dash">
+<h2>Dashboard</h2>
+<div class="card">
+SYS:<span id="sys"></span>
+DIA:<span id="dia"></span>
+HR:<span id="hr"></span>
+</div>
+<canvas id="chart"></canvas>
 </div>
 
-<!-- USERS -->
-
-<div id="users" class="page">
-  <h2>Users</h2>
-
-  <input id="name" placeholder="Tên">
-  <input id="device" placeholder="Device">
-  <button class="btn" onclick="addUser()">Thêm</button>
-
-  <div id="userList"></div>
+<div id="users" style="display:none">
+<h2>Users</h2>
+<div id="list"></div>
 </div>
 
-<!-- USER DETAIL -->
-
-<div id="detail" class="page">
-  <h2 id="detailName"></h2>
-  <canvas id="userChart"></canvas>
-  <div id="history"></div>
+<div id="detail" style="display:none">
+<h2 id="name"></h2>
+<canvas id="userChart"></canvas>
+<div id="his"></div>
 </div>
 
-</div>
 </div>
 </div>
 
 <script>
 
-/* LOGIN */
-function login(){
+const API="https://YOUR_SERVER_URL";
+
+function doLogin(){
   if(pass.value==="123456"){
     login.style.display="none";
     app.style.display="block";
-  } else alert("Sai pass");
+  }
 }
 
-/* PAGE */
-function showPage(p){
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.getElementById(p).classList.add('active');
+function show(p){
+  dash.style.display="none";
+  users.style.display="none";
+  detail.style.display="none";
+  document.getElementById(p).style.display="block";
 }
 
-/* DATA */
-let users = JSON.parse(localStorage.getItem("users")||"[]");
-
-/* USER */
-function addUser(){
-  let u={
-    id:Date.now(),
-    name:name.value,
-    device:device.value,
-    data:[]
-  };
-  users.push(u);
-  save();
-  renderUsers();
-}
-
-function renderUsers(){
-  userList.innerHTML="";
-  users.forEach(u=>{
-    userList.innerHTML+=`
-      <div class="user" onclick="openUser(${u.id})">
-        ${u.name} (${u.device})
-      </div>`;
-  });
-}
-
-function openUser(id){
-  let u=users.find(x=>x.id==id);
-  detailName.innerText=u.name;
-
-  showPage('detail');
-
-  let labels=[],sysData=[];
-  history.innerHTML="";
-
-  u.data.forEach(d=>{
-    labels.push(d.time);
-    sysData.push(d.sys);
-
-    history.innerHTML+=`
-      <div class="card">
-        ${d.time} - SYS:${d.sys} DIA:${d.dia} HR:${d.hr}
-      </div>`;
-  });
-
-  new Chart(userChart,{
-    type:"line",
-    data:{labels:labels,datasets:[{label:"SYS",data:sysData}]}
-  });
-}
-
-/* SAVE */
-function save(){
-  localStorage.setItem("users",JSON.stringify(users));
-}
-
-/* DASHBOARD CHART */
-let mainChart=new Chart(mainChart,{
+// ===== DASHBOARD =====
+let chart=new Chart(chart,{
   type:"line",
-  data:{labels:[],datasets:[{label:"SYS",data:[]}]}
+  data:{labels:[],datasets:[{data:[]}]}
 });
 
-/* FAKE DATA */
 setInterval(()=>{
-  if(users.length==0) return;
-
-  let u=users[0];
-
-  let d={
-    time:new Date().toLocaleTimeString(),
-    sys:Math.floor(Math.random()*40+100),
-    dia:Math.floor(Math.random()*20+70),
-    hr:Math.floor(Math.random()*40+60)
-  };
-
-  u.data.push(d);
-  save();
-
+fetch(API+"/api/data")
+.then(r=>r.json())
+.then(d=>{
   sys.innerText=d.sys;
   dia.innerText=d.dia;
   hr.innerText=d.hr;
 
-  mainChart.data.labels.push(d.time);
-  mainChart.data.datasets[0].data.push(d.sys);
-
-  if(mainChart.data.labels.length>10){
-    mainChart.data.labels.shift();
-    mainChart.data.datasets[0].data.shift();
-  }
-
-  mainChart.update();
-
+  chart.data.labels.push(new Date().toLocaleTimeString());
+  chart.data.datasets[0].data.push(d.sys);
+  chart.update();
+});
 },2000);
 
-/* INIT */
-renderUsers();
+// ===== USERS =====
+function loadUsers(){
+fetch(API+"/api/users")
+.then(r=>r.json())
+.then(u=>{
+  list.innerHTML="";
+  u.forEach(x=>{
+    list.innerHTML+=`<div class="user" onclick="openUser('${x.chat_id}','${x.name}')">${x.name}</div>`;
+  });
+});
+}
+
+function openUser(id,nameUser){
+show('detail');
+name.innerText=nameUser;
+
+fetch(API+"/api/history/"+id)
+.then(r=>r.json())
+.then(d=>{
+  let labels=[],data=[];
+  his.innerHTML="";
+  d.forEach(x=>{
+    labels.push(x.time);
+    data.push(x.sys);
+
+    his.innerHTML+=`<div>${x.time} SYS:${x.sys}</div>`;
+  });
+
+  new Chart(userChart,{
+    type:"line",
+    data:{labels:labels,datasets:[{data:data}]}
+  });
+});
+}
+
+loadUsers();
 
 </script>
 
