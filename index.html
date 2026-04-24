@@ -7,13 +7,10 @@
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #0ea5e9; }
         body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        
-        /* Chỉnh khung login rộng hơn theo ý bạn */
         #login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .login-box { background: var(--card); padding: 40px; border-radius: 15px; text-align: center; width: 450px; }
         .login-box input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
         .login-box button { width: 95%; padding: 12px; background: var(--accent); border: none; color: white; border-radius: 5px; cursor: pointer; font-weight: bold; }
-
         .sidebar { width: 300px; background: var(--card); border-right: 1px solid #334155; display: flex; flex-direction: column; }
         .user-item { padding: 15px; background: #334155; margin: 10px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .user-item.active { background: var(--accent); }
@@ -26,24 +23,21 @@
     </style>
 </head>
 <body>
-
 <div id="login-screen">
     <div class="login-box">
-        <h2>Admin Login</h2>
+        <h2>ICU System Login</h2>
         <input id="u" placeholder="Admin">
         <input id="p" type="password" placeholder="Mật khẩu">
         <button onclick="login()">ĐĂNG NHẬP</button>
     </div>
 </div>
-
 <div class="sidebar">
     <button style="margin:10px; padding:10px; background:#ef4444; color:white; border:none; border-radius:5px; cursor:pointer;" onclick="logout()">Đăng Xuất</button>
     <div id="user-list"></div>
 </div>
-
 <div class="main">
     <div id="dashboard" style="display:none;">
-        <h2 id="patient-name">Bệnh nhân</h2>
+        <h2 id="patient-name">Danh sách bệnh nhân</h2>
         <div class="stats-grid">
             <div class="stat-box">Tâm thu <h1 id="avg-sys">0</h1> mmHg</div>
             <div class="stat-box">Tâm trương <h1 id="avg-dia">0</h1> mmHg</div>
@@ -56,22 +50,18 @@
         </table>
     </div>
 </div>
-
 <script>
-    const API = "https://dohuyetap.onrender.com"; // Đảm bảo đúng link số 9 của bạn
+    const API = "https://doanvdk-10.onrender.com"; 
     let TOKEN = "", selectedId = null, timer = null;
-
     const chart = new Chart(document.getElementById('chart'), {
         type: 'line',
         data: { labels: [], datasets: [{ label: 'SYS (mmHg)', data: [], borderColor: '#0ea5e9', tension: 0.3 }] },
         options: { animation: false }
     });
-
     window.onload = () => {
         const saved = localStorage.getItem("icu_token");
         if (saved) { TOKEN = saved; document.getElementById("login-screen").style.display = "none"; loadUsers(); }
     };
-
     function login() {
         fetch(API+"/api/login", {
             method:"POST",
@@ -81,9 +71,7 @@
             if(d.token) { TOKEN = d.token; localStorage.setItem("icu_token", TOKEN); location.reload(); }
         });
     }
-
     function logout() { localStorage.clear(); location.reload(); }
-
     function loadUsers() {
         fetch(API+"/api/users", {headers:{Authorization: TOKEN}})
         .then(r => r.json()).then(data => {
@@ -95,7 +83,6 @@
             `).join('');
         });
     }
-
     function changeName(id, old) {
         const n = prompt("Tên mới:", old);
         if (n) {
@@ -106,24 +93,14 @@
             }).then(() => loadUsers());
         }
     }
-
     function selectPatient(id, name) {
         selectedId = id;
         document.getElementById("dashboard").style.display = "block";
         document.getElementById("patient-name").innerText = "Bệnh nhân: " + name;
-        
-        // RESET DỮ LIỆU ĐỂ KHÔNG BỊ TRÀN TỪ NGƯỜI CŨ
-        document.getElementById("avg-sys").innerText = "0";
-        document.getElementById("avg-dia").innerText = "0";
-        document.getElementById("avg-hr").innerText = "0";
-        document.getElementById("table-body").innerHTML = "";
-        chart.data.labels = []; chart.data.datasets[0].data = []; chart.update();
-
         if(timer) clearInterval(timer);
         refreshData();
         timer = setInterval(refreshData, 5000);
     }
-
     function refreshData() {
         fetch(API + `/api/history?user_id=${selectedId}`, {headers:{Authorization: TOKEN}})
         .then(r => r.json()).then(logs => {
