@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Pannel ICU</title>
+    <title>Hệ thống ICU Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #0ea5e9; }
@@ -18,30 +18,16 @@
         table { width: 100%; border-collapse: collapse; background: var(--card); }
         th, td { padding: 12px; border-bottom: 1px solid #334155; text-align: center; }
         .btn-logout { width: 90%; margin: 10px auto; padding: 10px; background: #ef4444; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .btn-edit {
-    background: #f59e0b;
-    color: white;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-}
-
     </style>
 </head>
 <body>
 
 <div id="login-screen">
-    <div style="background: var(--card); padding: 40px; border-radius: 15px; text-align: center; width: 450px;">
-        <h2 style="margin-bottom: 20px;">ICU Login</h2>
-        
-        <input id="u" placeholder="Admin" style="padding: 12px; margin: 8px; width: 90%; border-radius: 5px; border: 1px solid #334155;"><br>
-        <input id="p" type="password" placeholder="Mật khẩu" style="padding: 12px; margin: 8px; width: 90%; border-radius: 5px; border: 1px solid #334155;"><br>
-        
-        <button onclick="login()" style="padding: 12px 30px; background: var(--accent); border: none; color: white; margin-top: 20px; width: 95%; border-radius: 5px; cursor: pointer; font-weight: bold;">
-            Đăng nhập
-        </button>
+    <div style="background: var(--card); padding: 30px; border-radius: 15px; text-align: center;">
+        <h2>ICU Login</h2>
+        <input id="u" placeholder="Admin" style="padding: 10px; margin: 5px;"><br>
+        <input id="p" type="password" placeholder="Mật khẩu" style="padding: 10px; margin: 5px;"><br>
+        <button onclick="login()" style="padding: 10px 20px; background: var(--accent); border: none; color: white; margin-top: 10px;">Vào hệ thống</button>
     </div>
 </div>
 
@@ -67,7 +53,7 @@
 </div>
 
 <script>
-    const API = "https://doanvdk-11.onrender.com";
+    const API = "https://doanvdk-8.onrender.com";
     let TOKEN = "", selectedId = null, timer = null;
 
     const chart = new Chart(document.getElementById('chart'), {
@@ -102,47 +88,14 @@
     function logout() { localStorage.clear(); location.reload(); }
 
     function loadUsers() {
-    fetch(API + "/api/users", { headers: { Authorization: TOKEN } })
-    .then(r => r.json())
-    .then(data => {
-        const list = document.getElementById("user-list");
-        list.innerHTML = data.map(usr => `
-            <div class="user-item ${selectedId == usr[0] ? 'active' : ''}" id="item-${usr[0]}" onclick="selectPatient('${usr[0]}', '${usr[1]}')">
-                <span id="name-text-${usr[0]}">${usr[1]}</span>
-                <button class="btn-edit" onclick="event.stopPropagation(); changeName('${usr[0]}', '${usr[1]}')">Sửa</button>
-            </div>
-        `).join('');
-    });
-}
-
-function changeName(id, oldName) {
-    const newName = prompt("Nhập tên mới cho bệnh nhân:", oldName);
-    
-    // Nếu người dùng nhấn Cancel hoặc để trống thì không làm gì
-    if (newName === null || newName.trim() === "") return;
-
-    fetch(API + "/api/update_name", {
-        method: "POST",
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': TOKEN 
-        },
-        body: JSON.stringify({ id: id, new_name: newName.trim() })
-    })
-    .then(r => {
-        if (r.ok) {
-            alert("Đã cập nhật tên thành công!");
-            loadUsers(); // Tải lại danh sách để hiện tên mới
-            // Nếu đang xem chính bệnh nhân đó thì cập nhật tiêu đề luôn
-            if (selectedId === id) {
-                document.getElementById("patient-name").innerText = "Bệnh nhân: " + newName;
-            }
-        } else {
-            alert("Lỗi khi cập nhật tên!");
-        }
-    })
-    .catch(err => console.error("Error:", err));
-}
+        fetch(API+"/api/users", {headers:{Authorization: TOKEN}})
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("user-list").innerHTML = data.map(usr => `
+                <div class="user-item" id="item-${usr[0]}" onclick="selectPatient('${usr[0]}', '${usr[1]}')">${usr[1]}</div>
+            `).join('');
+        });
+    }
 
     // HÀM QUAN TRỌNG: Xóa sạch dữ liệu cũ khi chuyển người
     function resetDashboard() {
