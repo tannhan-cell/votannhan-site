@@ -1,247 +1,71 @@
 <!DOCTYPE html>
 
-<html lang="vi">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Medical Desktop App</title>
-
+<title>Medical Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
-    margin:0;
-    font-family:Segoe UI;
-    background:linear-gradient(135deg,#0f172a,#1e293b);
-    color:white;
-}
-
-/* LAYOUT */
-.app{
-    display:flex;
-    height:100vh;
-}
-
-/* SIDEBAR */
-.sidebar{
-    width:230px;
-    background:rgba(255,255,255,0.05);
-    padding:20px;
-}
-
-.btn{
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border:none;
-    border-radius:12px;
-    background:rgba(255,255,255,0.1);
-    color:white;
-    cursor:pointer;
-    transition:0.3s;
-}
-
-.btn:hover{
-    background:#3b82f6;
-    transform:scale(1.05);
-}
-
-/* MAIN */
-.main{
-    flex:1;
-    padding:20px;
-}
-
-/* CARD */
-.grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:20px;
-}
-
-.card{
-    background:rgba(255,255,255,0.08);
-    padding:20px;
-    border-radius:15px;
-    text-align:center;
-}
-
-.value{
-    font-size:36px;
-}
-
-/* PAGE */
-.page{display:none;}
-.active{display:block}
-
-/* USER */
-.user{
-    display:flex;
-    justify-content:space-between;
-    background:rgba(255,255,255,0.1);
-    padding:10px;
-    margin:10px 0;
-    border-radius:10px;
-}
+body{font-family:sans-serif;background:#0f172a;color:white;text-align:center;}
+.card{background:#1e293b;padding:20px;margin:10px;border-radius:10px;}
+button{padding:10px;margin:5px;border:none;background:#3b82f6;color:white;}
 </style>
 
 </head>
 
 <body>
 
-<div class="app">
+<h1>🏥 Medical Dashboard</h1>
 
-<!-- SIDEBAR -->
-
-<div class="sidebar">
-    <h2>🏥 MED APP</h2>
-
-```
-<button class="btn" onclick="showPage('dashboard')">Dashboard</button>
-<button class="btn" onclick="showPage('users')">Users</button>
-```
-
-</div>
-
-<!-- MAIN -->
-
-<div class="main">
-
-<!-- DASHBOARD -->
-
-<div id="dashboard" class="page active">
-
-```
-<h1 id="title">Chưa chọn user</h1>
-
-<select id="userSelect" onchange="selectUser()"></select>
-
-<div class="grid">
-    <div class="card">
-        <h3>SYS</h3>
-        <div class="value" id="sys">--</div>
-    </div>
-    <div class="card">
-        <h3>DIA</h3>
-        <div class="value" id="dia">--</div>
-    </div>
-    <div class="card">
-        <h3>HR</h3>
-        <div class="value" id="hr">--</div>
-    </div>
+<div class="card">
+SYS: <span id="sys">--</span><br>
+DIA: <span id="dia">--</span><br>
+HR: <span id="hr">--</span>
 </div>
 
 <canvas id="chart"></canvas>
-```
 
-</div>
-
-<!-- USERS -->
-
-<div id="users" class="page">
-
-```
-<h2>Quản lý người dùng</h2>
-
-<input id="newUser" placeholder="Nhập tên">
-<button class="btn" onclick="addUser()">Thêm</button>
-
-<div id="list"></div>
-```
-
-</div>
-
-</div>
-</div>
+<h2>Users</h2>
+<div id="users"></div>
 
 <script>
 
-/* ===== DATA ===== */
-let users = [];
-let currentUser = null;
+const API="http://YOUR_ESP32_IP";
 
-function showPage(p){
-    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-    document.getElementById(p).classList.add('active');
-}
-
-/* ===== USER ===== */
-function addUser(){
-    let name = newUser.value;
-    if(!name) return;
-
-    let id = Date.now();
-    users.push({id,name});
-
-    renderUsers();
-}
-
-function renderUsers(){
-    userSelect.innerHTML="";
-    list.innerHTML="";
-
-    users.forEach(u=>{
-        userSelect.innerHTML += `<option value="${u.id}">${u.name}</option>`;
-
-        list.innerHTML += `
-        <div class="user">
-            ${u.name}
-            <button onclick="deleteUser(${u.id})">X</button>
-        </div>`;
-    });
-
-    if(users.length>0){
-        currentUser = users[0].id;
-        selectUser();
-    }
-}
-
-function deleteUser(id){
-    users = users.filter(u=>u.id!=id);
-    renderUsers();
-}
-
-function selectUser(){
-    currentUser = userSelect.value;
-    let u = users.find(x=>x.id==currentUser);
-    title.innerText = u.name;
-}
-
-/* ===== CHART ===== */
-let chart = new Chart(document.getElementById("chart"),{
-    type:"line",
-    data:{
-        labels:[],
-        datasets:[{
-            label:"SYS",
-            data:[]
-        }]
-    }
+let chart=new Chart(document.getElementById("chart"),{
+  type:"line",
+  data:{labels:[],datasets:[{label:"SYS",data:[]}]}
 });
 
-/* ===== DEMO REALTIME ===== */
 setInterval(()=>{
-    if(!currentUser) return;
-
-    let sys = Math.floor(Math.random()*40+100);
-    let dia = Math.floor(Math.random()*30+70);
-    let hr = Math.floor(Math.random()*40+60);
-
-    document.getElementById("sys").innerText = sys;
-    document.getElementById("dia").innerText = dia;
-    document.getElementById("hr").innerText = hr;
+  fetch(API+"/data")
+  .then(r=>r.json())
+  .then(d=>{
+    sys.innerText=d.sys;
+    dia.innerText=d.dia;
+    hr.innerText=d.hr;
 
     chart.data.labels.push(new Date().toLocaleTimeString());
-    chart.data.datasets[0].data.push(sys);
+    chart.data.datasets[0].data.push(d.sys);
 
     if(chart.data.labels.length>10){
-        chart.data.labels.shift();
-        chart.data.datasets[0].data.shift();
+      chart.data.labels.shift();
+      chart.data.datasets[0].data.shift();
     }
 
     chart.update();
-
+  });
 },2000);
+
+fetch(API+"/users")
+.then(r=>r.json())
+.then(u=>{
+  users.innerHTML="";
+  u.forEach(x=>{
+    users.innerHTML+=`<div>${x.name}</div>`;
+  });
+});
 
 </script>
 
