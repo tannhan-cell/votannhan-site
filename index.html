@@ -1,71 +1,278 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Medical Admin</title>
+<title>Medical Admin Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{font-family:sans-serif;background:#0f172a;color:white;text-align:center;}
-.card{background:#1e293b;padding:20px;margin:10px;border-radius:10px;}
-button{padding:10px;margin:5px;border:none;background:#3b82f6;color:white;}
+body{
+  margin:0;
+  font-family:'Segoe UI';
+  background:linear-gradient(135deg,#0f172a,#1e293b);
+  color:white;
+}
+
+/* LOGIN */
+#login{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.box{
+  background:#1e293b;
+  padding:30px;
+  border-radius:15px;
+  box-shadow:0 0 30px black;
+}
+
+/* APP */
+#app{display:none;}
+.container{display:flex;height:100vh;}
+
+/* SIDEBAR */
+.sidebar{
+  width:250px;
+  background:#020617;
+  padding:20px;
+}
+.btn{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border:none;
+  border-radius:10px;
+  background:#1e293b;
+  color:white;
+  cursor:pointer;
+}
+.btn:hover{
+  background:#3b82f6;
+}
+
+/* MAIN */
+.main{
+  flex:1;
+  padding:20px;
+}
+
+/* CARD */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+}
+.card{
+  background:#1e293b;
+  padding:20px;
+  border-radius:15px;
+  text-align:center;
+}
+.value{font-size:40px;}
+
+/* USER LIST */
+.user{
+  background:#1e293b;
+  padding:10px;
+  margin:10px 0;
+  border-radius:10px;
+  cursor:pointer;
+}
+.user:hover{background:#334155;}
+
+.page{display:none;}
+.active{display:block;}
 </style>
 
 </head>
 
 <body>
 
-<h1>🏥 Medical Dashboard</h1>
+<!-- LOGIN -->
 
-<div class="card">
-SYS: <span id="sys">--</span><br>
-DIA: <span id="dia">--</span><br>
-HR: <span id="hr">--</span>
+<div id="login">
+  <div class="box">
+    <h2>🔐 Admin Login</h2>
+    <input type="password" id="pass" placeholder="Password"><br>
+    <button class="btn" onclick="login()">Login</button>
+  </div>
 </div>
 
-<canvas id="chart"></canvas>
+<!-- APP -->
 
-<h2>Users</h2>
-<div id="users"></div>
+<div id="app">
+<div class="container">
+
+<div class="sidebar">
+  <h2>🏥 MED PRO</h2>
+  <button class="btn" onclick="showPage('dashboard')">Dashboard</button>
+  <button class="btn" onclick="showPage('users')">Users</button>
+</div>
+
+<div class="main">
+
+<!-- DASHBOARD -->
+
+<div id="dashboard" class="page active">
+  <h1>Dashboard</h1>
+
+  <div class="grid">
+    <div class="card">
+      <h3>SYS</h3>
+      <div class="value" id="sys">--</div>
+    </div>
+    <div class="card">
+      <h3>DIA</h3>
+      <div class="value" id="dia">--</div>
+    </div>
+    <div class="card">
+      <h3>HR</h3>
+      <div class="value" id="hr">--</div>
+    </div>
+  </div>
+
+<canvas id="mainChart"></canvas>
+
+</div>
+
+<!-- USERS -->
+
+<div id="users" class="page">
+  <h2>Users</h2>
+
+  <input id="name" placeholder="Tên">
+  <input id="device" placeholder="Device">
+  <button class="btn" onclick="addUser()">Thêm</button>
+
+  <div id="userList"></div>
+</div>
+
+<!-- USER DETAIL -->
+
+<div id="detail" class="page">
+  <h2 id="detailName"></h2>
+  <canvas id="userChart"></canvas>
+  <div id="history"></div>
+</div>
+
+</div>
+</div>
+</div>
 
 <script>
 
-const API="http://YOUR_ESP32_IP";
+/* LOGIN */
+function login(){
+  if(pass.value==="123456"){
+    login.style.display="none";
+    app.style.display="block";
+  } else alert("Sai pass");
+}
 
-let chart=new Chart(document.getElementById("chart"),{
+/* PAGE */
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById(p).classList.add('active');
+}
+
+/* DATA */
+let users = JSON.parse(localStorage.getItem("users")||"[]");
+
+/* USER */
+function addUser(){
+  let u={
+    id:Date.now(),
+    name:name.value,
+    device:device.value,
+    data:[]
+  };
+  users.push(u);
+  save();
+  renderUsers();
+}
+
+function renderUsers(){
+  userList.innerHTML="";
+  users.forEach(u=>{
+    userList.innerHTML+=`
+      <div class="user" onclick="openUser(${u.id})">
+        ${u.name} (${u.device})
+      </div>`;
+  });
+}
+
+function openUser(id){
+  let u=users.find(x=>x.id==id);
+  detailName.innerText=u.name;
+
+  showPage('detail');
+
+  let labels=[],sysData=[];
+  history.innerHTML="";
+
+  u.data.forEach(d=>{
+    labels.push(d.time);
+    sysData.push(d.sys);
+
+    history.innerHTML+=`
+      <div class="card">
+        ${d.time} - SYS:${d.sys} DIA:${d.dia} HR:${d.hr}
+      </div>`;
+  });
+
+  new Chart(userChart,{
+    type:"line",
+    data:{labels:labels,datasets:[{label:"SYS",data:sysData}]}
+  });
+}
+
+/* SAVE */
+function save(){
+  localStorage.setItem("users",JSON.stringify(users));
+}
+
+/* DASHBOARD CHART */
+let mainChart=new Chart(mainChart,{
   type:"line",
   data:{labels:[],datasets:[{label:"SYS",data:[]}]}
 });
 
+/* FAKE DATA */
 setInterval(()=>{
-  fetch(API+"/data")
-  .then(r=>r.json())
-  .then(d=>{
-    sys.innerText=d.sys;
-    dia.innerText=d.dia;
-    hr.innerText=d.hr;
+  if(users.length==0) return;
 
-    chart.data.labels.push(new Date().toLocaleTimeString());
-    chart.data.datasets[0].data.push(d.sys);
+  let u=users[0];
 
-    if(chart.data.labels.length>10){
-      chart.data.labels.shift();
-      chart.data.datasets[0].data.shift();
-    }
+  let d={
+    time:new Date().toLocaleTimeString(),
+    sys:Math.floor(Math.random()*40+100),
+    dia:Math.floor(Math.random()*20+70),
+    hr:Math.floor(Math.random()*40+60)
+  };
 
-    chart.update();
-  });
+  u.data.push(d);
+  save();
+
+  sys.innerText=d.sys;
+  dia.innerText=d.dia;
+  hr.innerText=d.hr;
+
+  mainChart.data.labels.push(d.time);
+  mainChart.data.datasets[0].data.push(d.sys);
+
+  if(mainChart.data.labels.length>10){
+    mainChart.data.labels.shift();
+    mainChart.data.datasets[0].data.shift();
+  }
+
+  mainChart.update();
+
 },2000);
 
-fetch(API+"/users")
-.then(r=>r.json())
-.then(u=>{
-  users.innerHTML="";
-  u.forEach(x=>{
-    users.innerHTML+=`<div>${x.name}</div>`;
-  });
-});
+/* INIT */
+renderUsers();
 
 </script>
 
