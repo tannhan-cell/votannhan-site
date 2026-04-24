@@ -3,71 +3,104 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Medical Dashboard</title>
+<title>ICU Monitor</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#eef3f8}
-.header{background:#2563eb;color:white;padding:15px;font-size:22px}
-.card{background:white;padding:20px;border-radius:15px;margin:10px;display:inline-block;width:180px;text-align:center}
-.value{font-size:35px;font-weight:bold}
-.popup{position:fixed;top:20px;right:20px;background:red;color:white;padding:15px;border-radius:10px;display:none}
+body{margin:0;background:#0f172a;color:#0ff;font-family:monospace}
+.center{display:flex;justify-content:center;align-items:center;height:100vh}
+input{padding:10px;margin:5px;border:none;border-radius:5px}
+button{padding:10px;background:#0ff;border:none;border-radius:5px;cursor:pointer}
+.card{display:inline-block;margin:10px;padding:20px;background:#020617;border:1px solid #0ff}
+.big{font-size:40px}
+.user{cursor:pointer;padding:10px;border-bottom:1px solid #0ff}
 </style>
 
 </head>
 
 <body>
 
-<div class="header">🏥 Smart Blood Pressure System</div>
+<div id="login" class="center">
+<div>
+<h2>Admin Login</h2>
+<input id="user" placeholder="username"><br>
+<input id="pass" type="password"><br>
+<button onclick="login()">Login</button>
+</div>
+</div>
+
+<div id="app" style="display:none">
+
+<h2>🏥 ICU Monitor</h2>
 
 <div>
-<div class="card">SYS<div id="sys" class="value">0</div></div>
-<div class="card">DIA<div id="dia" class="value">0</div></div>
-<div class="card">HR<div id="hr" class="value">0</div></div>
+<div class="card">SYS<div id="sys" class="big">0</div></div>
+<div class="card">DIA<div id="dia" class="big">0</div></div>
+<div class="card">HR<div id="hr" class="big">0</div></div>
 </div>
 
 <canvas id="chart"></canvas>
 
-<div id="alert" class="popup"></div>
+<h3>Users</h3>
+<div id="users"></div>
+
+</div>
 
 <script>
 
 const API="https://doanvdk.onrender.com";
+let TOKEN="";
+
+function login(){
+ fetch(API+"/api/login",{
+  method:"POST",
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({username:user.value,password:pass.value})
+ })
+ .then(r=>r.json())
+ .then(d=>{
+  TOKEN=d.token;
+  login.style.display="none";
+  app.style.display="block";
+  loadUsers();
+ });
+}
+
+function loadUsers(){
+ fetch(API+"/api/users",{headers:{Authorization:TOKEN}})
+ .then(r=>r.json())
+ .then(data=>{
+  users.innerHTML="";
+  data.forEach(u=>{
+    users.innerHTML+=`<div class="user" onclick="selectUser(${u[0]})">${u[1]}</div>`;
+  });
+ });
+}
 
 let chart=new Chart(document.getElementById("chart"),{
  type:"line",
- data:{labels:[],datasets:[{label:"SYS",data:[]}]}
+ data:{labels:[],datasets:[{data:[]}]}
 });
 
-setInterval(()=>{
- fetch(API+"/api/data")
- .then(r=>r.json())
- .then(data=>{
-  if(data.length){
-    let d=data[data.length-1];
+function selectUser(id){
+ setInterval(()=>{
+  fetch(API+"/api/data",{headers:{Authorization:TOKEN}})
+  .then(r=>r.json())
+  .then(data=>{
+    let d=data.filter(x=>x[3]==id);
+    if(d.length){
+      let last=d[d.length-1];
+      sys.innerText=last[0];
+      dia.innerText=last[1];
+      hr.innerText=last[2];
 
-    sys.innerText=d[0];
-    dia.innerText=d[1];
-    hr.innerText=d[2];
-
-    chart.data.labels.push(new Date().toLocaleTimeString());
-    chart.data.datasets[0].data.push(d[0]);
-
-    if(chart.data.labels.length>20){
-      chart.data.labels.shift();
-      chart.data.datasets[0].data.shift();
+      chart.data.labels.push(new Date().toLocaleTimeString());
+      chart.data.datasets[0].data.push(last[0]);
+      chart.update();
     }
-
-    chart.update();
-
-    if(d[0]>140){
-      alert.innerText="⚠️ HUYẾT ÁP CAO!";
-      alert.style.display="block";
-      setTimeout(()=>alert.style.display="none",3000);
-    }
-  }
- });
-},1000);
+  });
+ },1000);
+}
 
 </script>
 
