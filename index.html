@@ -116,19 +116,32 @@ async function load(){
 
 // ADD PATIENT
 async function addPatient(){
-  await fetch(API+"/patient",{
+  if(!name.value || !cccd.value){
+    alert("Nhập thiếu!");
+    return;
+  }
+
+  let res = await fetch(API+"/patient",{
     method:"POST",
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      name:name.value,
-      dob:dob.value,
-      cccd:cccd.value,
-      address:address.value
+      name: name.value,
+      dob: dob.value,
+      cccd: cccd.value,
+      address: address.value
     })
   });
+
+  let data = await res.json();
+  console.log(data);
+
+  if(data.error){
+    alert(data.error);
+    return;
+  }
+
   load();
 }
-
 // SELECT
 function select(p){
   currentPatient=p;
