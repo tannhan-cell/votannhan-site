@@ -1,185 +1,213 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Hệ thống quản lý huyết áp</title>
+<meta charset="UTF-8">
+<title>ICU Monitor</title>
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
-  <!-- Chart -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{
+  background:#020617;
+  color:#e2e8f0;
+  font-family: 'Segoe UI', sans-serif;
+}
 
-  <style>
-    body {
-      background: #f4f6f9;
-    }
-    .card {
-      border-radius: 15px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-    .sidebar {
-      height: 100vh;
-      background: #2c3e50;
-      color: white;
-      padding: 20px;
-    }
-    .sidebar h3 {
-      color: #1abc9c;
-    }
-    .patient-item {
-      cursor: pointer;
-      padding: 8px;
-      border-radius: 8px;
-    }
-    .patient-item:hover {
-      background: #ecf0f1;
-      color: black;
-    }
-  </style>
+.card{
+  background:#0f172a;
+  border:none;
+  border-radius:15px;
+  box-shadow:0 0 20px rgba(0,255,200,0.1);
+}
+
+.big-number{
+  font-size:48px;
+  font-weight:bold;
+}
+
+.label{
+  color:#94a3b8;
+}
+
+.green{color:#22c55e;}
+.red{color:#ef4444;}
+.yellow{color:#facc15;}
+
+.sidebar{
+  height:100vh;
+  background:#020617;
+  padding:20px;
+  border-right:1px solid #1e293b;
+}
+
+.patient-item{
+  padding:8px;
+  cursor:pointer;
+}
+.patient-item:hover{
+  background:#1e293b;
+}
+</style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginPage" class="container mt-5 text-center">
-  <div class="card p-4">
-    <h3>🔐 Đăng nhập hệ thống</h3>
-    <input type="password" id="password" class="form-control my-3" placeholder="Nhập mật khẩu admin">
-    <button class="btn btn-primary" onclick="login()">Đăng nhập</button>
+<div class="row">
+
+<!-- Sidebar -->
+<div class="col-3 sidebar">
+  <h4 class="green">🩺 ICU Monitor</h4>
+  <ul id="patients"></ul>
+</div>
+
+<!-- Main -->
+<div class="col-9 p-3">
+
+<div class="row">
+
+<!-- SYS -->
+<div class="col-4">
+  <div class="card p-3 text-center">
+    <div class="label">SYS</div>
+    <div id="sys" class="big-number green">--</div>
   </div>
 </div>
 
-<!-- MAIN -->
-<div id="mainPage" style="display:none;">
-  <div class="row">
-
-    <!-- Sidebar -->
-    <div class="col-3 sidebar">
-      <h3>🩺 Patients</h3>
-      <ul id="patientList" class="list-unstyled"></ul>
-    </div>
-
-    <!-- Content -->
-    <div class="col-9 p-4">
-
-      <h2>📊 Dashboard</h2>
-
-      <!-- Add patient -->
-      <div class="card p-3 mb-3">
-        <h5>➕ Thêm bệnh nhân</h5>
-        <div class="row">
-          <div class="col"><input id="name" class="form-control" placeholder="Tên"></div>
-          <div class="col"><input id="dob" class="form-control" placeholder="Ngày sinh"></div>
-          <div class="col"><input id="cccd" class="form-control" placeholder="CCCD"></div>
-          <div class="col"><input id="address" class="form-control" placeholder="Địa chỉ"></div>
-        </div>
-        <button class="btn btn-success mt-2" onclick="addPatient()">Lưu</button>
-      </div>
-
-      <!-- Info -->
-      <div class="card p-3 mb-3">
-        <h5 id="patientName">Chưa chọn bệnh nhân</h5>
-        <p id="patientInfo"></p>
-      </div>
-
-      <!-- Chart -->
-      <div class="card p-3">
-        <canvas id="chart"></canvas>
-      </div>
-
-    </div>
+<!-- DIA -->
+<div class="col-4">
+  <div class="card p-3 text-center">
+    <div class="label">DIA</div>
+    <div id="dia" class="big-number yellow">--</div>
   </div>
+</div>
+
+<!-- HR -->
+<div class="col-4">
+  <div class="card p-3 text-center">
+    <div class="label">HR</div>
+    <div id="hr" class="big-number red">--</div>
+  </div>
+</div>
+
+</div>
+
+<!-- Patient info -->
+<div class="card p-3 mt-3">
+  <h5 id="name">Chưa chọn bệnh nhân</h5>
+  <div id="info"></div>
+</div>
+
+<!-- Chart -->
+<div class="card p-3 mt-3">
+  <canvas id="chart"></canvas>
+</div>
+
+</div>
 </div>
 
 <script>
+
 let currentPatient = null;
-let chart = null;
+let chart;
 
-async function login(){
-  let pass = document.getElementById("password").value;
+const socket = io("http://localhost:3000");
 
-  if(pass === "admin123"){
-    document.getElementById("loginPage").style.display = "none";
-    document.getElementById("mainPage").style.display = "block";
-    loadPatients();
-  }else{
-    alert("Sai mật khẩu!");
+// realtime
+socket.on("newData", (msg)=>{
+  if(!currentPatient) return;
+  if(msg.cccd !== currentPatient.cccd) return;
+
+  currentPatient.records.push(msg.data);
+
+  updateDisplay(msg.data);
+  drawChart();
+});
+
+// update số lớn
+function updateDisplay(d){
+  document.getElementById("sys").innerText = d.sys;
+  document.getElementById("dia").innerText = d.dia;
+  document.getElementById("hr").innerText = d.hr;
+
+  // cảnh báo
+  if(d.sys > 140 || d.hr > 100){
+    alert("⚠️ Cảnh báo huyết áp / nhịp tim cao!");
   }
 }
 
-async function addPatient(){
-  let p = {
-    name: name.value,
-    dob: dob.value,
-    cccd: cccd.value,
-    address: address.value
-  };
-
-  await fetch("http://localhost:3000/patient",{
-    method:"POST",
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(p)
-  });
-
-  loadPatients();
-}
-
-async function loadPatients(){
+// load bệnh nhân
+async function load(){
   let res = await fetch("http://localhost:3000/patient");
   let data = await res.json();
 
-  let list = document.getElementById("patientList");
+  let list = document.getElementById("patients");
   list.innerHTML = "";
 
   data.forEach(p=>{
     let li = document.createElement("li");
-    li.className = "patient-item";
+    li.className="patient-item";
     li.innerText = p.name;
     li.onclick = ()=>selectPatient(p);
     list.appendChild(li);
   });
 }
 
+// chọn bệnh nhân
 function selectPatient(p){
   currentPatient = p;
 
-  document.getElementById("patientName").innerText = p.name;
-  document.getElementById("patientInfo").innerText =
-    `CCCD: ${p.cccd} | DOB: ${p.dob} | Address: ${p.address}`;
+  document.getElementById("name").innerText = p.name;
+  document.getElementById("info").innerText =
+    `CCCD: ${p.cccd} | DOB: ${p.dob}`;
 
-  drawChart(p);
+  drawChart();
 }
 
-function drawChart(p){
+// vẽ chart
+function drawChart(){
   let ctx = document.getElementById("chart");
 
   if(chart) chart.destroy();
 
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: p.records.map(r=>r.time),
-      datasets: [
+  chart = new Chart(ctx,{
+    type:"line",
+    data:{
+      labels: currentPatient.records.map(r=>r.time),
+      datasets:[
         {
-          label: 'SYS',
-          data: p.records.map(r=>r.sys),
-          borderColor: 'red'
+          label:"SYS",
+          data: currentPatient.records.map(r=>r.sys),
+          borderColor:"#22c55e"
         },
         {
-          label: 'DIA',
-          data: p.records.map(r=>r.dia),
-          borderColor: 'blue'
+          label:"DIA",
+          data: currentPatient.records.map(r=>r.dia),
+          borderColor:"#facc15"
         },
         {
-          label: 'HR',
-          data: p.records.map(r=>r.hr),
-          borderColor: 'green'
+          label:"HR",
+          data: currentPatient.records.map(r=>r.hr),
+          borderColor:"#ef4444"
         }
       ]
+    },
+    options:{
+      animation:false,
+      scales:{
+        x:{ticks:{color:"white"}},
+        y:{ticks:{color:"white"}}
+      },
+      plugins:{
+        legend:{labels:{color:"white"}}
+      }
     }
   });
 }
+
+load();
+
 </script>
 
 </body>
