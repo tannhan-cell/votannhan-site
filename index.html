@@ -21,14 +21,14 @@ body{background:#020617;color:white;}
 <body>
 
 <!-- LOGIN -->
-<div id="login" class="container mt-5 text-center">
+<div id="loginPage" class="container mt-5 text-center">
   <h2>🔐 Admin Login</h2>
-  <input id="pass" type="password" class="form-control my-3" placeholder="Password">
-  <button class="btn btn-success" onclick="login()">Login</button>
+  <input id="passInput" type="password" class="form-control my-3" placeholder="Password">
+  <button class="btn btn-success" onclick="handleLogin()">Login</button>
 </div>
 
 <!-- MAIN -->
-<div id="main" style="display:none;">
+<div id="mainPage" style="display:none;">
 <div class="row">
 
 <!-- SIDEBAR -->
@@ -58,13 +58,13 @@ body{background:#020617;color:white;}
   <div id="pinfo"></div>
 </div>
 
-<!-- MEASUREMENTS LIST -->
+<!-- RECORD LIST -->
 <div class="card p-3 mb-3">
   <h5>📁 Lịch sử đo</h5>
   <ul id="records"></ul>
 </div>
 
-<!-- ICU DISPLAY -->
+<!-- MONITOR -->
 <div id="monitor" style="display:none;">
 <div class="row">
 
@@ -100,21 +100,25 @@ body{background:#020617;color:white;}
 <script>
 
 let currentPatient = null;
-let currentRecords = [];
 let chart;
 
-// LOGIN
-function login(){
-  if(pass.value==="admin123"){
+// LOGIN FIX
+function handleLogin(){
+  let pass = document.getElementById("passInput").value;
+
+  if(pass === "admin123"){
     localStorage.setItem("login","true");
     location.reload();
-  }else alert("Sai mật khẩu");
+  }else{
+    alert("Sai mật khẩu");
+  }
 }
 
+// CHECK LOGIN
 window.onload = ()=>{
   if(localStorage.getItem("login")==="true"){
-    login.style.display="none";
-    main.style.display="block";
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("mainPage").style.display="block";
     loadPatients();
   }
 }
@@ -169,18 +173,16 @@ function loadRecords(p){
   let list=document.getElementById("records");
   list.innerHTML="";
 
-  currentRecords = p.records || [];
-
-  currentRecords.forEach(r=>{
+  (p.records || []).forEach(r=>{
     let li=document.createElement("li");
     li.className="patient";
-    li.innerText=r.time; // file name kiểu ngày giờ
+    li.innerText=r.time;
     li.onclick=()=>showRecord(r);
     list.appendChild(li);
   });
 }
 
-// SHOW SINGLE RECORD
+// SHOW RECORD
 function showRecord(r){
   monitor.style.display="block";
 
@@ -188,7 +190,7 @@ function showRecord(r){
   dia.innerText=r.dia;
   hr.innerText=r.hr;
 
-  drawChart([r]); // chỉ 1 lần đo
+  drawChart([r]);
 }
 
 // DRAW CHART
@@ -219,8 +221,7 @@ socket.on("newData",(msg)=>{
 
   currentPatient.records.push(msg.data);
   loadRecords(currentPatient);
-
-  showRecord(msg.data); // tự nhảy realtime
+  showRecord(msg.data);
 });
 
 </script>
