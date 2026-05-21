@@ -3,20 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <title>ICU Monitor</title>
+
 <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{background:#020617;color:#e2e8f0;font-family:sans-serif;margin:0}
-.center{display:flex;justify-content:center;align-items:center;height:100vh}
-.login{background:#0f172a;padding:30px;border-radius:10px}
-input{display:block;margin:5px;padding:10px;background:#0f172a;color:white;border:none}
-button{background:#22c55e;padding:10px;border:none;color:white}
-.sidebar{width:200px;float:left;background:#020617;height:100vh}
-.main{margin-left:210px;padding:10px}
-.monitor{font-size:30px;margin:20px}
-.patient{padding:10px;cursor:pointer}
-.patient:hover{background:#1e293b}
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:linear-gradient(135deg,#020617,#020617,#020617);
+  color:#e2e8f0;
+}
+
+/* ===== LOGIN ===== */
+.center{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.login{
+  background:#0f172a;
+  padding:40px;
+  border-radius:20px;
+  box-shadow:0 0 30px #000;
+}
+
+.login input{
+  width:200px;
+  padding:10px;
+  margin:10px 0;
+  background:#020617;
+  border:none;
+  color:white;
+}
+
+.login button{
+  width:100%;
+  padding:10px;
+  background:#22c55e;
+  border:none;
+  color:white;
+  border-radius:10px;
+}
+
+/* ===== LAYOUT ===== */
+.sidebar{
+  width:220px;
+  height:100vh;
+  background:#020617;
+  float:left;
+  border-right:1px solid #1e293b;
+}
+
+.patient{
+  padding:12px;
+  cursor:pointer;
+  color:#94a3b8;
+}
+
+.patient:hover{
+  background:#1e293b;
+  color:#fff;
+}
+
+.main{
+  margin-left:220px;
+  padding:20px;
+}
+
+/* ===== CARD ===== */
+.card{
+  background:#0f172a;
+  padding:20px;
+  border-radius:20px;
+  margin-bottom:20px;
+  box-shadow:0 0 15px rgba(0,0,0,0.5);
+}
+
+/* ===== MONITOR ===== */
+.monitor{
+  display:flex;
+  gap:20px;
+}
+
+.box{
+  flex:1;
+  background:#020617;
+  padding:20px;
+  border-radius:15px;
+  text-align:center;
+}
+
+.box span{
+  font-size:30px;
+}
+
+.sys{color:#22c55e}
+.dia{color:#eab308}
+.hr{color:#ef4444}
+
+/* ===== INPUT ===== */
+input{
+  display:block;
+  margin:5px 0;
+  padding:10px;
+  width:100%;
+  background:#020617;
+  border:none;
+  color:white;
+  border-radius:10px;
+}
+
+button{
+  padding:10px;
+  background:#22c55e;
+  border:none;
+  color:white;
+  border-radius:10px;
+  width:100%;
+}
 </style>
 </head>
 
@@ -26,7 +133,7 @@ button{background:#22c55e;padding:10px;border:none;color:white}
 
 <script>
 const API="http://localhost:3000";
-let current=null, chart;
+let chart,current=null;
 
 // ===== LOGIN =====
 function showLogin(){
@@ -53,28 +160,32 @@ function showDashboard(){
   <div class="sidebar" id="list"></div>
 
   <div class="main">
-    <div id="info"></div>
+    <div class="card" id="info">Chưa chọn bệnh nhân</div>
 
     <div class="monitor">
-      SYS: <span id="sys">--</span> |
-      DIA: <span id="dia">--</span> |
-      HR: <span id="hr">--</span>
+      <div class="box sys">SYS<br><span id="sys">--</span></div>
+      <div class="box dia">DIA<br><span id="dia">--</span></div>
+      <div class="box hr">HR<br><span id="hr">--</span></div>
     </div>
 
-    <canvas id="chart"></canvas>
+    <div class="card">
+      <canvas id="chart"></canvas>
+    </div>
 
-    <h3>Tạo hồ sơ</h3>
-    <input id="name" placeholder="Tên">
-    <input id="dob" placeholder="DOB">
-    <input id="cccd" placeholder="CCCD">
-    <input id="address" placeholder="Địa chỉ">
-    <button onclick="add()">Tạo</button>
+    <div class="card">
+      <h3>Tạo hồ sơ</h3>
+      <input id="name" placeholder="Tên">
+      <input id="dob" placeholder="Ngày sinh">
+      <input id="cccd" placeholder="CCCD">
+      <input id="address" placeholder="Địa chỉ">
+      <button onclick="add()">Tạo</button>
+    </div>
   </div>`;
 
   load();
 }
 
-// ===== LOAD PATIENT =====
+// ===== LOAD =====
 async function load(){
   let res=await fetch(API+"/patient");
   let data=await res.json();
@@ -89,23 +200,25 @@ async function load(){
   });
 }
 
-// ===== SELECT PATIENT =====
+// ===== SELECT =====
 function select(p){
   current=p;
 
   info.innerHTML=`
     <b>${p.name}</b><br>
     ${p.dob}<br>
-    ${p.cccd}<br>
+    CCCD: ${p.cccd}<br>
     ${p.address}
   `;
 
   if(p.records.length>0){
     let s=0,d=0,h=0;
     p.records.forEach(x=>{s+=x.sys;d+=x.dia;h+=x.hr});
+
     sys.innerText=(s/p.records.length).toFixed(0);
     dia.innerText=(d/p.records.length).toFixed(0);
     hr.innerText=(h/p.records.length).toFixed(0);
+
     draw(p.records);
   }
 }
@@ -119,13 +232,18 @@ function draw(r){
 
   chart=new Chart(document.getElementById("chart"),{
     type:"line",
-    data:{labels,
-      datasets:[{data,borderColor:"#22c55e"}]
+    data:{
+      labels,
+      datasets:[{
+        data,
+        borderColor:"#22c55e",
+        tension:0.4
+      }]
     }
   });
 }
 
-// ===== ADD PATIENT =====
+// ===== ADD =====
 async function add(){
   await fetch(API+"/patient",{
     method:"POST",
