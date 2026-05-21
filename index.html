@@ -116,29 +116,26 @@ async function load(){
 
 // ADD PATIENT
 async function addPatient(){
-  if(!name.value || !cccd.value){
+  let nameInput = document.getElementById("name");
+  let dobInput = document.getElementById("dob");
+  let cccdInput = document.getElementById("cccd");
+  let addressInput = document.getElementById("address");
+
+  if(!nameInput.value.trim() || !cccdInput.value.trim()){
     alert("Nhập thiếu!");
     return;
   }
 
-  let res = await fetch(API+"/patient",{
+  await fetch(API+"/patient",{
     method:"POST",
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      name: name.value,
-      dob: dob.value,
-      cccd: cccd.value,
-      address: address.value
+      name: nameInput.value,
+      dob: dobInput.value,
+      cccd: cccdInput.value,
+      address: addressInput.value
     })
   });
-
-  let data = await res.json();
-  console.log(data);
-
-  if(data.error){
-    alert(data.error);
-    return;
-  }
 
   load();
 }
