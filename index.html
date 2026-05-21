@@ -3,68 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <title>ICU Monitor</title>
-
-<script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
 <style>
 body{
   margin:0;
   font-family:sans-serif;
-  background:linear-gradient(135deg,#020617,#020617,#020617);
+  background:#020617;
   color:#e2e8f0;
 }
 
-/* ===== LOGIN ===== */
-.center{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-
-.login{
-  background:#0f172a;
-  padding:40px;
-  border-radius:20px;
-  box-shadow:0 0 30px #000;
-}
-
-.login input{
-  width:200px;
-  padding:10px;
-  margin:10px 0;
-  background:#020617;
-  border:none;
-  color:white;
-}
-
-.login button{
-  width:100%;
-  padding:10px;
-  background:#22c55e;
-  border:none;
-  color:white;
-  border-radius:10px;
-}
-
-/* ===== LAYOUT ===== */
 .sidebar{
   width:220px;
   height:100vh;
   background:#020617;
-  float:left;
   border-right:1px solid #1e293b;
+  float:left;
+  padding:10px;
 }
 
-.patient{
-  padding:12px;
+.sidebar div{
+  padding:10px;
   cursor:pointer;
   color:#94a3b8;
 }
-
-.patient:hover{
-  background:#1e293b;
+.sidebar div:hover{
   color:#fff;
 }
 
@@ -73,202 +36,152 @@ body{
   padding:20px;
 }
 
-/* ===== CARD ===== */
 .card{
   background:#0f172a;
   padding:20px;
-  border-radius:20px;
-  margin-bottom:20px;
-  box-shadow:0 0 15px rgba(0,0,0,0.5);
+  margin-bottom:15px;
+  border-radius:10px;
 }
 
-/* ===== MONITOR ===== */
-.monitor{
-  display:flex;
-  gap:20px;
-}
-
-.box{
-  flex:1;
-  background:#020617;
-  padding:20px;
-  border-radius:15px;
-  text-align:center;
-}
-
-.box span{
-  font-size:30px;
-}
-
-.sys{color:#22c55e}
-.dia{color:#eab308}
-.hr{color:#ef4444}
-
-/* ===== INPUT ===== */
 input{
-  display:block;
-  margin:5px 0;
-  padding:10px;
   width:100%;
+  padding:10px;
+  margin:5px 0;
   background:#020617;
   border:none;
   color:white;
-  border-radius:10px;
 }
 
 button{
+  width:100%;
   padding:10px;
-  background:#22c55e;
+  background:#16a34a;
   border:none;
   color:white;
-  border-radius:10px;
-  width:100%;
+  cursor:pointer;
+}
+.big{
+  font-size:40px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="app"></div>
+<!-- LOGIN -->
+<div id="login" style="padding:100px;text-align:center;">
+  <h2>Admin Login</h2>
+  <input id="pass" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+<div class="sidebar" id="list"></div>
+
+<div class="main">
+
+<div class="card" id="info">Chưa chọn bệnh nhân</div>
+
+<div class="card">
+  SYS <div class="big" id="sys">--</div>
+  DIA <div class="big" id="dia">--</div>
+  HR <div class="big" id="hr">--</div>
+</div>
+
+<div class="card">
+  <h3>Tạo hồ sơ</h3>
+  <input id="name" placeholder="Tên">
+  <input id="dob" placeholder="Ngày sinh">
+  <input id="cccd" placeholder="CCCD">
+  <input id="address" placeholder="Địa chỉ">
+  <button onclick="add()">Tạo</button>
+</div>
+
+</div>
+</div>
 
 <script>
 const API="http://localhost:3000";
-let chart,current=null;
 
-// ===== LOGIN =====
-function showLogin(){
-  app.innerHTML=`
-  <div class="center">
-    <div class="login">
-      <h2>ICU SYSTEM</h2>
-      <input id="pass" type="password" placeholder="Admin password">
-      <button onclick="login()">LOGIN</button>
-    </div>
-  </div>`;
+let current=null;
+
+async function login(){
+  let res = await fetch(API+"/login",{
+    method:"POST",
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({password:pass.value})
+  });
+
+  let data = await res.json();
+
+  if(data.success){
+    loginDiv.style.display="none";
+    app.style.display="block";
+    load();
+  }else{
+    alert("Sai mật khẩu");
+  }
 }
 
-function login(){
-  if(pass.value==="admin123"){
-    localStorage.setItem("login","1");
-    showDashboard();
-  }else alert("Sai mật khẩu");
-}
-
-// ===== DASHBOARD =====
-function showDashboard(){
-  app.innerHTML=`
-  <div class="sidebar" id="list"></div>
-
-  <div class="main">
-    <div class="card" id="info">Chưa chọn bệnh nhân</div>
-
-    <div class="monitor">
-      <div class="box sys">SYS<br><span id="sys">--</span></div>
-      <div class="box dia">DIA<br><span id="dia">--</span></div>
-      <div class="box hr">HR<br><span id="hr">--</span></div>
-    </div>
-
-    <div class="card">
-      <canvas id="chart"></canvas>
-    </div>
-
-    <div class="card">
-      <h3>Tạo hồ sơ</h3>
-      <input id="name" placeholder="Tên">
-      <input id="dob" placeholder="Ngày sinh">
-      <input id="cccd" placeholder="CCCD">
-      <input id="address" placeholder="Địa chỉ">
-      <button onclick="add()">Tạo</button>
-    </div>
-  </div>`;
-
-  load();
-}
-
-// ===== LOAD =====
 async function load(){
-  let res=await fetch(API+"/patient");
-  let data=await res.json();
+  let res = await fetch(API+"/patients");
+  let data = await res.json();
 
   list.innerHTML="";
+
   data.forEach(p=>{
     let div=document.createElement("div");
-    div.className="patient";
-    div.innerText=p.name;
-    div.onclick=()=>select(p);
+    div.innerText=p.name || "Không tên";
+
+    div.onclick=()=>{
+      current=p;
+      info.innerHTML=`
+        <b>${p.name}</b><br>
+        ${p.dob}<br>
+        CCCD: ${p.cccd}<br>
+        ${p.address}
+      `;
+    }
+
     list.appendChild(div);
   });
 }
 
-// ===== SELECT =====
-function select(p){
-  current=p;
-
-  info.innerHTML=`
-    <b>${p.name}</b><br>
-    ${p.dob}<br>
-    CCCD: ${p.cccd}<br>
-    ${p.address}
-  `;
-
-  if(p.records.length>0){
-    let s=0,d=0,h=0;
-    p.records.forEach(x=>{s+=x.sys;d+=x.dia;h+=x.hr});
-
-    sys.innerText=(s/p.records.length).toFixed(0);
-    dia.innerText=(d/p.records.length).toFixed(0);
-    hr.innerText=(h/p.records.length).toFixed(0);
-
-    draw(p.records);
-  }
-}
-
-// ===== CHART =====
-function draw(r){
-  let labels=r.map(x=>x.time);
-  let data=r.map(x=>x.sys);
-
-  if(chart) chart.destroy();
-
-  chart=new Chart(document.getElementById("chart"),{
-    type:"line",
-    data:{
-      labels,
-      datasets:[{
-        data,
-        borderColor:"#22c55e",
-        tension:0.4
-      }]
-    }
-  });
-}
-
-// ===== ADD =====
 async function add(){
+  if(!name.value || !cccd.value){
+    alert("Nhập thiếu!");
+    return;
+  }
+
   await fetch(API+"/patient",{
     method:"POST",
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      name:name.value,
-      dob:dob.value,
-      cccd:cccd.value,
-      address:address.value
+      name:name.value.trim(),
+      dob:dob.value.trim(),
+      cccd:cccd.value.trim(),
+      address:address.value.trim()
     })
   });
+
+  name.value="";
+  dob.value="";
+  cccd.value="";
+  address.value="";
+
   load();
 }
 
-// ===== REALTIME =====
-const socket=io(API);
+// REALTIME
+const socket = io(API);
+
 socket.on("data",(d)=>{
   sys.innerText=d.sys;
   dia.innerText=d.dia;
   hr.innerText=d.hr;
 });
-
-// ===== INIT =====
-if(localStorage.getItem("login")) showDashboard();
-else showLogin();
 </script>
 
 </body>
