@@ -1,212 +1,156 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>ICU Monitor</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
 <style>
-body{background:#020617;color:white;}
-.card{background:#0f172a;border-radius:15px;border:none;}
-.sidebar{height:100vh;background:#020617;padding:15px;}
-.patient{cursor:pointer;padding:6px;}
-.patient:hover{background:#1e293b;}
-.big{font-size:40px;font-weight:bold;}
+body{background:#020617;color:#e2e8f0;font-family:sans-serif;margin:0}
+.center{display:flex;justify-content:center;align-items:center;height:100vh}
+.login{background:#0f172a;padding:30px;border-radius:10px}
+input{display:block;margin:5px;padding:10px;background:#0f172a;color:white;border:none}
+button{background:#22c55e;padding:10px;border:none;color:white}
+.sidebar{width:200px;float:left;background:#020617;height:100vh}
+.main{margin-left:210px;padding:10px}
+.monitor{font-size:30px;margin:20px}
+.patient{padding:10px;cursor:pointer}
+.patient:hover{background:#1e293b}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginPage" class="container mt-5 text-center">
-  <h2>🔐 Admin Login</h2>
-  <input id="pass" type="password" class="form-control my-3">
-  <button class="btn btn-success" onclick="login()">Login</button>
-</div>
-
-<!-- MAIN -->
-<div id="main" style="display:none;">
-<div class="row">
-
-<div class="col-3 sidebar">
-  <h4>Patients</h4>
-  <ul id="patients"></ul>
-</div>
-
-<div class="col-9 p-3">
-
-<div class="card p-3 mb-3">
-  <h5>Tạo hồ sơ</h5>
-  <input id="name" class="form-control mb-1" placeholder="Tên">
-  <input id="dob" class="form-control mb-1" placeholder="Ngày sinh">
-  <input id="cccd" class="form-control mb-1" placeholder="CCCD">
-  <input id="address" class="form-control mb-1" placeholder="Địa chỉ">
-  <button onclick="addPatient()" class="btn btn-success">Tạo</button>
-</div>
-
-<div class="card p-3 mb-3">
-  <h5 id="pname">---</h5>
-</div>
-
-<div class="card p-3 mb-3">
-  <h5>📁 Lịch sử đo</h5>
-  <ul id="records"></ul>
-</div>
-
-<button onclick="fake()" class="btn btn-danger mb-3">ĐO THỬ</button>
-
-<div id="monitor" style="display:none;">
-<div class="row">
-<div class="col-4"><div class="card p-3 text-center">SYS<div id="sys" class="big text-success">--</div></div></div>
-<div class="col-4"><div class="card p-3 text-center">DIA<div id="dia" class="big text-warning">--</div></div></div>
-<div class="col-4"><div class="card p-3 text-center">HR<div id="hr" class="big text-danger">--</div></div></div>
-</div>
-
-<div class="card p-3 mt-3">
-<canvas id="chart"></canvas>
-</div>
-</div>
-
-</div>
-</div>
-</div>
+<div id="app"></div>
 
 <script>
+const API="http://localhost:3000";
+let current=null, chart;
 
-const API = "http://localhost:3000";
-const socket = io(API);
+// ===== LOGIN =====
+function showLogin(){
+  app.innerHTML=`
+  <div class="center">
+    <div class="login">
+      <h2>ICU SYSTEM</h2>
+      <input id="pass" type="password" placeholder="Admin password">
+      <button onclick="login()">LOGIN</button>
+    </div>
+  </div>`;
+}
 
-let currentPatient = null;
-let chart;
-
-// LOGIN
 function login(){
   if(pass.value==="admin123"){
-    localStorage.setItem("login","true");
-    location.reload();
-  } else alert("Sai mật khẩu");
+    localStorage.setItem("login","1");
+    showDashboard();
+  }else alert("Sai mật khẩu");
 }
 
-// CHECK LOGIN
-window.onload=()=>{
-  if(localStorage.getItem("login")==="true"){
-    loginPage.style.display="none";
-    main.style.display="block";
-    load();
-  }
-}
+// ===== DASHBOARD =====
+function showDashboard(){
+  app.innerHTML=`
+  <div class="sidebar" id="list"></div>
 
-// LOAD
-async function load(){
-  let res = await fetch(API+"/patient");
-  let data = await res.json();
+  <div class="main">
+    <div id="info"></div>
 
-  patients.innerHTML="";
-  data.forEach(p=>{
-    let li=document.createElement("li");
-    li.className="patient";
-    li.innerText=p.name;
-    li.onclick=()=>select(p);
-    patients.appendChild(li);
-  });
-}
+    <div class="monitor">
+      SYS: <span id="sys">--</span> |
+      DIA: <span id="dia">--</span> |
+      HR: <span id="hr">--</span>
+    </div>
 
-// ADD PATIENT
-async function addPatient(){
-  let nameInput = document.getElementById("name");
-  let dobInput = document.getElementById("dob");
-  let cccdInput = document.getElementById("cccd");
-  let addressInput = document.getElementById("address");
+    <canvas id="chart"></canvas>
 
-  if(!nameInput.value.trim() || !cccdInput.value.trim()){
-    alert("Nhập thiếu!");
-    return;
-  }
-
-  await fetch(API+"/patient",{
-    method:"POST",
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      name: nameInput.value,
-      dob: dobInput.value,
-      cccd: cccdInput.value,
-      address: addressInput.value
-    })
-  });
+    <h3>Tạo hồ sơ</h3>
+    <input id="name" placeholder="Tên">
+    <input id="dob" placeholder="DOB">
+    <input id="cccd" placeholder="CCCD">
+    <input id="address" placeholder="Địa chỉ">
+    <button onclick="add()">Tạo</button>
+  </div>`;
 
   load();
 }
-// SELECT
-function select(p){
-  currentPatient=p;
-  pname.innerText=p.name;
 
-  records.innerHTML="";
-  (p.records||[]).forEach(r=>{
-    let li=document.createElement("li");
-    li.innerText=r.time;
-    li.onclick=()=>show(r);
-    records.appendChild(li);
+// ===== LOAD PATIENT =====
+async function load(){
+  let res=await fetch(API+"/patient");
+  let data=await res.json();
+
+  list.innerHTML="";
+  data.forEach(p=>{
+    let div=document.createElement("div");
+    div.className="patient";
+    div.innerText=p.name;
+    div.onclick=()=>select(p);
+    list.appendChild(div);
   });
 }
 
-// SHOW
-function show(r){
-  monitor.style.display="block";
-  sys.innerText=r.sys;
-  dia.innerText=r.dia;
-  hr.innerText=r.hr;
+// ===== SELECT PATIENT =====
+function select(p){
+  current=p;
 
-  draw([r]);
+  info.innerHTML=`
+    <b>${p.name}</b><br>
+    ${p.dob}<br>
+    ${p.cccd}<br>
+    ${p.address}
+  `;
+
+  if(p.records.length>0){
+    let s=0,d=0,h=0;
+    p.records.forEach(x=>{s+=x.sys;d+=x.dia;h+=x.hr});
+    sys.innerText=(s/p.records.length).toFixed(0);
+    dia.innerText=(d/p.records.length).toFixed(0);
+    hr.innerText=(h/p.records.length).toFixed(0);
+    draw(p.records);
+  }
 }
 
-// CHART
-function draw(data){
-  let ctx = document.getElementById("chart");
+// ===== CHART =====
+function draw(r){
+  let labels=r.map(x=>x.time);
+  let data=r.map(x=>x.sys);
 
   if(chart) chart.destroy();
 
-  chart=new Chart(ctx,{
+  chart=new Chart(document.getElementById("chart"),{
     type:"line",
-    data:{
-      labels:data.map(x=>x.time),
-      datasets:[
-        {label:"SYS",data:data.map(x=>x.sys),borderColor:"green"},
-        {label:"DIA",data:data.map(x=>x.dia),borderColor:"yellow"},
-        {label:"HR",data:data.map(x=>x.hr),borderColor:"red"}
-      ]
+    data:{labels,
+      datasets:[{data,borderColor:"#22c55e"}]
     }
   });
 }
 
-// REALTIME
-socket.on("newData",(msg)=>{
-  if(!currentPatient) return;
-  if(msg.cccd!==currentPatient.cccd) return;
-
-  currentPatient.records.push(msg.data);
-  select(currentPatient);
-  show(msg.data);
-});
-
-// TEST
-async function fake(){
-  if(!currentPatient) return alert("Chọn bệnh nhân");
-
-  await fetch(API+"/record/"+currentPatient.cccd,{
+// ===== ADD PATIENT =====
+async function add(){
+  await fetch(API+"/patient",{
     method:"POST",
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      sys:110+Math.random()*30,
-      dia:70+Math.random()*20,
-      hr:60+Math.random()*40
+      name:name.value,
+      dob:dob.value,
+      cccd:cccd.value,
+      address:address.value
     })
   });
+  load();
 }
 
+// ===== REALTIME =====
+const socket=io(API);
+socket.on("data",(d)=>{
+  sys.innerText=d.sys;
+  dia.innerText=d.dia;
+  hr.innerText=d.hr;
+});
+
+// ===== INIT =====
+if(localStorage.getItem("login")) showDashboard();
+else showLogin();
 </script>
 
 </body>
