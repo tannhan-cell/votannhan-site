@@ -22,7 +22,7 @@ body{background:#020617;color:white;}
 
 <!-- LOGIN -->
 <div id="loginPage" class="container mt-5 text-center">
-  <h2>🔐 Admin</h2>
+  <h2>🔐 Admin Login</h2>
   <input id="pass" type="password" class="form-control my-3">
   <button class="btn btn-success" onclick="login()">Login</button>
 </div>
@@ -40,10 +40,10 @@ body{background:#020617;color:white;}
 
 <div class="card p-3 mb-3">
   <h5>Tạo hồ sơ</h5>
-  <input id="name" placeholder="Tên" class="form-control mb-1">
-  <input id="dob" placeholder="DOB" class="form-control mb-1">
-  <input id="cccd" placeholder="CCCD" class="form-control mb-1">
-  <input id="address" placeholder="Address" class="form-control mb-1">
+  <input id="name" class="form-control mb-1" placeholder="Tên">
+  <input id="dob" class="form-control mb-1" placeholder="Ngày sinh">
+  <input id="cccd" class="form-control mb-1" placeholder="CCCD">
+  <input id="address" class="form-control mb-1" placeholder="Địa chỉ">
   <button onclick="addPatient()" class="btn btn-success">Tạo</button>
 </div>
 
@@ -52,6 +52,7 @@ body{background:#020617;color:white;}
 </div>
 
 <div class="card p-3 mb-3">
+  <h5>📁 Lịch sử đo</h5>
   <ul id="records"></ul>
 </div>
 
@@ -75,20 +76,21 @@ body{background:#020617;color:white;}
 
 <script>
 
-const API = "https://doanvdk.onrender.com";
+const API = "http://localhost:3000";
 const socket = io(API);
 
 let currentPatient = null;
 let chart;
 
-// login
+// LOGIN
 function login(){
   if(pass.value==="admin123"){
     localStorage.setItem("login","true");
     location.reload();
-  }
+  } else alert("Sai mật khẩu");
 }
 
+// CHECK LOGIN
 window.onload=()=>{
   if(localStorage.getItem("login")==="true"){
     loginPage.style.display="none";
@@ -97,7 +99,7 @@ window.onload=()=>{
   }
 }
 
-// load bệnh nhân
+// LOAD
 async function load(){
   let res = await fetch(API+"/patient");
   let data = await res.json();
@@ -112,7 +114,7 @@ async function load(){
   });
 }
 
-// tạo
+// ADD PATIENT
 async function addPatient(){
   await fetch(API+"/patient",{
     method:"POST",
@@ -127,7 +129,7 @@ async function addPatient(){
   load();
 }
 
-// chọn
+// SELECT
 function select(p){
   currentPatient=p;
   pname.innerText=p.name;
@@ -141,7 +143,7 @@ function select(p){
   });
 }
 
-// hiển thị
+// SHOW
 function show(r){
   monitor.style.display="block";
   sys.innerText=r.sys;
@@ -151,11 +153,13 @@ function show(r){
   draw([r]);
 }
 
-// chart
+// CHART
 function draw(data){
+  let ctx = document.getElementById("chart");
+
   if(chart) chart.destroy();
 
-  chart=new Chart(chartCanvas,{
+  chart=new Chart(ctx,{
     type:"line",
     data:{
       labels:data.map(x=>x.time),
@@ -168,7 +172,7 @@ function draw(data){
   });
 }
 
-// realtime
+// REALTIME
 socket.on("newData",(msg)=>{
   if(!currentPatient) return;
   if(msg.cccd!==currentPatient.cccd) return;
@@ -178,17 +182,17 @@ socket.on("newData",(msg)=>{
   show(msg.data);
 });
 
-// test đo
+// TEST
 async function fake(){
-  if(!currentPatient) return alert("chọn bệnh nhân");
+  if(!currentPatient) return alert("Chọn bệnh nhân");
 
   await fetch(API+"/record/"+currentPatient.cccd,{
     method:"POST",
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      sys:120+Math.random()*20,
-      dia:80+Math.random()*10,
-      hr:70+Math.random()*20
+      sys:110+Math.random()*30,
+      dia:70+Math.random()*20,
+      hr:60+Math.random()*40
     })
   });
 }
