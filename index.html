@@ -2,47 +2,54 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Blood Pressure Pro</title>
+<title>Health Monitor Pro</title>
 
 <style>
 body {
     margin: 0;
-    font-family: Arial;
-    background: linear-gradient(135deg, #0f172a, #1e293b);
+    font-family: 'Segoe UI';
+    background: linear-gradient(135deg, #0f172a, #1e3a8a);
     color: white;
 }
 
 .container {
-    width: 360px;
-    margin: 40px auto;
+    width: 420px;
+    margin: 30px auto;
     background: #1e293b;
     padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
 }
 
 h2 {
     text-align: center;
+    margin-bottom: 20px;
 }
 
 input {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     margin: 6px 0;
-    border-radius: 8px;
+    border-radius: 10px;
     border: none;
     background: #334155;
     color: white;
+    font-size: 14px;
+}
+
+input:focus {
+    outline: 2px solid #38bdf8;
 }
 
 button {
     width: 100%;
-    padding: 10px;
-    margin-top: 8px;
+    padding: 12px;
+    margin-top: 10px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-weight: bold;
     cursor: pointer;
+    font-size: 15px;
 }
 
 .save { background: #22c55e; }
@@ -50,17 +57,21 @@ button {
 
 .records {
     margin-top: 15px;
-    max-height: 150px;
+    max-height: 180px;
     overflow-y: auto;
-    background: #0f172a;
+    background: #020617;
     padding: 10px;
     border-radius: 10px;
 }
 
 .records div {
-    padding: 5px;
+    padding: 8px;
     border-bottom: 1px solid #334155;
     cursor: pointer;
+}
+
+.records div:hover {
+    background: #1e40af;
 }
 
 .preview {
@@ -70,21 +81,33 @@ button {
     border-radius: 10px;
     font-size: 14px;
 }
+
+.label {
+    font-size: 13px;
+    margin-top: 10px;
+    color: #94a3b8;
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-    <h2>📊 Huyết Áp</h2>
+    <h2>🩺 Health Monitor</h2>
 
-    <input id="user" placeholder="Tên người dùng">
+    <div class="label">Thông tin cá nhân</div>
+    <input id="name" placeholder="Họ và tên">
+    <input id="dob" type="date">
+    <input id="cccd" placeholder="CCCD">
+    <input id="address" placeholder="Nơi ở">
+
+    <div class="label">Chỉ số đo</div>
     <input id="sys" placeholder="SYS">
     <input id="dia" placeholder="DIA">
     <input id="pul" placeholder="PULSE">
 
-    <button class="save" onclick="save()">💾 Lưu</button>
-    <button class="load" onclick="load()">📂 Xem</button>
+    <button class="save" onclick="save()">💾 Lưu dữ liệu</button>
+    <button class="load" onclick="load()">📂 Xem lịch sử</button>
 
     <div class="records" id="records"></div>
     <div class="preview" id="preview"></div>
@@ -95,7 +118,11 @@ const API = "http://127.0.0.1:5000";
 
 function save() {
     const data = {
-        user: user.value,
+        user: name.value,   // giữ API cũ
+        name: name.value,
+        dob: dob.value,
+        cccd: cccd.value,
+        address: address.value,
         sys: sys.value,
         dia: dia.value,
         pul: pul.value
@@ -114,7 +141,7 @@ function save() {
 }
 
 function load() {
-    fetch(API + "/records/" + user.value)
+    fetch(API + "/records/" + name.value)
     .then(res => res.json())
     .then(files => {
         records.innerHTML = "";
@@ -128,7 +155,7 @@ function load() {
 }
 
 function readFile(file) {
-    fetch(API + "/records/" + user.value + "/" + file)
+    fetch(API + "/records/" + name.value + "/" + file)
     .then(res => res.text())
     .then(text => {
         preview.innerText = text;
