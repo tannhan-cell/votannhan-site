@@ -2,75 +2,42 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Hệ thống đo huyết áp</title>
+<title>Hospital Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
 <style>
-body {
-    margin:0;
-    font-family:Segoe UI;
-    display:flex;
-    height:100vh;
-    background:#f1f2f6;
-}
-
-/* sidebar */
+body {margin:0; font-family:Segoe UI; display:flex;}
 #sidebar {
-    width:270px;
-    background:#2f3542;
-    color:white;
-    padding:15px;
+    width:260px; background:#1e272e; color:white; padding:15px;
 }
-
 .patient {
-    padding:10px;
-    margin:6px 0;
-    background:#57606f;
-    border-radius:6px;
-    cursor:pointer;
+    padding:10px; margin:5px 0;
+    background:#485460; border-radius:6px; cursor:pointer;
 }
+.patient:hover {background:#00a8ff;}
 
-.patient:hover {
-    background:#1e90ff;
-}
-
-/* main */
-#main {
-    flex:1;
-    padding:20px;
-}
+#main {flex:1; padding:20px; background:#f1f2f6;}
 
 .card {
     background:white;
     padding:15px;
     border-radius:10px;
     margin-bottom:15px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
 }
 
-input {
-    padding:8px;
-    margin:5px;
-    width:180px;
-}
-
+input {padding:8px; margin:5px;}
 button {
     padding:8px 12px;
     border:none;
     border-radius:6px;
     cursor:pointer;
 }
-
-.green {background:#2ed573;color:white;}
-.red {background:#ff4757;color:white;}
-.orange {background:#ffa502;color:white;}
-
-.stat {
-    display:inline-block;
-    margin-right:20px;
-    font-size:18px;
-}
+.green {background:#2ecc71;color:white;}
+.red {background:#e74c3c;color:white;}
+.orange {background:#f39c12;color:white;}
 </style>
 </head>
 
@@ -86,19 +53,14 @@ button {
 <div class="card">
     <h3>Tạo hồ sơ</h3>
     <input id="name" placeholder="Tên">
-    <input id="dob" placeholder="Ngày sinh">
     <input id="cccd" placeholder="CCCD">
-    <input id="addr" placeholder="Địa chỉ"><br>
-    <button class="green" onclick="create()">Tạo hồ sơ</button>
+    <button class="green" onclick="create()">Tạo</button>
 </div>
 
 <div class="card">
-    <h3 id="info">Chưa chọn bệnh nhân</h3>
-
-    <div id="stats"></div><br>
-
-    <button class="orange" onclick="startMeasure()">BẮT ĐẦU ĐO</button>
-    <button class="red" onclick="deletePatient()">Xóa</button>
+    <h3 id="info">Chưa chọn</h3>
+    <button class="orange" onclick="start()">BẮT ĐẦU ĐO</button>
+    <button class="red" onclick="del()">Xóa</button>
 </div>
 
 <div class="card">
@@ -109,95 +71,87 @@ button {
 
 <script>
 const API="http://127.0.0.1:5000"
+const socket = io(API)
+
 let current=null
 let chart=null
+let dataArr=[]
 
+// load bệnh nhân
 function load(){
  fetch(API+"/patients")
  .then(r=>r.json())
- .then(data=>{
+ .then(d=>{
     list.innerHTML=""
-    data.forEach(f=>{
-        let d=document.createElement("div")
-        d.className="patient"
-        d.innerText=f
-        d.onclick=()=>openFolder(f)
-        list.appendChild(d)
+    d.forEach(f=>{
+        let div=document.createElement("div")
+        div.className="patient"
+        div.innerText=f
+        div.onclick=()=>select(f)
+        list.appendChild(div)
     })
  })
 }
 
+// tạo
 function create(){
  fetch(API+"/create_patient",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
         name:name.value,
-        dob:dob.value,
-        cccd:cccd.value,
-        addr:addr.value
+        cccd:cccd.value
     })
- }).then(()=>{
-    alert("Tạo thành công")
-    load()
- })
+ }).then(load)
 }
 
-function openFolder(f){
+// chọn bệnh nhân
+function select(f){
  current=f
- info.innerHTML="👤 "+f
- update()
+ info.innerText=f
+ dataArr=[]
 }
 
-function update(){
- if(!current) return
-
- fetch(API+"/records/"+current)
- .then(r=>r.json())
- .then(data=>{
-
-    if(data.length==0) return
-
-    let sys=data.map(x=>x.sys)
-    let dia=data.map(x=>x.dia)
-    let pulse=data.map(x=>x.pulse)
-
-    let avg=(arr)=>Math.round(arr.reduce((a,b)=>a+b,0)/arr.length)
-
-    stats.innerHTML=`
-    <div class="stat">SYS TB: ${avg(sys)}</div>
-    <div class="stat">DIA TB: ${avg(dia)}</div>
-    <div class="stat">PULSE TB: ${avg(pulse)}</div>
-    `
-
-    if(chart) chart.destroy()
-
-    chart=new Chart(chartCanvas,{
-        type:"line",
-        data:{
-            labels:data.map(x=>x.time),
-            datasets:[
-                {label:"SYS",data:sys,borderColor:"red"},
-                {label:"DIA",data:dia,borderColor:"blue"},
-                {label:"PULSE",data:pulse,borderColor:"green"}
-            ]
-        }
-    })
- })
-}
-
-function startMeasure(){
+// bắt đầu đo
+function start(){
  if(!current) return alert("Chọn bệnh nhân")
  fetch(API+"/start_measure/"+current)
 }
 
-function deletePatient(){
+// xóa
+function del(){
  if(!current) return
- fetch(API+"/delete/"+current,{method:"DELETE"})
- .then(()=>{current=null; load()})
+ fetch(API+"/delete/"+current,{method:"DELETE"}).then(()=>{
+    current=null
+    load()
+ })
 }
 
-setInterval(update,3000)
+// 🔥 REALTIME NHẬN DATA
+socket.on("new_data",(d)=>{
+ if(d.folder !== current) return
+
+ dataArr.push(d)
+
+ let labels=dataArr.map(x=>x.time)
+ let sys=dataArr.map(x=>x.sys)
+ let dia=dataArr.map(x=>x.dia)
+ let pulse=dataArr.map(x=>x.pulse)
+
+ if(chart) chart.destroy()
+
+ chart=new Chart(chartCanvas,{
+    type:"line",
+    data:{
+        labels:labels,
+        datasets:[
+            {label:"SYS",data:sys,borderColor:"red"},
+            {label:"DIA",data:dia,borderColor:"blue"},
+            {label:"PULSE",data:pulse,borderColor:"green"}
+        ]
+    }
+ })
+})
 
 load()
 </script>
