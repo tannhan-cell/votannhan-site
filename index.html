@@ -2,265 +2,127 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>ICU Monitor</title>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  background:#020617;
-  color:#e2e8f0;
-}
-
-/* LOGIN */
-.center{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.login{
-  background:#0f172a;
-  padding:40px;
-  border-radius:20px;
-  box-shadow:0 0 30px #000;
-}
-
-/* SIDEBAR */
-.sidebar{
-  width:230px;
-  height:100vh;
-  float:left;
-  background:#020617;
-  border-right:1px solid #1e293b;
-}
-.patient{
-  padding:12px;
-  cursor:pointer;
-  color:#94a3b8;
-}
-.patient:hover{
-  background:#1e293b;
-  color:#fff;
-}
-
-/* MAIN */
-.main{
-  margin-left:230px;
-  padding:20px;
-}
-
-/* CARD */
-.card{
-  background:#0f172a;
-  padding:20px;
-  border-radius:20px;
-  margin-bottom:15px;
-  box-shadow:0 0 20px rgba(0,0,0,0.5);
-}
-
-/* MONITOR */
-.monitor{
-  display:flex;
-  gap:15px;
-}
-.box{
-  flex:1;
-  text-align:center;
-  background:#020617;
-  padding:20px;
-  border-radius:15px;
-}
-.box span{
-  font-size:32px;
-}
-.sys{color:#22c55e}
-.dia{color:#eab308}
-.hr{color:#ef4444}
-
-/* INPUT */
-input{
-  width:100%;
-  padding:10px;
-  margin:5px 0;
-  background:#020617;
-  border:none;
-  color:white;
-  border-radius:10px;
-}
-button{
-  width:100%;
-  padding:10px;
-  background:#22c55e;
-  border:none;
-  color:white;
-  border-radius:10px;
-}
-
-/* ECG */
-canvas{
-  width:100%;
-  height:150px;
-  background:black;
-  border-radius:10px;
-}
+body{background:#020617;color:white;font-family:sans-serif;margin:0}
+.sidebar{width:220px;float:left;height:100vh;background:#020617;border-right:1px solid #333}
+.item{padding:10px;cursor:pointer}
+.item:hover{background:#1e293b}
+.main{margin-left:220px;padding:20px}
+.card{background:#0f172a;padding:15px;margin-bottom:10px;border-radius:10px}
+button{background:red;color:white;border:none;padding:5px;border-radius:5px}
 </style>
 </head>
 
 <body>
 
-<div id="app"></div>
+<div class="sidebar" id="list"></div>
+
+<div class="main">
+<div class="card" id="info">Chọn bệnh nhân</div>
+
+<div class="card">
+<canvas id="chart"></canvas>
+</div>
+
+<div class="card">
+<input id="name" placeholder="Tên">
+<input id="cccd" placeholder="CCCD">
+<button onclick="add()">Tạo</button>
+</div>
+</div>
 
 <script>
 const API="http://127.0.0.1:3000";
+let current="";
+let chart;
 
-// ===== LOGIN UI =====
-function showLogin(){
-  app.innerHTML=`
-  <div class="center">
-    <div class="login">
-      <h2>ICU SYSTEM</h2>
-      <input id="user" placeholder="Username">
-      <input id="pass" type="password" placeholder="Password">
-      <button onclick="login()">LOGIN</button>
-    </div>
-  </div>`;
-}
-
-// ===== DASHBOARD =====
-function showMain(){
-  app.innerHTML=`
-  <div class="sidebar" id="list"></div>
-
-  <div class="main">
-    <div class="card" id="info">Chưa chọn bệnh nhân</div>
-
-    <div class="monitor">
-      <div class="box sys">SYS<br><span id="sys">--</span></div>
-      <div class="box dia">DIA<br><span id="dia">--</span></div>
-      <div class="box hr">HR<br><span id="hr">--</span></div>
-    </div>
-
-    <div class="card">
-      <canvas id="ecg"></canvas>
-    </div>
-
-    <div class="card">
-      <h3>Tạo hồ sơ</h3>
-      <input id="name" placeholder="Tên">
-      <input id="dob" placeholder="Ngày sinh">
-      <input id="cccd" placeholder="CCCD">
-      <input id="address" placeholder="Địa chỉ">
-      <button onclick="add()">Tạo</button>
-    </div>
-  </div>`;
-  load();
-  startECG();
-}
-
-// ===== LOGIN FIX =====
-async function login(){
-  let res = await fetch(API+"/login",{
-    method:"POST",
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      username:document.getElementById("user").value,
-      password:document.getElementById("pass").value
-    })
-  });
-
-  let data = await res.json();
-
-  if(data.success){
-    showMain();
-  }else{
-    alert("Sai tài khoản");
-  }
-}
-
-// ===== LOAD =====
 async function load(){
-  let res = await fetch(API+"/patients");
-  let data = await res.json();
+ let res=await fetch(API+"/patients");
+ let data=await res.json();
 
-  list.innerHTML="";
+ list.innerHTML="";
+ data.forEach(p=>{
+  let div=document.createElement("div");
+  div.className="item";
+  div.innerHTML=p+` <button onclick="del('${p}')">X</button>`;
 
-  data.forEach(p=>{
-    let div=document.createElement("div");
-    div.className="patient";
-    div.innerText=p.name || "Không tên";
+  div.onclick=()=>{
+    current=p;
+    info.innerText=p;
+    loadRecords();
+  };
 
-    div.onclick=()=>{
-      info.innerHTML=`
-        <b>${p.name}</b><br>
-        ${p.dob}<br>
-        CCCD: ${p.cccd}<br>
-        ${p.address}
-      `;
-    }
-
-    list.appendChild(div);
-  });
+  list.appendChild(div);
+ });
 }
 
-// ===== ADD FIX =====
 async function add(){
-  let nameV=document.getElementById("name").value.trim();
-  let cccdV=document.getElementById("cccd").value.trim();
+ let name=nameInput.value;
+ let cccd=cccdInput.value;
 
-  if(!nameV || !cccdV){
-    alert("Thiếu dữ liệu!");
-    return;
-  }
+ await fetch(API+"/patient",{
+  method:"POST",
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({name,cccd})
+ });
 
-  let res = await fetch(API+"/patient",{
-    method:"POST",
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      name:nameV,
-      dob:document.getElementById("dob").value,
-      cccd:cccdV,
-      address:document.getElementById("address").value
-    })
-  });
-
-  let data = await res.json();
-
-  if(data.success){
-    alert("Đã tạo!");
-    load();
-  }else{
-    alert("Lỗi tạo!");
-  }
+ load();
 }
 
-// ===== ECG =====
-function startECG(){
-  const canvas=document.getElementById("ecg");
-  const ctx=canvas.getContext("2d");
-  let x=0;
-
-  const socket=io(API);
-
-  socket.on("data",(d)=>{
-    sys.innerText=d.sys;
-    dia.innerText=d.dia;
-    hr.innerText=d.hr;
-
-    ctx.fillStyle="black";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-
-    ctx.fillStyle="lime";
-    ctx.fillRect(x,75+d.ecg*10,2,2);
-
-    x+=2;
-    if(x>canvas.width) x=0;
-  });
+async function del(n){
+ await fetch(API+"/delete/"+n);
+ load();
 }
 
-// INIT
-showLogin();
+async function loadRecords(){
+ let res=await fetch(API+"/records/"+current);
+ let files=await res.json();
+
+ let labels=[];
+ let sys=[],dia=[],hr=[];
+
+ files.forEach(f=>{
+  labels.push(f);
+  sys.push(Math.random()*30+110);
+  dia.push(Math.random()*20+70);
+  hr.push(Math.random()*40+60);
+ });
+
+ drawChart(labels,sys,dia,hr);
+}
+
+function drawChart(labels,sys,dia,hr){
+ if(chart) chart.destroy();
+
+ chart=new Chart(document.getElementById("chart"),{
+  type:"line",
+  data:{
+    labels:labels,
+    datasets:[
+      {label:"SYS",data:sys,borderColor:"lime"},
+      {label:"DIA",data:dia,borderColor:"yellow"},
+      {label:"HR",data:hr,borderColor:"red"}
+    ]
+  }
+ });
+}
+
+// realtime + auto save
+const socket=io(API);
+socket.on("data",(d)=>{
+ if(current){
+   fetch(API+"/save",{
+     method:"POST",
+     headers:{'Content-Type':'application/json'},
+     body:JSON.stringify({...d,folder:current})
+   });
+ }
+});
+
+load();
 </script>
 
 </body>
