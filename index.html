@@ -70,18 +70,20 @@ async function login(){
   method:"POST",
   headers:{'Content-Type':'application/json'},
   body:JSON.stringify({
-    username:user.value,
-    password:pass.value
+    username: user.value,
+    password: pass.value
   })
  });
 
- let data=await res.json();
+ let data = await res.json();
 
  if(data.success){
-   login.style.display="none";
-   app.style.display="block";
+   document.getElementById("login").style.display = "none";
+   document.getElementById("app").style.display = "block";
    load();
- }else alert("Sai tài khoản");
+ }else{
+   alert("Sai tài khoản");
+ }
 }
 
 // LOAD
