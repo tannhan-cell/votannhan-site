@@ -2,152 +2,100 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Blood Pressure System</title>
+<title>Quản lý huyết áp</title>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
     font-family: Arial;
+    display: flex;
     margin: 0;
-    background: #0f172a;
+}
+
+#left {
+    width: 25%;
+    background: #2c3e50;
     color: white;
-}
-
-.login, .dashboard {
-    display: none;
-    padding: 20px;
-}
-
-input {
     padding: 10px;
-    margin: 5px;
-    width: 200px;
+}
+
+#right {
+    flex: 1;
+    padding: 20px;
 }
 
 button {
-    padding: 10px 20px;
-    background: #22c55e;
-    border: none;
-    color: white;
-    cursor: pointer;
-}
-
-.container {
-    display: flex;
-}
-
-.left {
-    width: 60%;
-}
-
-.right {
-    width: 40%;
-    background: #1e293b;
-    padding: 20px;
-}
-
-.patient {
-    padding: 10px;
-    background: #334155;
+    padding: 5px 10px;
     margin: 5px;
-    cursor: pointer;
+}
+
+input {
+    width: 90%;
+    margin: 5px;
+    padding: 5px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div class="login" id="login" style="display:block">
-    <h2>Login</h2>
-    <input id="user" placeholder="Username"><br>
-    <input id="pass" type="password" placeholder="Password"><br>
-    <button onclick="login()">Login</button>
+<!-- SIDEBAR -->
+<div id="left">
+    <h3>Bệnh nhân</h3>
+    <div id="list"></div>
 </div>
 
-<!-- DASHBOARD -->
-<div class="dashboard" id="dash">
-    <div class="container">
+<!-- MAIN -->
+<div id="right">
+    <h2>Tạo hồ sơ</h2>
 
-        <!-- LEFT -->
-        <div class="left">
-            <h3>Patients</h3>
-            <div id="patients"></div>
+    <input id="name" placeholder="Tên"><br>
+    <input id="dob" placeholder="Ngày sinh"><br>
+    <input id="cccd" placeholder="CCCD"><br>
+    <input id="addr" placeholder="Địa chỉ"><br>
 
-            <canvas id="chart"></canvas>
-        </div>
+    <button onclick="create()">Tạo</button>
 
-        <!-- RIGHT -->
-        <div class="right">
-            <h3>Create Patient</h3>
-
-            <input id="name" placeholder="Tên"><br>
-            <input id="dob" placeholder="Ngày sinh"><br>
-            <input id="cccd" placeholder="CCCD"><br>
-            <input id="addr" placeholder="Nơi ở"><br>
-
-            <button onclick="create()">Tạo hồ sơ</button>
-        </div>
-
-    </div>
+    <h2>Biểu đồ</h2>
+    <canvas id="chart"></canvas>
 </div>
 
 <script>
 let currentFolder = null
-let chart
-
-function login() {
-    fetch("http://127.0.0.1:5000/login", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({
-            username: user.value,
-            password: pass.value
-        })
-    })
-    .then(r=>r.json())
-    .then(d=>{
-        if(d.status==="ok"){
-            loginDiv = document.getElementById("login")
-            dash = document.getElementById("dash")
-
-            loginDiv.style.display="none"
-            dash.style.display="block"
-
-            loadPatients()
-        }
-    })
-}
+let chart = null
 
 function create(){
-    fetch("/create_patient",{
+    fetch("http://127.0.0.1:5000/create_patient",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-            name:name.value,
-            dob:dob.value,
-            cccd:cccd.value,
-            addr:addr.value
+        body:JSON.stringify({
+            name: name.value,
+            dob: dob.value,
+            cccd: cccd.value,
+            addr: addr.value
         })
-    }).then(()=>loadPatients())
+    }).then(()=>load())
 }
 
-function loadPatients(){
-    fetch("/patients")
+function load(){
+    fetch("http://127.0.0.1:5000/patients")
     .then(r=>r.json())
     .then(data=>{
-        let html=""
-        data.forEach(p=>{
-            html += `<div class="patient" onclick="select('${p}')">${p}</div>`
+        list.innerHTML=""
+        data.forEach(f=>{
+            let div=document.createElement("div")
+            div.innerHTML=f
+            div.onclick=()=>openFolder(f)
+            list.appendChild(div)
         })
-        patients.innerHTML = html
     })
 }
 
-function select(folder){
+function openFolder(folder){
     currentFolder = folder
 
-    fetch("/records/"+folder)
+    fetch("http://127.0.0.1:5000/records/"+folder)
     .then(r=>r.json())
     .then(data=>{
         let labels = data.map(x=>x.time)
@@ -160,7 +108,7 @@ function select(folder){
         chart = new Chart(document.getElementById("chart"),{
             type:"line",
             data:{
-                labels: labels,
+                labels:labels,
                 datasets:[
                     {label:"SYS", data:sys, borderColor:"red"},
                     {label:"DIA", data:dia, borderColor:"blue"},
@@ -170,6 +118,8 @@ function select(folder){
         })
     })
 }
+
+load()
 </script>
 
 </body>
