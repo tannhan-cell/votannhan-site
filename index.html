@@ -2,83 +2,81 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Hệ thống đo huyết áp</title>
+<title>Quản lý huyết áp</title>
 
+<!-- ⚠️ NẾU BỊ BLOCK CDN → tải về local -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
     margin: 0;
-    font-family: Arial;
+    font-family: 'Segoe UI';
     display: flex;
     height: 100vh;
+    background: #ecf0f1;
 }
 
-/* SIDEBAR */
 #sidebar {
     width: 260px;
-    background: #1e272e;
+    background: linear-gradient(180deg, #2c3e50, #34495e);
     color: white;
     padding: 15px;
-    overflow-y: auto;
 }
 
 .patient {
     padding: 10px;
-    margin: 5px 0;
-    background: #485460;
+    margin: 8px 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 6px;
     cursor: pointer;
-    border-radius: 5px;
 }
 
 .patient:hover {
-    background: #34ace0;
+    background: #3498db;
 }
 
-/* MAIN */
 #main {
     flex: 1;
-    padding: 20px;
-    background: #f1f2f6;
+    padding: 25px;
 }
 
-/* FORM */
 input {
-    width: 95%;
-    padding: 8px;
-    margin: 5px 0;
+    width: 260px;
+    padding: 10px;
+    margin: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
 }
 
 button {
-    padding: 8px 12px;
-    background: #2ed573;
+    padding: 10px 16px;
     border: none;
+    border-radius: 6px;
+    background: #2ecc71;
     color: white;
     cursor: pointer;
 }
 
 button:hover {
-    background: #1e90ff;
+    background: #27ae60;
 }
 
 #info {
-    margin-top: 10px;
-    background: white;
+    margin-top: 15px;
     padding: 10px;
-    border-radius: 5px;
+    background: white;
+    border-radius: 8px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- SIDEBAR -->
 <div id="sidebar">
-    <h3>Danh sách bệnh nhân</h3>
+    <h3>Bệnh nhân</h3>
     <div id="list"></div>
 </div>
 
-<!-- MAIN -->
 <div id="main">
 
     <h2>Tạo hồ sơ</h2>
@@ -86,13 +84,13 @@ button:hover {
     <input id="name" placeholder="Tên">
     <input id="dob" placeholder="Ngày sinh">
     <input id="cccd" placeholder="CCCD">
-    <input id="addr" placeholder="Địa chỉ">
+    <input id="addr" placeholder="Địa chỉ"><br>
 
     <button onclick="createPatient()">Tạo hồ sơ</button>
 
     <div id="info"></div>
 
-    <h2>Biểu đồ huyết áp</h2>
+    <h2>Biểu đồ</h2>
     <canvas id="chart"></canvas>
 
 </div>
@@ -101,15 +99,12 @@ button:hover {
 const API = "http://127.0.0.1:5000"
 
 let chart = null
-let currentFolder = null
 
-// ===== LOAD DANH SÁCH =====
 function loadPatients(){
     fetch(API + "/patients")
     .then(r=>r.json())
     .then(data=>{
         list.innerHTML = ""
-
         data.forEach(f=>{
             let div = document.createElement("div")
             div.className = "patient"
@@ -120,11 +115,10 @@ function loadPatients(){
     })
 }
 
-// ===== TẠO HỒ SƠ =====
 function createPatient(){
-    fetch(API + "/create_patient",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
+    fetch(API + "/create_patient", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
             name: name.value,
             dob: dob.value,
@@ -132,27 +126,24 @@ function createPatient(){
             addr: addr.value
         })
     })
-    .then(r=>r.json())
-    .then(res=>{
-        if(res.status){
-            alert("Tạo thành công!")
-            loadPatients()
-        } else {
-            alert("Lỗi!")
-        }
+    .then(res => res.json())
+    .then(data => {
+        alert("Tạo thành công!")
+        loadPatients()
+    })
+    .catch(err=>{
+        alert("Lỗi kết nối server!")
+        console.error(err)
     })
 }
 
-// ===== MỞ HỒ SƠ =====
 function openFolder(folder){
-    currentFolder = folder
-
     fetch(API + "/records/" + folder)
     .then(r=>r.json())
     .then(data=>{
 
         if(data.length === 0){
-            info.innerHTML = "Chưa có dữ liệu đo"
+            info.innerHTML = "Chưa có dữ liệu"
             return
         }
 
@@ -161,7 +152,6 @@ function openFolder(folder){
         let dia = data.map(x=>x.dia)
         let pulse = data.map(x=>x.pulse)
 
-        // trung bình
         let avgSys = (sys.reduce((a,b)=>a+b,0)/sys.length).toFixed(1)
         let avgDia = (dia.reduce((a,b)=>a+b,0)/dia.length).toFixed(1)
         let avgPulse = (pulse.reduce((a,b)=>a+b,0)/pulse.length).toFixed(1)
@@ -189,7 +179,6 @@ function openFolder(folder){
     })
 }
 
-// ===== AUTO LOAD =====
 loadPatients()
 </script>
 
