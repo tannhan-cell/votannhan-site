@@ -2,158 +2,116 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Hospital Dashboard</title>
+<title>ICU Monitor</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
 <style>
-body {margin:0; font-family:Segoe UI; display:flex;}
-#sidebar {
-    width:260px; background:#1e272e; color:white; padding:15px;
-}
-.patient {
-    padding:10px; margin:5px 0;
-    background:#485460; border-radius:6px; cursor:pointer;
-}
-.patient:hover {background:#00a8ff;}
-
-#main {flex:1; padding:20px; background:#f1f2f6;}
-
-.card {
-    background:white;
-    padding:15px;
-    border-radius:10px;
-    margin-bottom:15px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.1);
-}
-
-input {padding:8px; margin:5px;}
-button {
-    padding:8px 12px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-}
-.green {background:#2ecc71;color:white;}
-.red {background:#e74c3c;color:white;}
-.orange {background:#f39c12;color:white;}
+body {background:#0b1220;color:white;font-family:Arial;}
+.card {background:#111827;padding:15px;margin:10px;border-radius:10px;}
+.big {font-size:40px;font-weight:bold;}
+button {padding:10px;margin:5px;}
 </style>
 </head>
 
 <body>
 
-<div id="sidebar">
-    <h3>Bệnh nhân</h3>
-    <div id="list"></div>
-</div>
-
-<div id="main">
+<h2>🏥 ICU Dashboard</h2>
 
 <div class="card">
-    <h3>Tạo hồ sơ</h3>
-    <input id="name" placeholder="Tên">
-    <input id="cccd" placeholder="CCCD">
-    <button class="green" onclick="create()">Tạo</button>
+  <h3>Tạo bệnh nhân</h3>
+  <input id="name" placeholder="Tên"><br>
+  <input id="cccd" placeholder="CCCD"><br>
+  <input id="dob" placeholder="DOB"><br>
+  <input id="address" placeholder="Address"><br>
+  <button onclick="add()">Tạo</button>
 </div>
 
 <div class="card">
-    <h3 id="info">Chưa chọn</h3>
-    <button class="orange" onclick="start()">BẮT ĐẦU ĐO</button>
-    <button class="red" onclick="del()">Xóa</button>
+  <h3>Danh sách</h3>
+  <ul id="list"></ul>
 </div>
 
 <div class="card">
-    <canvas id="chart"></canvas>
+  <h3 id="pname">---</h3>
+  <button onclick="fake()">ĐO THỬ</button>
 </div>
 
+<div class="card">
+  SYS <div id="sys" class="big">--</div>
+  DIA <div id="dia" class="big">--</div>
+  HR <div id="hr" class="big">--</div>
 </div>
 
 <script>
-const API="http://127.0.0.1:5000"
-const socket = io(API)
 
-let current=null
-let chart=null
-let dataArr=[]
+const API = "http://127.0.0.1:5000";
+const socket = io(API);
 
-// load bệnh nhân
-function load(){
- fetch(API+"/patients")
- .then(r=>r.json())
- .then(d=>{
-    list.innerHTML=""
-    d.forEach(f=>{
-        let div=document.createElement("div")
-        div.className="patient"
-        div.innerText=f
-        div.onclick=()=>select(f)
-        list.appendChild(div)
-    })
- })
+let current = null;
+
+// load
+async function load(){
+  let res = await fetch(API+"/patients");
+  let data = await res.json();
+
+  list.innerHTML="";
+  data.forEach(p=>{
+    let li=document.createElement("li");
+    li.innerText=p.name;
+    li.onclick=()=>select(p);
+    list.appendChild(li);
+  });
 }
 
 // tạo
-function create(){
- fetch(API+"/create_patient",{
+async function add(){
+  await fetch(API+"/create_patient",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
-        name:name.value,
-        cccd:cccd.value
+      name:name.value,
+      cccd:cccd.value,
+      dob:dob.value,
+      address:address.value
     })
- }).then(load)
+  });
+  load();
 }
 
-// chọn bệnh nhân
-function select(f){
- current=f
- info.innerText=f
- dataArr=[]
+// chọn
+function select(p){
+  current=p;
+  pname.innerText=p.name;
 }
 
-// bắt đầu đo
-function start(){
- if(!current) return alert("Chọn bệnh nhân")
- fetch(API+"/start_measure/"+current)
+// fake data
+async function fake(){
+  if(!current) return alert("chọn bệnh nhân");
+
+  await fetch(API+"/record/"+current.cccd,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      sys:120+Math.random()*20,
+      dia:80+Math.random()*10,
+      hr:70+Math.random()*20
+    })
+  });
 }
 
-// xóa
-function del(){
- if(!current) return
- fetch(API+"/delete/"+current,{method:"DELETE"}).then(()=>{
-    current=null
-    load()
- })
-}
+// realtime
+socket.on("newData",(msg)=>{
+  if(!current) return;
+  if(msg.cccd!==current.cccd) return;
 
-// 🔥 REALTIME NHẬN DATA
-socket.on("new_data",(d)=>{
- if(d.folder !== current) return
+  sys.innerText=Math.round(msg.data.sys);
+  dia.innerText=Math.round(msg.data.dia);
+  hr.innerText=Math.round(msg.data.hr);
+});
 
- dataArr.push(d)
+load();
 
- let labels=dataArr.map(x=>x.time)
- let sys=dataArr.map(x=>x.sys)
- let dia=dataArr.map(x=>x.dia)
- let pulse=dataArr.map(x=>x.pulse)
-
- if(chart) chart.destroy()
-
- chart=new Chart(chartCanvas,{
-    type:"line",
-    data:{
-        labels:labels,
-        datasets:[
-            {label:"SYS",data:sys,borderColor:"red"},
-            {label:"DIA",data:dia,borderColor:"blue"},
-            {label:"PULSE",data:pulse,borderColor:"green"}
-        ]
-    }
- })
-})
-
-load()
 </script>
 
 </body>
