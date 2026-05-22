@@ -1,118 +1,330 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>ICU Monitor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏥 Hệ Thống Theo Dõi ICU Realtime</title>
 
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {background:#0b1220;color:white;font-family:Arial;}
-.card {background:#111827;padding:15px;margin:10px;border-radius:10px;}
-.big {font-size:40px;font-weight:bold;}
-button {padding:10px;margin:5px;}
+    :root {
+        --bg: #090d16;
+        --panel: #131c2e;
+        --card: #1e293b;
+        --accent-blue: #38bdf8;
+        --accent-green: #4ade80;
+        --accent-red: #f87171;
+        --text: #f8fafc;
+        --text-muted: #94a3b8;
+    }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        box-sizing: border-box;
+    }
+
+    h2 { margin: 0 0 20px 0; font-size: 24px; display: flex; align-items: center; gap: 10px; }
+
+    /* Bố cục Grid 3 cột thông minh */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 320px 1fr 350px;
+        gap: 20px;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .panel {
+        background: var(--panel);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #243552;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .panel h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Form Nhập Liệu mượt mà */
+    .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    input {
+        background: #0f172a;
+        border: 1px solid #334155;
+        padding: 10px 14px;
+        border-radius: 8px;
+        color: white;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+    input:focus { border-color: var(--accent-blue); outline: none; box-shadow: 0 0 0 2px rgba(56,189,248,0.2); }
+
+    button {
+        background: var(--accent-blue);
+        color: #0f172a;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.2s;
+        font-size: 14px;
+    }
+    button:hover { opacity: 0.9; transform: translateY(-1px); }
+    button.btn-fake { background: #6366f1; color: white; margin-top: 10px; }
+
+    /* Danh sách bệnh nhân */
+    .patient-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
+    .patient-list li {
+        background: var(--card);
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+        border-left: 4px solid transparent;
+        display: flex;
+        justify-content: space-between;
+    }
+    .patient-list li:hover { background: #2d3d5a; }
+    .patient-list li.active { border-left-color: var(--accent-blue); background: #243754; font-weight: bold; }
+    .patient-list li span { font-size: 12px; color: var(--text-muted); align-self: center; }
+
+    /* Chỉ số lớn Realtime cực đẹp */
+    .vitals-container { display: flex; flex-direction: column; gap: 15px; flex: 1; justify-content: center; }
+    .vital-box {
+        background: #0f172a;
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        border: 1px solid #1e293b;
+        position: relative;
+    }
+    .vital-box.sys { border-top: 4px solid var(--accent-red); }
+    .vital-box.dia { border-top: 4px solid var(--accent-blue); }
+    .vital-box.hr { border-top: 4px solid var(--accent-green); }
+    .vital-label { font-size: 12px; color: var(--text-muted); font-weight: bold; }
+    .vital-value { font-size: 48px; font-weight: bold; font-family: monospace; margin: 5px 0; }
+    .vital-unit { font-size: 12px; color: var(--text-muted); }
+
+    /* Khu vực trung tâm: Biểu đồ & Bảng dữ liệu */
+    .center-panel { overflow-y: auto; gap: 20px; }
+    .chart-container { background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid #1e293b; height: 180px; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+    th { background: #0f172a; color: var(--accent-blue); padding: 10px; text-align: center; font-weight: 600; }
+    td { padding: 10px; border-bottom: 1px solid #1e293b; text-align: center; }
+    tr:hover { background: rgba(255,255,255,0.02); }
 </style>
 </head>
-
 <body>
 
-<h2>🏥 ICU Dashboard</h2>
+<h2>🏥 Hệ Thống Theo Dõi Trung Tâm ICU</h2>
 
-<div class="card">
-  <h3>Tạo bệnh nhân</h3>
-  <input id="name" placeholder="Tên"><br>
-  <input id="cccd" placeholder="CCCD"><br>
-  <input id="dob" placeholder="DOB"><br>
-  <input id="address" placeholder="Address"><br>
-  <button onclick="add()">Tạo</button>
-</div>
+<div class="dashboard-grid">
+    <div class="panel">
+        <h3>➕ Thêm bệnh nhân</h3>
+        <div class="form-group">
+            <input id="p_name" placeholder="Họ và tên">
+            <input id="p_cccd" placeholder="Số CCCD/Mã định danh">
+            <input id="p_dob" placeholder="Ngày sinh (DD/MM/YYYY)">
+            <input id="p_address" placeholder="Địa chỉ thường trú">
+            <button onclick="addPatient()">Lưu thông tin</button>
+        </div>
+        
+        <h3>👥 Danh Sách Bệnh Nhân</h3>
+        <ul id="list" class="patient-list"></ul>
+    </div>
 
-<div class="card">
-  <h3>Danh sách</h3>
-  <ul id="list"></ul>
-</div>
+    <div class="panel center-panel">
+        <h3 id="pname">Bệnh nhân: Chưa chọn</h3>
+        <div class="chart-container">
+            <canvas id="liveChart"></canvas>
+        </div>
+        
+        <h3>📋 Nhật ký chỉ số (15 lần gần nhất)</h3>
+        <div style="overflow-x:auto; flex:1;">
+            <table>
+                <thead>
+                    <tr><th>Thời gian</th><th>Tâm thu (SYS)</th><th>Tâm trương (DIA)</th><th>Nhịp tim (HR)</th></tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr><td colspan="4" style="color:var(--text-muted);">Vui lòng chọn bệnh nhân để xem lịch sử</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-<div class="card">
-  <h3 id="pname">---</h3>
-  <button onclick="fake()">ĐO THỬ</button>
-</div>
-
-<div class="card">
-  SYS <div id="sys" class="big">--</div>
-  DIA <div id="dia" class="big">--</div>
-  HR <div id="hr" class="big">--</div>
+    <div class="panel">
+        <h3>📺 Chỉ số trực quan (Realtime)</h3>
+        <div class="vitals-container">
+            <div class="vital-box sys">
+                <div class="vital-label">HUYẾT ÁP TÂM THU</div>
+                <div id="sys" class="vital-value" style="color: var(--accent-red);">--</div>
+                <div class="vital-unit">mmHg</div>
+            </div>
+            <div class="vital-box dia">
+                <div class="vital-label">HUYẾT ÁP TÂM TRƯƠNG</div>
+                <div id="dia" class="vital-value" style="color: var(--accent-blue);">--</div>
+                <div class="vital-unit">mmHg</div>
+            </div>
+            <div class="vital-box hr">
+                <div class="vital-label">NHỊP TIM THỰC TẾ</div>
+                <div id="hr" class="vital-value" style="color: var(--accent-green);">--</div>
+                <div class="vital-unit">bpm</div>
+            </div>
+        </div>
+        <button class="btn-fake" onclick="fakeData()">⚡ CHẠY ĐO THỬ (FAKE)</button>
+    </div>
 </div>
 
 <script>
-
-const API = "http://127.0.0.1:5000";
+const API = "http://127.0.0.1:5000"; // Thay link Render tại đây
 const socket = io(API);
+let currentPatient = null;
 
-let current = null;
-
-// load
-async function load(){
-  let res = await fetch(API+"/patients");
-  let data = await res.json();
-
-  list.innerHTML="";
-  data.forEach(p=>{
-    let li=document.createElement("li");
-    li.innerText=p.name;
-    li.onclick=()=>select(p);
-    list.appendChild(li);
-  });
-}
-
-// tạo
-async function add(){
-  await fetch(API+"/create_patient",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      name:name.value,
-      cccd:cccd.value,
-      dob:dob.value,
-      address:address.value
-    })
-  });
-  load();
-}
-
-// chọn
-function select(p){
-  current=p;
-  pname.innerText=p.name;
-}
-
-// fake data
-async function fake(){
-  if(!current) return alert("chọn bệnh nhân");
-
-  await fetch(API+"/record/"+current.cccd,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      sys:120+Math.random()*20,
-      dia:80+Math.random()*10,
-      hr:70+Math.random()*20
-    })
-  });
-}
-
-// realtime
-socket.on("newData",(msg)=>{
-  if(!current) return;
-  if(msg.cccd!==current.cccd) return;
-
-  sys.innerText=Math.round(msg.data.sys);
-  dia.innerText=Math.round(msg.data.dia);
-  hr.innerText=Math.round(msg.data.hr);
+// Khởi tạo Chart.js đa màu sắc đẹp mắt
+const ctx = document.getElementById('liveChart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            { label: 'SYS', data: [], borderColor: '#f87171', tension: 0.2, borderWidth: 2 },
+            { label: 'DIA', data: [], borderColor: '#38bdf8', tension: 0.2, borderWidth: 2 }
+        ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { labels: { color: '#fff' } } } }
 });
 
-load();
+// Tải danh sách bệnh nhân
+async function loadPatients(){
+    let res = await fetch(API+"/patients");
+    let data = await res.json();
+    const listEl = document.getElementById("list");
+    listEl.innerHTML = "";
+    
+    data.forEach(p => {
+        let li = document.createElement("li");
+        li.id = `p-${p.cccd}`;
+        li.innerHTML = `<div>${p.name}</div><span>${p.cccd}</span>`;
+        if(currentPatient && currentPatient.cccd === p.cccd) li.className = "active";
+        li.onclick = () => selectPatient(p);
+        listEl.appendChild(li);
+    });
+}
 
+// Tạo bệnh nhân & Tự động xóa form cũ để tránh đè dữ liệu
+async function addPatient(){
+    const nameInput = document.getElementById("p_name");
+    const cccdInput = document.getElementById("p_cccd");
+    const dobInput = document.getElementById("p_dob");
+    const addrInput = document.getElementById("p_address");
+
+    if(!nameInput.value || !cccdInput.value) return alert("Vui lòng nhập đầy đủ Tên và CCCD!");
+
+    let res = await fetch(API+"/create_patient", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            name: nameInput.value,
+            cccd: cccdInput.value,
+            dob: dobInput.value,
+            address: addrInput.value
+        })
+    });
+    
+    let result = await res.json();
+    if(result.error) {
+        alert(result.error);
+    } else {
+        // Reset sạch form nhập
+        nameInput.value = ""; cccdInput.value = ""; dobInput.value = ""; addrInput.value = "";
+        loadPatients();
+    }
+}
+
+// Chọn bệnh nhân & hiển thị lịch sử đo cũ
+function selectPatient(p){
+    currentPatient = p;
+    document.querySelectorAll(".patient-list li").forEach(li => li.classList.remove("active"));
+    document.getElementById(`p-${p.cccd}`).classList.add("active");
+    
+    document.getElementById("pname").innerText = `Bệnh nhân: ${p.name} (Sinh năm: ${p.dob || 'Chưa rõ'})`;
+    
+    // Cập nhật lại màn hình hiển thị lịch sử
+    updateDashboardUI(p.records);
+}
+
+// Hàm cập nhật bảng dữ liệu và biểu đồ đường phẳng
+function updateDashboardUI(records) {
+    if(!records || records.length === 0) {
+        document.getElementById("sys").innerText = "--";
+        document.getElementById("dia").innerText = "--";
+        document.getElementById("hr").innerText = "--";
+        document.getElementById("table-body").innerHTML = `<tr><td colspan="4" style="color:var(--text-muted);">Bệnh nhân này chưa có dữ liệu đo</td></tr>`;
+        chart.data.labels = []; chart.data.datasets[0].data = []; chart.data.datasets[1].data = []; chart.update();
+        return;
+    }
+
+    // Lấy chỉ số mới nhất hiển thị lên ô lớn
+    const latest = records[records.length - 1];
+    document.getElementById("sys").innerText = Math.round(latest.sys);
+    document.getElementById("dia").innerText = Math.round(latest.dia);
+    document.getElementById("hr").innerText = Math.round(latest.hr);
+
+    // Đổ vào bảng log (đảo ngược để hiển thị mới nhất lên đầu)
+    const reversedLogs = [...records].reverse().slice(0, 15);
+    document.getElementById("table-body").innerHTML = reversedLogs.map(r => `
+        <tr>
+            <td>${r.time.replace('_', ' ')}</td>
+            <td style="color:var(--accent-red); font-weight:bold;">${Math.round(r.sys)}</td>
+            <td style="color:var(--accent-blue); font-weight:bold;">${Math.round(r.dia)}</td>
+            <td style="color:var(--accent-green); font-weight:bold;">${Math.round(r.hr)}</td>
+        </tr>
+    `).join('');
+
+    // Đồng bộ vào Biểu đồ đường (10 điểm gần nhất)
+    const chartData = records.slice(-10);
+    chart.data.labels = chartData.map(r => r.time.split('_')[1] || r.time);
+    chart.data.datasets[0].data = chartData.map(r => r.sys);
+    chart.data.datasets[1].data = chartData.map(r => r.dia);
+    chart.update();
+}
+
+// Đo khống dữ liệu kiểm thử nhanh
+async function fakeData(){
+    if(!currentPatient) return alert("Vui lòng chọn 1 bệnh nhân từ danh sách trước!");
+    await fetch(API+"/record/"+currentPatient.cccd, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            sys: 115 + Math.random()*20,
+            dia: 75 + Math.random()*15,
+            hr: 65 + Math.random()*25
+        })
+    });
+}
+
+// Lắng nghe dữ liệu đẩy trực tiếp về từ SocketIO toàn thời gian
+socket.on("newData", (msg) => {
+    // Tìm và cập nhật dữ liệu cục bộ của bệnh nhân tương ứng trong danh sách để không bị mất khi bấm qua lại
+    if(currentPatient && msg.cccd === currentPatient.cccd) {
+        currentPatient.records.push(msg.data);
+        updateDashboardUI(currentPatient.records);
+    }
+});
+
+loadPatients();
 </script>
-
 </body>
 </html>
