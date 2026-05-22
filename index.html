@@ -2,72 +2,92 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Blood Pressure App</title>
+<title>Blood Pressure Pro</title>
+
 <style>
-    body {
-        font-family: Arial;
-        background: #0f172a;
-        color: white;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-    }
-    .card {
-        background: #1e293b;
-        padding: 25px;
-        border-radius: 15px;
-        width: 320px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
-    h2 {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    input, button {
-        width: 100%;
-        padding: 10px;
-        margin: 8px 0;
-        border-radius: 8px;
-        border: none;
-    }
-    input {
-        background: #334155;
-        color: white;
-    }
-    button {
-        background: #38bdf8;
-        color: black;
-        font-weight: bold;
-        cursor: pointer;
-    }
-    button:hover {
-        background: #0ea5e9;
-    }
-    .records {
-        margin-top: 15px;
-        max-height: 150px;
-        overflow-y: auto;
-        background: #0f172a;
-        padding: 10px;
-        border-radius: 10px;
-    }
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+}
+
+.container {
+    width: 360px;
+    margin: 40px auto;
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+h2 {
+    text-align: center;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border-radius: 8px;
+    border: none;
+    background: #334155;
+    color: white;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.save { background: #22c55e; }
+.load { background: #3b82f6; }
+
+.records {
+    margin-top: 15px;
+    max-height: 150px;
+    overflow-y: auto;
+    background: #0f172a;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.records div {
+    padding: 5px;
+    border-bottom: 1px solid #334155;
+    cursor: pointer;
+}
+
+.preview {
+    margin-top: 10px;
+    background: #020617;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 14px;
+}
 </style>
 </head>
 
 <body>
-<div class="card">
-    <h2>📊 Đo Huyết Áp</h2>
+
+<div class="container">
+    <h2>📊 Huyết Áp</h2>
 
     <input id="user" placeholder="Tên người dùng">
     <input id="sys" placeholder="SYS">
     <input id="dia" placeholder="DIA">
     <input id="pul" placeholder="PULSE">
 
-    <button onclick="save()">💾 Lưu</button>
-    <button onclick="load()">📂 Xem dữ liệu</button>
+    <button class="save" onclick="save()">💾 Lưu</button>
+    <button class="load" onclick="load()">📂 Xem</button>
 
     <div class="records" id="records"></div>
+    <div class="preview" id="preview"></div>
 </div>
 
 <script>
@@ -75,10 +95,10 @@ const API = "http://127.0.0.1:5000";
 
 function save() {
     const data = {
-        user: document.getElementById("user").value,
-        sys: document.getElementById("sys").value,
-        dia: document.getElementById("dia").value,
-        pul: document.getElementById("pul").value
+        user: user.value,
+        sys: sys.value,
+        dia: dia.value,
+        pul: pul.value
     };
 
     fetch(API + "/save", {
@@ -87,23 +107,34 @@ function save() {
         body: JSON.stringify(data)
     })
     .then(res => res.text())
-    .then(alert);
+    .then(msg => {
+        alert(msg);
+        load();
+    });
 }
 
 function load() {
-    const user = document.getElementById("user").value;
-
-    fetch(API + "/records/" + user)
+    fetch(API + "/records/" + user.value)
     .then(res => res.json())
-    .then(data => {
-        const div = document.getElementById("records");
-        div.innerHTML = "";
-
-        data.forEach(f => {
-            div.innerHTML += `<div>📄 ${f}</div>`;
+    .then(files => {
+        records.innerHTML = "";
+        files.forEach(f => {
+            const div = document.createElement("div");
+            div.innerText = "📄 " + f;
+            div.onclick = () => readFile(f);
+            records.appendChild(div);
         });
     });
 }
+
+function readFile(file) {
+    fetch(API + "/records/" + user.value + "/" + file)
+    .then(res => res.text())
+    .then(text => {
+        preview.innerText = text;
+    });
+}
 </script>
+
 </body>
 </html>
