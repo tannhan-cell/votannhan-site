@@ -185,7 +185,7 @@
         <h3>➕ Thêm bệnh nhân</h3>
         <div class="form-group">
             <input id="p_name" placeholder="Họ và tên">
-            <input id="p_cccd" placeholder="Số CCCD/Mã định danh">
+            <input id="p_cccd" placeholder="Số CCCD">
             <input id="p_dob" placeholder="Ngày sinh (DD/MM/YYYY)">
             <input id="p_address" placeholder="Địa chỉ thường trú">
             <button onclick="addPatient()">Lưu thông tin</button>
@@ -368,7 +368,7 @@ function selectPatient(p) {
     
     document.getElementById("pname").innerHTML = `
         <span style="color: var(--accent-blue);">HỌ VÀ TÊN:</span> ${p.name}<br>
-        <span style="color: var(--accent-blue);">NGÀY THÁNG NĂM SINH:</span> ${p.dob || 'Chưa rõ'}<br>
+        <span style="color: var(--accent-blue);">NĂM SINH:</span> ${p.dob || 'Chưa rõ'}<br>
         <span style="color: var(--accent-blue);">CCCD:</span> ${p.cccd}<br>
         <span style="color: var(--accent-blue);">NƠI Ở:</span> ${p.address || 'Chưa rõ'}
     `;
