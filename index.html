@@ -240,7 +240,7 @@
                 <div class="vital-unit">bpm</div>
             </div>
         </div>
-        <button class="btn-start-measure" onclick="triggerHardwareMeasure()">⚡ BẮT ĐẦU ĐO TRỰC TUYẾN</button>
+        <button class="btn-start-measure" onclick="triggerTestMeasure()">🧪 ĐO THỬ (TEST SMS)</button>
     </div>
 </div>
 
@@ -364,7 +364,6 @@ function selectPatient(p) {
     const activeLi = document.getElementById(`p-${p.cccd}`);
     if(activeLi) activeLi.classList.add("active");
     
-    // Đổ thêm thông tin SỐ ĐIỆN THOẠI ra màn hình
     document.getElementById("pname").innerHTML = `
         <span style="color: var(--accent-blue);">HỌ VÀ TÊN:</span> ${p.name}<br>
         <span style="color: var(--accent-blue);">NGÀY THÁNG NĂM SINH:</span> ${p.dob || 'Chưa rõ'}<br>
@@ -375,15 +374,20 @@ function selectPatient(p) {
     updateDashboardUI(p.records);
 }
 
-async function triggerHardwareMeasure() {
-    if(!currentPatient) return alert("Vui lòng chọn bệnh nhân trước khi ấn đo!");
-    let res = await fetch(API + "/api/trigger_measure", {
+async function triggerTestMeasure() {
+    if(!currentPatient) return alert("Vui lòng chọn một bệnh nhân trong danh sách trước khi ấn Đo Thử!");
+    
+    let res = await fetch(API + "/api/test_measure", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cccd: currentPatient.cccd, name: currentPatient.name })
+        body: JSON.stringify({ cccd: currentPatient.cccd })
     });
     let data = await res.json();
-    if(data.msg === "triggered") alert(`🚀 Đã gửi lệnh kích hoạt phần cứng đo cho: ${currentPatient.name}`);
+    if(data.msg === "ok") {
+        alert(`🎯 Đã kích hoạt chế độ Đo Thử thành công!\nHãy kiểm tra điện thoại của bệnh nhân: ${currentPatient.name}`);
+    } else {
+        alert("Lỗi: " + data.error);
+    }
 }
 
 async function deletePatient(cccd, name) {
@@ -406,7 +410,7 @@ async function addPatient(){
     const cccdInput = document.getElementById("p_cccd");
     const dobInput = document.getElementById("p_dob");
     const addrInput = document.getElementById("p_address");
-    const phoneInput = document.getElementById("p_phone"); // Lấy giá trị SĐT
+    const phoneInput = document.getElementById("p_phone");
 
     if(!nameInput.value || !cccdInput.value) return alert("Vui lòng nhập đầy đủ Tên và CCCD!");
 
@@ -418,7 +422,7 @@ async function addPatient(){
             cccd: cccdInput.value,
             dob: dobInput.value,
             address: addrInput.value,
-            phone: phoneInput.value // Gửi SĐT lên server
+            phone: phoneInput.value
         })
     });
     
