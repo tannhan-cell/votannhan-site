@@ -1,129 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<title>Blood Pressure App</title>
 <style>
-body{background:#020617;color:white;font-family:sans-serif;margin:0}
-.sidebar{width:220px;float:left;height:100vh;background:#020617;border-right:1px solid #333}
-.item{padding:10px;cursor:pointer}
-.item:hover{background:#1e293b}
-.main{margin-left:220px;padding:20px}
-.card{background:#0f172a;padding:15px;margin-bottom:10px;border-radius:10px}
-button{background:red;color:white;border:none;padding:5px;border-radius:5px}
+    body {
+        font-family: Arial;
+        background: #0f172a;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    .card {
+        background: #1e293b;
+        padding: 25px;
+        border-radius: 15px;
+        width: 320px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    input, button {
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border: none;
+    }
+    input {
+        background: #334155;
+        color: white;
+    }
+    button {
+        background: #38bdf8;
+        color: black;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    button:hover {
+        background: #0ea5e9;
+    }
+    .records {
+        margin-top: 15px;
+        max-height: 150px;
+        overflow-y: auto;
+        background: #0f172a;
+        padding: 10px;
+        border-radius: 10px;
+    }
 </style>
 </head>
 
 <body>
-
-<div class="sidebar" id="list"></div>
-
-<div class="main">
-<div class="card" id="info">Chọn bệnh nhân</div>
-
 <div class="card">
-<canvas id="chart"></canvas>
-</div>
+    <h2>📊 Đo Huyết Áp</h2>
 
-<div class="card">
-<input id="name" placeholder="Tên">
-<input id="cccd" placeholder="CCCD">
-<button onclick="add()">Tạo</button>
-</div>
+    <input id="user" placeholder="Tên người dùng">
+    <input id="sys" placeholder="SYS">
+    <input id="dia" placeholder="DIA">
+    <input id="pul" placeholder="PULSE">
+
+    <button onclick="save()">💾 Lưu</button>
+    <button onclick="load()">📂 Xem dữ liệu</button>
+
+    <div class="records" id="records"></div>
 </div>
 
 <script>
-const API="http://127.0.0.1:3000";
-let current="";
-let chart;
+const API = "http://127.0.0.1:5000";
 
-async function load(){
- let res=await fetch(API+"/patients");
- let data=await res.json();
+function save() {
+    const data = {
+        user: document.getElementById("user").value,
+        sys: document.getElementById("sys").value,
+        dia: document.getElementById("dia").value,
+        pul: document.getElementById("pul").value
+    };
 
- list.innerHTML="";
- data.forEach(p=>{
-  let div=document.createElement("div");
-  div.className="item";
-  div.innerHTML=p+` <button onclick="del('${p}')">X</button>`;
-
-  div.onclick=()=>{
-    current=p;
-    info.innerText=p;
-    loadRecords();
-  };
-
-  list.appendChild(div);
- });
+    fetch(API + "/save", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    })
+    .then(res => res.text())
+    .then(alert);
 }
 
-async function add(){
- let name=nameInput.value;
- let cccd=cccdInput.value;
+function load() {
+    const user = document.getElementById("user").value;
 
- await fetch(API+"/patient",{
-  method:"POST",
-  headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({name,cccd})
- });
+    fetch(API + "/records/" + user)
+    .then(res => res.json())
+    .then(data => {
+        const div = document.getElementById("records");
+        div.innerHTML = "";
 
- load();
+        data.forEach(f => {
+            div.innerHTML += `<div>📄 ${f}</div>`;
+        });
+    });
 }
-
-async function del(n){
- await fetch(API+"/delete/"+n);
- load();
-}
-
-async function loadRecords(){
- let res=await fetch(API+"/records/"+current);
- let files=await res.json();
-
- let labels=[];
- let sys=[],dia=[],hr=[];
-
- files.forEach(f=>{
-  labels.push(f);
-  sys.push(Math.random()*30+110);
-  dia.push(Math.random()*20+70);
-  hr.push(Math.random()*40+60);
- });
-
- drawChart(labels,sys,dia,hr);
-}
-
-function drawChart(labels,sys,dia,hr){
- if(chart) chart.destroy();
-
- chart=new Chart(document.getElementById("chart"),{
-  type:"line",
-  data:{
-    labels:labels,
-    datasets:[
-      {label:"SYS",data:sys,borderColor:"lime"},
-      {label:"DIA",data:dia,borderColor:"yellow"},
-      {label:"HR",data:hr,borderColor:"red"}
-    ]
-  }
- });
-}
-
-// realtime + auto save
-const socket=io(API);
-socket.on("data",(d)=>{
- if(current){
-   fetch(API+"/save",{
-     method:"POST",
-     headers:{'Content-Type':'application/json'},
-     body:JSON.stringify({...d,folder:current})
-   });
- }
-});
-
-load();
 </script>
-
 </body>
 </html>
