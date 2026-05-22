@@ -5,64 +5,137 @@
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
 <style>
-body{margin:0;background:#020617;color:white;font-family:sans-serif}
-.sidebar{width:200px;height:100vh;float:left;border-right:1px solid #1e293b}
-.sidebar div{padding:10px;color:#94a3b8;cursor:pointer}
-.sidebar div:hover{color:#fff}
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#020617;
+  color:#e2e8f0;
+}
 
-.main{margin-left:200px;padding:20px}
+/* LOGIN */
+#loginBox{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.login{
+  background:#0f172a;
+  padding:30px;
+  border-radius:15px;
+  box-shadow:0 0 20px #000;
+}
 
-.card{background:#0f172a;padding:20px;margin-bottom:15px;border-radius:10px}
+/* LAYOUT */
+.sidebar{
+  width:220px;
+  height:100vh;
+  float:left;
+  border-right:1px solid #1e293b;
+  padding:10px;
+}
+.sidebar div{
+  padding:10px;
+  cursor:pointer;
+  color:#94a3b8;
+  border-radius:8px;
+}
+.sidebar div:hover{
+  background:#1e293b;
+  color:#fff;
+}
 
-input{width:100%;padding:10px;margin:5px 0;background:#020617;color:white;border:none}
-button{width:100%;padding:10px;background:#16a34a;border:none;color:white}
+.main{
+  margin-left:220px;
+  padding:20px;
+}
 
-canvas{background:black;width:100%;height:150px}
+/* CARD */
+.card{
+  background:#0f172a;
+  padding:20px;
+  margin-bottom:15px;
+  border-radius:15px;
+}
+
+/* MONITOR */
+.monitor{
+  display:flex;
+  gap:15px;
+}
+.box{
+  flex:1;
+  background:#020617;
+  padding:20px;
+  border-radius:10px;
+  text-align:center;
+}
+.big{
+  font-size:35px;
+}
+
+/* INPUT */
+input{
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  background:#020617;
+  border:none;
+  color:white;
+  border-radius:8px;
+}
+button{
+  width:100%;
+  padding:10px;
+  background:#22c55e;
+  border:none;
+  color:white;
+  border-radius:8px;
+}
 </style>
 </head>
 
 <body>
 
 <!-- LOGIN -->
-<div id="login" style="padding:100px;text-align:center">
-<h2>Admin Login</h2>
-<input id="user" placeholder="Username">
-<input id="pass" placeholder="Password">
-<button onclick="login()">Login</button>
+<div id="loginBox">
+  <div class="login">
+    <h2>ICU LOGIN</h2>
+    <input id="user" placeholder="Username">
+    <input id="pass" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
 </div>
 
+<!-- APP -->
 <div id="app" style="display:none">
 
 <div class="sidebar" id="list"></div>
 
 <div class="main">
 
-<div class="card" id="info">Chưa chọn</div>
+<div class="card" id="info">Chưa chọn bệnh nhân</div>
 
-<div class="card">
-SYS <span id="sys">--</span>
-DIA <span id="dia">--</span>
-HR <span id="hr">--</span>
+<div class="card monitor">
+  <div class="box">SYS<div class="big" id="sys">--</div></div>
+  <div class="box">DIA<div class="big" id="dia">--</div></div>
+  <div class="box">HR<div class="big" id="hr">--</div></div>
 </div>
 
 <div class="card">
-<canvas id="ecg"></canvas>
-</div>
-
-<div class="card">
-<input id="name" placeholder="Tên">
-<input id="dob" placeholder="Ngày sinh">
-<input id="cccd" placeholder="CCCD">
-<input id="address" placeholder="Địa chỉ">
-<button onclick="add()">Tạo</button>
+  <h3>Tạo bệnh nhân</h3>
+  <input id="name" placeholder="Tên">
+  <input id="dob" placeholder="Ngày sinh">
+  <input id="cccd" placeholder="CCCD">
+  <input id="address" placeholder="Địa chỉ">
+  <button onclick="add()">Tạo</button>
 </div>
 
 </div>
 </div>
 
 <script>
-const API = "http://127.0.0.1:3000";
-let current=null;
+const API="http://127.0.0.1:3000";
 
 // LOGIN FIX
 async function login(){
@@ -70,41 +143,35 @@ async function login(){
   method:"POST",
   headers:{'Content-Type':'application/json'},
   body:JSON.stringify({
-    username: user.value,
-    password: pass.value
+    username: document.getElementById("user").value,
+    password: document.getElementById("pass").value
   })
  });
 
  let data = await res.json();
 
  if(data.success){
-   document.getElementById("login").style.display = "none";
-   document.getElementById("app").style.display = "block";
+   document.getElementById("loginBox").style.display="none";
+   document.getElementById("app").style.display="block";
    load();
- }else{
-   alert("Sai tài khoản");
- }
+ }else alert("Sai tài khoản");
 }
 
 // LOAD
 async function load(){
- let res=await fetch(API+"/patients");
- let data=await res.json();
+ let res = await fetch(API+"/patients");
+ let data = await res.json();
 
+ let list = document.getElementById("list");
  list.innerHTML="";
 
  data.forEach(p=>{
   let d=document.createElement("div");
-  d.innerText=p.name;
+  d.innerText=p.name || "Không tên";
 
   d.onclick=()=>{
-    current=p;
-    info.innerHTML=`
-      <b>${p.name}</b><br>
-      ${p.dob}<br>
-      ${p.cccd}<br>
-      ${p.address}
-    `;
+    document.getElementById("info").innerHTML=
+      `<b>${p.name}</b><br>${p.dob}<br>${p.cccd}<br>${p.address}`;
   }
 
   list.appendChild(d);
@@ -113,45 +180,48 @@ async function load(){
 
 // ADD FIX
 async function add(){
- if(!name.value.trim() || !cccd.value.trim()){
-   alert("Thiếu!");
+ let name = document.getElementById("name").value.trim();
+ let cccd = document.getElementById("cccd").value.trim();
+
+ if(!name || !cccd){
+   alert("Thiếu dữ liệu!");
    return;
  }
 
- await fetch(API+"/patient",{
+ let res = await fetch(API+"/patient",{
   method:"POST",
   headers:{'Content-Type':'application/json'},
   body:JSON.stringify({
-    name:name.value.trim(),
-    dob:dob.value.trim(),
-    cccd:cccd.value.trim(),
-    address:address.value.trim()
+    name:name,
+    dob:document.getElementById("dob").value,
+    cccd:cccd,
+    address:document.getElementById("address").value
   })
  });
+
+ let data = await res.json();
+
+ if(!data.success){
+   alert("Lỗi tạo!");
+   return;
+ }
+
+ // reset
+ document.getElementById("name").value="";
+ document.getElementById("dob").value="";
+ document.getElementById("cccd").value="";
+ document.getElementById("address").value="";
 
  load();
 }
 
-// ECG
-const canvas=document.getElementById("ecg");
-const ctx=canvas.getContext("2d");
-let x=0;
-
+// REALTIME
 const socket=io(API);
 
 socket.on("data",(d)=>{
- sys.innerText=d.sys;
- dia.innerText=d.dia;
- hr.innerText=d.hr;
-
- ctx.fillStyle="black";
- ctx.fillRect(0,0,canvas.width,canvas.height);
-
- ctx.fillStyle="lime";
- ctx.fillRect(x,75+d.ecg*10,2,2);
-
- x+=2;
- if(x>canvas.width) x=0;
+ document.getElementById("sys").innerText=d.sys;
+ document.getElementById("dia").innerText=d.dia;
+ document.getElementById("hr").innerText=d.hr;
 });
 </script>
 
