@@ -34,7 +34,6 @@
 
     h2 { margin: 0 0 20px 0; font-size: 24px; display: flex; align-items: center; gap: 10px; }
 
-    /* === KHUNG LOGIN ADMIN SANG TRỌNG === */
     #login-screen { 
         position: fixed; 
         inset: 0; 
@@ -57,7 +56,6 @@
     .login-box input { width: 90%; margin: 10px 0; }
     .login-box button { width: 98%; margin-top: 15px; }
 
-    /* Bố cục Grid 3 cột thông minh */
     .dashboard-grid {
         display: grid;
         grid-template-columns: 320px 1fr 350px;
@@ -78,7 +76,6 @@
 
     .panel h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 0.5px; }
 
-    /* Form Nhập Liệu mượt mà */
     .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
     input {
         background: #0f172a;
@@ -90,6 +87,15 @@
         transition: 0.2s;
     }
     input:focus { border-color: var(--accent-blue); outline: none; box-shadow: 0 0 0 2px rgba(56,189,248,0.2); }
+
+    /* Thiết kế riêng ô tìm kiếm nổi bật */
+    .search-box {
+        background: #1e293b;
+        border: 1px solid var(--accent-blue);
+        margin-bottom: 12px;
+        padding: 10px;
+        font-weight: 500;
+    }
 
     button {
         background: var(--accent-blue);
@@ -106,7 +112,6 @@
     button.btn-fake { background: #6366f1; color: white; margin-top: 10px; }
     button.btn-logout { background: var(--accent-red); color: white; padding: 8px; margin-bottom: 15px; width: 100%; }
 
-    /* Danh sách bệnh nhân kèm nút chức năng */
     .patient-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
     .patient-list li {
         background: var(--card);
@@ -122,10 +127,9 @@
     }
     .patient-list li:hover { background: #2d3d5a; }
     .patient-list li.active { border-left-color: var(--accent-blue); background: #243754; font-weight: bold; }
-    .patient-list li .info { display: flex; flex-direction: column; gap: 4px; }
+    .patient-list li .info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
     .patient-list li span { font-size: 12px; color: var(--text-muted); }
     
-    /* Nút xóa hồ sơ nhỏ gọn */
     .btn-delete { 
         background: rgba(248, 113, 113, 0.15); 
         color: var(--accent-red); 
@@ -136,7 +140,6 @@
     }
     .btn-delete:hover { background: var(--accent-red); color: white; }
 
-    /* Chỉ số lớn Realtime cực đẹp */
     .vitals-container { display: flex; flex-direction: column; gap: 15px; flex: 1; justify-content: center; }
     .vital-box {
         background: #0f172a;
@@ -153,7 +156,6 @@
     .vital-value { font-size: 48px; font-weight: bold; font-family: monospace; margin: 5px 0; }
     .vital-unit { font-size: 12px; color: var(--text-muted); }
 
-    /* Khu vực trung tâm: Biểu đồ & Bảng dữ liệu */
     .center-panel { overflow-y: auto; gap: 20px; }
     .chart-container { background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid #1e293b; height: 180px; }
     
@@ -188,6 +190,9 @@
             <input id="p_address" placeholder="Địa chỉ thường trú">
             <button onclick="addPatient()">Lưu thông tin</button>
         </div>
+        
+        <h3>🔍 Tìm kiếm hồ sơ</h3>
+        <input id="p_search" class="search-box" placeholder="Nhập tên hoặc CCCD cần tìm..." oninput="filterPatients()">
         
         <h3>👥 Danh Sách Bệnh Nhân</h3>
         <ul id="list" class="patient-list"></ul>
@@ -238,7 +243,7 @@
 <script>
 const API = "http://127.0.0.1:5000"; 
 const socket = io(API);
-let TOKEN = "", currentPatient = null;
+let TOKEN = "", allPatients = [], currentPatient = null;
 
 const ctx = document.getElementById('liveChart').getContext('2d');
 const chart = new Chart(ctx, {
@@ -253,17 +258,21 @@ const chart = new Chart(ctx, {
     options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { labels: { color: '#fff' } } } }
 });
 
-// Kiểm tra trạng thái đăng nhập khi tải trang
 window.onload = () => {
     const savedToken = localStorage.getItem("icu_token_new");
     if (savedToken) {
         TOKEN = savedToken;
         document.getElementById("login-screen").style.display = "none";
+        
+        // GIỮ NGUYÊN KHÔNG TỰ CHỌN BỆNH NHÂN KHI LOAD LẠI TRANG TRÁNH LỖI NGẦM
+        currentPatient = null; 
+        updateDashboardUI([]);
+        document.getElementById("pname").innerText = "Bệnh nhân: Chưa chọn";
+        
         loadPatients();
     }
 };
 
-// Hàm xử lý Đăng nhập qua API kèm Token bảo mật
 function login() {
     fetch(API + "/api/login", {
         method: "POST",
@@ -289,15 +298,23 @@ function logout() {
     location.reload();
 }
 
-// Tải danh sách bệnh nhân (Có kèm Header Authorization Token)
 async function loadPatients(){
     let res = await fetch(API+"/patients", { headers: { "Authorization": TOKEN } });
     if(res.status === 403) return logout();
-    let data = await res.json();
-    
+    allPatients = await res.json(); // Lưu danh sách tổng vào biến toàn cục phục vụ tìm kiếm
+    renderPatientList(allPatients);
+}
+
+// Hàm hiển thị danh sách ra màn hình (hỗ trợ lọc khi gõ tìm kiếm)
+function renderPatientList(data) {
     const listEl = document.getElementById("list");
     listEl.innerHTML = "";
     
+    if(data.length === 0) {
+        listEl.innerHTML = `<div style="color:var(--text-muted); text-align:center; margin-top:10px; font-size:14px;">Không tìm thấy kết quả</div>`;
+        return;
+    }
+
     data.forEach(p => {
         let li = document.createElement("li");
         li.id = `p-${p.cccd}`;
@@ -314,7 +331,22 @@ async function loadPatients(){
     });
 }
 
-// Hỗ trợ ép kiểu chuỗi an toàn Object
+// XỬ LÝ LỌC REALTIME THÔNG QUA TÊN HOẶC SỐ CCCD
+function filterPatients() {
+    const keyword = document.getElementById("p_search").value.trim().toLowerCase();
+    if(!keyword) {
+        renderPatientList(allPatients);
+        return;
+    }
+    
+    // Tìm kiếm khớp chuỗi Tên hoặc CCCD
+    const filtered = allPatients.filter(p => 
+        p.name.toLowerCase().includes(keyword) || 
+        p.cccd.toLowerCase().includes(keyword)
+    );
+    renderPatientList(filtered);
+}
+
 String.prototype.eco = function() { return this; };
 function selectPatient(p) {
     currentPatient = p;
@@ -326,9 +358,8 @@ function selectPatient(p) {
     updateDashboardUI(p.records);
 }
 
-// XÓA HỒ SƠ BỆNH NHÂN KHỎI CƠ SỞ DỮ LIỆU CỨNG
 async function deletePatient(cccd, name) {
-    event.stopPropagation(); // Ngăn chặn sự kiện click chọn bệnh nhân bị kích hoạt nhầm
+    event.stopPropagation();
     if(!confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn hồ sơ và mọi bản ghi đo của bệnh nhân: ${name}?`)) return;
 
     let res = await fetch(API + `/delete_patient/${cccd}`, {
@@ -427,9 +458,9 @@ socket.on("newData", (msg) => {
         currentPatient.records.push(msg.data);
         updateDashboardUI(currentPatient.records);
     }
-    // Cập nhật ngầm dữ liệu trong mảng danh sách tổng để bấm qua lại không mất
-    document.querySelectorAll(".patient-list li").forEach(li => {
-        if(li.id === `p-${msg.cccd}`) loadPatients();
+    // Cập nhật mảng tổng ngầm khi có dữ liệu Socket đổ về
+    allPatients.forEach(p => {
+        if(p.cccd === msg.cccd) p.records.push(msg.data);
     });
 });
 
