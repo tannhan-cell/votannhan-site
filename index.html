@@ -185,9 +185,10 @@
         <h3>➕ Thêm bệnh nhân</h3>
         <div class="form-group">
             <input id="p_name" placeholder="Họ và tên">
-            <input id="p_cccd" placeholder="Số CCCD">
+            <input id="p_cccd" placeholder="Số CCCD/Mã định danh">
             <input id="p_dob" placeholder="Ngày sinh (DD/MM/YYYY)">
             <input id="p_address" placeholder="Địa chỉ thường trú">
+            <input id="p_phone" placeholder="Số điện thoại nhận SMS">
             <button onclick="addPatient()">Lưu thông tin</button>
         </div>
         
@@ -244,12 +245,10 @@
 </div>
 
 <script>
-// ĐẶT MẶC ĐỊNH CHUẨN ĐƯỜNG DẪN LOCAL LOCALHOST THEO YÊU CẦU
 const API = "http://127.0.0.1:5000"; 
 const socket = io(API);
 let IS_LOGGED = false, allPatients = [], currentPatient = null;
 
-// Khởi tạo đồ thị tích hợp 3 đường dữ liệu (SYS, DIA, và thêm đường mạch mạch HR)
 const ctx = document.getElementById('liveChart').getContext('2d');
 const chart = new Chart(ctx, {
     type: 'line',
@@ -359,18 +358,19 @@ function filterPatients() {
     renderPatientList(filtered);
 }
 
-// FIX HIỂN THỊ: Phân dòng rõ ràng và tô màu nhãn thông tin
 function selectPatient(p) {
     currentPatient = p;
     document.querySelectorAll(".patient-list li").forEach(li => li.classList.remove("active"));
     const activeLi = document.getElementById(`p-${p.cccd}`);
     if(activeLi) activeLi.classList.add("active");
     
+    // Đổ thêm thông tin SỐ ĐIỆN THOẠI ra màn hình
     document.getElementById("pname").innerHTML = `
         <span style="color: var(--accent-blue);">HỌ VÀ TÊN:</span> ${p.name}<br>
-        <span style="color: var(--accent-blue);">NĂM SINH:</span> ${p.dob || 'Chưa rõ'}<br>
+        <span style="color: var(--accent-blue);">NGÀY THÁNG NĂM SINH:</span> ${p.dob || 'Chưa rõ'}<br>
         <span style="color: var(--accent-blue);">CCCD:</span> ${p.cccd}<br>
-        <span style="color: var(--accent-blue);">NƠI Ở:</span> ${p.address || 'Chưa rõ'}
+        <span style="color: var(--accent-blue);">NƠI Ở:</span> ${p.address || 'Chưa rõ'}<br>
+        <span style="color: var(--accent-green);">SỐ ĐIỆN THOẠI SMS:</span> ${p.phone || 'Chưa cấu hình'}
     `;
     updateDashboardUI(p.records);
 }
@@ -406,6 +406,7 @@ async function addPatient(){
     const cccdInput = document.getElementById("p_cccd");
     const dobInput = document.getElementById("p_dob");
     const addrInput = document.getElementById("p_address");
+    const phoneInput = document.getElementById("p_phone"); // Lấy giá trị SĐT
 
     if(!nameInput.value || !cccdInput.value) return alert("Vui lòng nhập đầy đủ Tên và CCCD!");
 
@@ -416,7 +417,8 @@ async function addPatient(){
             name: nameInput.value,
             cccd: cccdInput.value,
             dob: dobInput.value,
-            address: addrInput.value
+            address: addrInput.value,
+            phone: phoneInput.value // Gửi SĐT lên server
         })
     });
     
@@ -424,7 +426,7 @@ async function addPatient(){
     if(result.error) {
         alert(result.error);
     } else {
-        nameInput.value = ""; cccdInput.value = ""; dobInput.value = ""; addrInput.value = "";
+        nameInput.value = ""; cccdInput.value = ""; dobInput.value = ""; addrInput.value = ""; phoneInput.value = "";
         loadPatients();
     }
 }
@@ -458,12 +460,11 @@ function updateDashboardUI(records) {
         </tr>
     `).join('');
 
-    // Nạp đồng thời dữ liệu của cả 3 đường vào Chart để vẽ mô hình đồ thị liên hoàn
     const chartData = records.slice(-10);
     chart.data.labels = chartData.map(r => r.time.split('_')[1] || r.time);
     chart.data.datasets[0].data = chartData.map(r => r.sys);
     chart.data.datasets[1].data = chartData.map(r => r.dia);
-    chart.data.datasets[2].data = chartData.map(r => r.hr); // Vẽ đường nhịp tim mượt mà
+    chart.data.datasets[2].data = chartData.map(r => r.hr);
     chart.update();
 }
 
