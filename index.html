@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Medical Dashboard</title>
+<title>Blood Pressure System</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -15,62 +15,42 @@ body {
 
 .login, .dashboard {
     display: none;
-}
-
-.center {
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
-
-.card {
-    background:#1e293b;
-    padding:30px;
-    border-radius:15px;
+    padding: 20px;
 }
 
 input {
-    width:100%;
-    padding:10px;
-    margin:5px 0;
+    padding: 10px;
+    margin: 5px;
+    width: 200px;
 }
 
 button {
-    padding:10px;
-    background:#22c55e;
-    border:none;
-    color:white;
-    cursor:pointer;
+    padding: 10px 20px;
+    background: #22c55e;
+    border: none;
+    color: white;
+    cursor: pointer;
 }
 
-.sidebar {
-    width:300px;
-    background:#111827;
-    height:100vh;
-    overflow:auto;
-    float:left;
+.container {
+    display: flex;
 }
 
-.main {
-    margin-left:300px;
-    padding:20px;
+.left {
+    width: 60%;
+}
+
+.right {
+    width: 40%;
+    background: #1e293b;
+    padding: 20px;
 }
 
 .patient {
-    padding:10px;
-    border-bottom:1px solid gray;
-    cursor:pointer;
-}
-
-.form {
-    position:fixed;
-    right:0;
-    top:0;
-    width:300px;
-    background:#1e293b;
-    height:100vh;
-    padding:20px;
+    padding: 10px;
+    background: #334155;
+    margin: 5px;
+    cursor: pointer;
 }
 </style>
 </head>
@@ -78,119 +58,116 @@ button {
 <body>
 
 <!-- LOGIN -->
-<div class="login center">
-    <div class="card">
-        <h2>Admin Login</h2>
-        <input id="user" placeholder="User">
-        <input id="pass" type="password" placeholder="Password">
-        <button onclick="login()">Login</button>
-    </div>
+<div class="login" id="login" style="display:block">
+    <h2>Login</h2>
+    <input id="user" placeholder="Username"><br>
+    <input id="pass" type="password" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
 </div>
 
 <!-- DASHBOARD -->
-<div class="dashboard">
-    <div class="sidebar" id="patients"></div>
+<div class="dashboard" id="dash">
+    <div class="container">
 
-    <div class="main">
-        <h2 id="title">Chọn bệnh nhân</h2>
-        <canvas id="chart"></canvas>
-        <div id="data"></div>
-    </div>
+        <!-- LEFT -->
+        <div class="left">
+            <h3>Patients</h3>
+            <div id="patients"></div>
 
-    <div class="form">
-        <h3>Tạo hồ sơ</h3>
-        <input id="name" placeholder="Tên">
-        <input id="dob" placeholder="Ngày sinh">
-        <input id="cccd" placeholder="CCCD">
-        <input id="address" placeholder="Nơi ở">
-        <button onclick="create()">Tạo</button>
+            <canvas id="chart"></canvas>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="right">
+            <h3>Create Patient</h3>
+
+            <input id="name" placeholder="Tên"><br>
+            <input id="dob" placeholder="Ngày sinh"><br>
+            <input id="cccd" placeholder="CCCD"><br>
+            <input id="addr" placeholder="Nơi ở"><br>
+
+            <button onclick="create()">Tạo hồ sơ</button>
+        </div>
+
     </div>
 </div>
 
 <script>
-document.querySelector(".login").style.display="flex"
+let currentFolder = null
+let chart
 
-async function login(){
-    let res = await fetch("/login",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-            user: user.value,
-            pass: pass.value
+function login() {
+    fetch("/login", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+            username: user.value,
+            password: pass.value
         })
     })
-    let data = await res.json()
-    if(data.status=="ok"){
-        document.querySelector(".login").style.display="none"
-        document.querySelector(".dashboard").style.display="block"
-        loadPatients()
-    }
-}
+    .then(r=>r.json())
+    .then(d=>{
+        if(d.status==="ok"){
+            loginDiv = document.getElementById("login")
+            dash = document.getElementById("dash")
 
-async function loadPatients(){
-    let res = await fetch("/patients")
-    let data = await res.json()
+            loginDiv.style.display="none"
+            dash.style.display="block"
 
-    patients.innerHTML=""
-    data.forEach(p=>{
-        patients.innerHTML += `
-        <div class="patient" onclick="openPatient('${p}')">
-            ${p}
-            <button onclick="del('${p}')">X</button>
-        </div>`
+            loadPatients()
+        }
     })
 }
 
-async function create(){
-    await fetch("/create",{
+function create(){
+    fetch("/create_patient",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
+        body: JSON.stringify({
             name:name.value,
             dob:dob.value,
             cccd:cccd.value,
-            address:address.value
+            addr:addr.value
         })
+    }).then(()=>loadPatients())
+}
+
+function loadPatients(){
+    fetch("/patients")
+    .then(r=>r.json())
+    .then(data=>{
+        let html=""
+        data.forEach(p=>{
+            html += `<div class="patient" onclick="select('${p}')">${p}</div>`
+        })
+        patients.innerHTML = html
     })
-    loadPatients()
 }
 
-async function del(p){
-    await fetch("/delete/"+p,{method:"DELETE"})
-    loadPatients()
-}
+function select(folder){
+    currentFolder = folder
 
-async function openPatient(p){
-    title.innerText = p
+    fetch("/records/"+folder)
+    .then(r=>r.json())
+    .then(data=>{
+        let labels = data.map(x=>x.time)
+        let sys = data.map(x=>x.sys)
+        let dia = data.map(x=>x.dia)
+        let pulse = data.map(x=>x.pulse)
 
-    let res = await fetch("/records/"+p)
-    let files = await res.json()
+        if(chart) chart.destroy()
 
-    let sys=[], dia=[], pulse=[]
-
-    for(let f of files){
-        let txt = await fetch(`/read/${p}/${f}`)
-        let t = await txt.text()
-
-        let s = t.match(/Tâm thu: (\d+)/)[1]
-        let d = t.match(/Tâm trương: (\d+)/)[1]
-        let pl = t.match(/Nhịp tim: (\d+)/)[1]
-
-        sys.push(s)
-        dia.push(d)
-        pulse.push(pl)
-    }
-
-    new Chart(document.getElementById("chart"), {
-        type: 'line',
-        data: {
-            labels: files,
-            datasets: [
-                {label:"Tâm thu", data:sys, borderColor:"red"},
-                {label:"Tâm trương", data:dia, borderColor:"blue"},
-                {label:"Nhịp tim", data:pulse, borderColor:"green"}
-            ]
-        }
+        chart = new Chart(document.getElementById("chart"),{
+            type:"line",
+            data:{
+                labels: labels,
+                datasets:[
+                    {label:"SYS", data:sys, borderColor:"red"},
+                    {label:"DIA", data:dia, borderColor:"blue"},
+                    {label:"PULSE", data:pulse, borderColor:"green"}
+                ]
+            }
+        })
     })
 }
 </script>
