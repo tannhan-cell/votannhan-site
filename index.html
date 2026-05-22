@@ -1,39 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Quản lý huyết áp</title>
+<title>Hệ thống đo huyết áp</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
+    margin: 0;
     font-family: Arial;
     display: flex;
-    margin: 0;
+    height: 100vh;
 }
 
-#left {
-    width: 25%;
-    background: #2c3e50;
+/* SIDEBAR */
+#sidebar {
+    width: 260px;
+    background: #1e272e;
     color: white;
-    padding: 10px;
+    padding: 15px;
+    overflow-y: auto;
 }
 
-#right {
+.patient {
+    padding: 10px;
+    margin: 5px 0;
+    background: #485460;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.patient:hover {
+    background: #34ace0;
+}
+
+/* MAIN */
+#main {
     flex: 1;
     padding: 20px;
+    background: #f1f2f6;
+}
+
+/* FORM */
+input {
+    width: 95%;
+    padding: 8px;
+    margin: 5px 0;
 }
 
 button {
-    padding: 5px 10px;
-    margin: 5px;
+    padding: 8px 12px;
+    background: #2ed573;
+    border: none;
+    color: white;
+    cursor: pointer;
 }
 
-input {
-    width: 90%;
-    margin: 5px;
-    padding: 5px;
+button:hover {
+    background: #1e90ff;
+}
+
+#info {
+    margin-top: 10px;
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
 }
 </style>
 </head>
@@ -41,85 +73,124 @@ input {
 <body>
 
 <!-- SIDEBAR -->
-<div id="left">
-    <h3>Bệnh nhân</h3>
+<div id="sidebar">
+    <h3>Danh sách bệnh nhân</h3>
     <div id="list"></div>
 </div>
 
 <!-- MAIN -->
-<div id="right">
+<div id="main">
+
     <h2>Tạo hồ sơ</h2>
 
-    <input id="name" placeholder="Tên"><br>
-    <input id="dob" placeholder="Ngày sinh"><br>
-    <input id="cccd" placeholder="CCCD"><br>
-    <input id="addr" placeholder="Địa chỉ"><br>
+    <input id="name" placeholder="Tên">
+    <input id="dob" placeholder="Ngày sinh">
+    <input id="cccd" placeholder="CCCD">
+    <input id="addr" placeholder="Địa chỉ">
 
-    <button onclick="create()">Tạo</button>
+    <button onclick="createPatient()">Tạo hồ sơ</button>
 
-    <h2>Biểu đồ</h2>
+    <div id="info"></div>
+
+    <h2>Biểu đồ huyết áp</h2>
     <canvas id="chart"></canvas>
+
 </div>
 
 <script>
-let currentFolder = null
+const API = "http://127.0.0.1:5000"
+
 let chart = null
+let currentFolder = null
 
-function create(){
-    fetch("http://127.0.0.1:5000/create_patient",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-            name: name.value,
-            dob: dob.value,
-            cccd: cccd.value,
-            addr: addr.value
-        })
-    }).then(()=>load())
-}
-
-function load(){
-    fetch("http://127.0.0.1:5000/patients")
+// ===== LOAD DANH SÁCH =====
+function loadPatients(){
+    fetch(API + "/patients")
     .then(r=>r.json())
     .then(data=>{
-        list.innerHTML=""
+        list.innerHTML = ""
+
         data.forEach(f=>{
-            let div=document.createElement("div")
-            div.innerHTML=f
-            div.onclick=()=>openFolder(f)
+            let div = document.createElement("div")
+            div.className = "patient"
+            div.innerText = f
+            div.onclick = ()=>openFolder(f)
             list.appendChild(div)
         })
     })
 }
 
+// ===== TẠO HỒ SƠ =====
+function createPatient(){
+    fetch(API + "/create_patient",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+            name: name.value,
+            dob: dob.value,
+            cccd: cccd.value,
+            addr: addr.value
+        })
+    })
+    .then(r=>r.json())
+    .then(res=>{
+        if(res.status){
+            alert("Tạo thành công!")
+            loadPatients()
+        } else {
+            alert("Lỗi!")
+        }
+    })
+}
+
+// ===== MỞ HỒ SƠ =====
 function openFolder(folder){
     currentFolder = folder
 
-    fetch("http://127.0.0.1:5000/records/"+folder)
+    fetch(API + "/records/" + folder)
     .then(r=>r.json())
     .then(data=>{
+
+        if(data.length === 0){
+            info.innerHTML = "Chưa có dữ liệu đo"
+            return
+        }
+
         let labels = data.map(x=>x.time)
         let sys = data.map(x=>x.sys)
         let dia = data.map(x=>x.dia)
         let pulse = data.map(x=>x.pulse)
 
+        // trung bình
+        let avgSys = (sys.reduce((a,b)=>a+b,0)/sys.length).toFixed(1)
+        let avgDia = (dia.reduce((a,b)=>a+b,0)/dia.length).toFixed(1)
+        let avgPulse = (pulse.reduce((a,b)=>a+b,0)/pulse.length).toFixed(1)
+
+        info.innerHTML = `
+            <b>${folder}</b><br>
+            SYS TB: ${avgSys} |
+            DIA TB: ${avgDia} |
+            PULSE TB: ${avgPulse}
+        `
+
         if(chart) chart.destroy()
 
-        chart = new Chart(document.getElementById("chart"),{
-            type:"line",
-            data:{
-                labels:labels,
-                datasets:[
-                    {label:"SYS", data:sys, borderColor:"red"},
-                    {label:"DIA", data:dia, borderColor:"blue"},
-                    {label:"PULSE", data:pulse, borderColor:"green"}
+        chart = new Chart(document.getElementById("chart"), {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: "SYS", data: sys, borderColor: "red" },
+                    { label: "DIA", data: dia, borderColor: "blue" },
+                    { label: "PULSE", data: pulse, borderColor: "green" }
                 ]
             }
         })
     })
 }
 
-load()
+// ===== AUTO LOAD =====
+loadPatients()
 </script>
 
 </body>
