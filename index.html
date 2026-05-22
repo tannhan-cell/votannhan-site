@@ -1,165 +1,197 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Health Monitor Pro</title>
+<title>Medical Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
+    font-family: Arial;
     margin: 0;
-    font-family: 'Segoe UI';
-    background: linear-gradient(135deg, #0f172a, #1e3a8a);
+    background: #0f172a;
     color: white;
 }
 
-.container {
-    width: 420px;
-    margin: 30px auto;
-    background: #1e293b;
-    padding: 25px;
-    border-radius: 20px;
-    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+.login, .dashboard {
+    display: none;
 }
 
-h2 {
-    text-align: center;
-    margin-bottom: 20px;
+.center {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.card {
+    background:#1e293b;
+    padding:30px;
+    border-radius:15px;
 }
 
 input {
-    width: 100%;
-    padding: 12px;
-    margin: 6px 0;
-    border-radius: 10px;
-    border: none;
-    background: #334155;
-    color: white;
-    font-size: 14px;
-}
-
-input:focus {
-    outline: 2px solid #38bdf8;
+    width:100%;
+    padding:10px;
+    margin:5px 0;
 }
 
 button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 15px;
+    padding:10px;
+    background:#22c55e;
+    border:none;
+    color:white;
+    cursor:pointer;
 }
 
-.save { background: #22c55e; }
-.load { background: #3b82f6; }
-
-.records {
-    margin-top: 15px;
-    max-height: 180px;
-    overflow-y: auto;
-    background: #020617;
-    padding: 10px;
-    border-radius: 10px;
+.sidebar {
+    width:300px;
+    background:#111827;
+    height:100vh;
+    overflow:auto;
+    float:left;
 }
 
-.records div {
-    padding: 8px;
-    border-bottom: 1px solid #334155;
-    cursor: pointer;
+.main {
+    margin-left:300px;
+    padding:20px;
 }
 
-.records div:hover {
-    background: #1e40af;
+.patient {
+    padding:10px;
+    border-bottom:1px solid gray;
+    cursor:pointer;
 }
 
-.preview {
-    margin-top: 10px;
-    background: #020617;
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 14px;
-}
-
-.label {
-    font-size: 13px;
-    margin-top: 10px;
-    color: #94a3b8;
+.form {
+    position:fixed;
+    right:0;
+    top:0;
+    width:300px;
+    background:#1e293b;
+    height:100vh;
+    padding:20px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-    <h2>🩺 Health Monitor</h2>
+<!-- LOGIN -->
+<div class="login center">
+    <div class="card">
+        <h2>Admin Login</h2>
+        <input id="user" placeholder="User">
+        <input id="pass" type="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+    </div>
+</div>
 
-    <div class="label">Thông tin cá nhân</div>
-    <input id="name" placeholder="Họ và tên">
-    <input id="dob" type="date">
-    <input id="cccd" placeholder="CCCD">
-    <input id="address" placeholder="Nơi ở">
+<!-- DASHBOARD -->
+<div class="dashboard">
+    <div class="sidebar" id="patients"></div>
 
-    <div class="label">Chỉ số đo</div>
-    <input id="sys" placeholder="SYS">
-    <input id="dia" placeholder="DIA">
-    <input id="pul" placeholder="PULSE">
+    <div class="main">
+        <h2 id="title">Chọn bệnh nhân</h2>
+        <canvas id="chart"></canvas>
+        <div id="data"></div>
+    </div>
 
-    <button class="save" onclick="save()">💾 Lưu dữ liệu</button>
-    <button class="load" onclick="load()">📂 Xem lịch sử</button>
-
-    <div class="records" id="records"></div>
-    <div class="preview" id="preview"></div>
+    <div class="form">
+        <h3>Tạo hồ sơ</h3>
+        <input id="name" placeholder="Tên">
+        <input id="dob" placeholder="Ngày sinh">
+        <input id="cccd" placeholder="CCCD">
+        <input id="address" placeholder="Nơi ở">
+        <button onclick="create()">Tạo</button>
+    </div>
 </div>
 
 <script>
-const API = "http://127.0.0.1:5000";
+document.querySelector(".login").style.display="flex"
 
-function save() {
-    const data = {
-        user: name.value,   // giữ API cũ
-        name: name.value,
-        dob: dob.value,
-        cccd: cccd.value,
-        address: address.value,
-        sys: sys.value,
-        dia: dia.value,
-        pul: pul.value
-    };
-
-    fetch(API + "/save", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
+async function login(){
+    let res = await fetch("/login",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            user: user.value,
+            pass: pass.value
+        })
     })
-    .then(res => res.text())
-    .then(msg => {
-        alert(msg);
-        load();
-    });
+    let data = await res.json()
+    if(data.status=="ok"){
+        document.querySelector(".login").style.display="none"
+        document.querySelector(".dashboard").style.display="block"
+        loadPatients()
+    }
 }
 
-function load() {
-    fetch(API + "/records/" + name.value)
-    .then(res => res.json())
-    .then(files => {
-        records.innerHTML = "";
-        files.forEach(f => {
-            const div = document.createElement("div");
-            div.innerText = "📄 " + f;
-            div.onclick = () => readFile(f);
-            records.appendChild(div);
-        });
-    });
+async function loadPatients(){
+    let res = await fetch("/patients")
+    let data = await res.json()
+
+    patients.innerHTML=""
+    data.forEach(p=>{
+        patients.innerHTML += `
+        <div class="patient" onclick="openPatient('${p}')">
+            ${p}
+            <button onclick="del('${p}')">X</button>
+        </div>`
+    })
 }
 
-function readFile(file) {
-    fetch(API + "/records/" + name.value + "/" + file)
-    .then(res => res.text())
-    .then(text => {
-        preview.innerText = text;
-    });
+async function create(){
+    await fetch("/create",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            name:name.value,
+            dob:dob.value,
+            cccd:cccd.value,
+            address:address.value
+        })
+    })
+    loadPatients()
+}
+
+async function del(p){
+    await fetch("/delete/"+p,{method:"DELETE"})
+    loadPatients()
+}
+
+async function openPatient(p){
+    title.innerText = p
+
+    let res = await fetch("/records/"+p)
+    let files = await res.json()
+
+    let sys=[], dia=[], pulse=[]
+
+    for(let f of files){
+        let txt = await fetch(`/read/${p}/${f}`)
+        let t = await txt.text()
+
+        let s = t.match(/Tâm thu: (\d+)/)[1]
+        let d = t.match(/Tâm trương: (\d+)/)[1]
+        let pl = t.match(/Nhịp tim: (\d+)/)[1]
+
+        sys.push(s)
+        dia.push(d)
+        pulse.push(pl)
+    }
+
+    new Chart(document.getElementById("chart"), {
+        type: 'line',
+        data: {
+            labels: files,
+            datasets: [
+                {label:"Tâm thu", data:sys, borderColor:"red"},
+                {label:"Tâm trương", data:dia, borderColor:"blue"},
+                {label:"Nhịp tim", data:pulse, borderColor:"green"}
+            ]
+        }
+    })
 }
 </script>
 
