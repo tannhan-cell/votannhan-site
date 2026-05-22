@@ -88,13 +88,13 @@
     }
     input:focus { border-color: var(--accent-blue); outline: none; box-shadow: 0 0 0 2px rgba(56,189,248,0.2); }
 
-    /* Thiết kế riêng ô tìm kiếm nổi bật */
     .search-box {
         background: #1e293b;
         border: 1px solid var(--accent-blue);
         margin-bottom: 12px;
         padding: 10px;
         font-weight: 500;
+        width: 90%;
     }
 
     button {
@@ -241,7 +241,8 @@
 </div>
 
 <script>
-const API = "http://127.0.0.1:5000"; 
+// ĐÃ ĐỔI LINK THÀNH SERVER RENDER THỰC TẾ CỦA BẠN ĐỂ ĐỒNG BỘ CHUẨN ĐƯỜNG TRUYỀN
+const API = "https://dohuyetap.onrender.com"; 
 const socket = io(API);
 let TOKEN = "", allPatients = [], currentPatient = null;
 
@@ -263,12 +264,9 @@ window.onload = () => {
     if (savedToken) {
         TOKEN = savedToken;
         document.getElementById("login-screen").style.display = "none";
-        
-        // GIỮ NGUYÊN KHÔNG TỰ CHỌN BỆNH NHÂN KHI LOAD LẠI TRANG TRÁNH LỖI NGẦM
         currentPatient = null; 
         updateDashboardUI([]);
         document.getElementById("pname").innerText = "Bệnh nhân: Chưa chọn";
-        
         loadPatients();
     }
 };
@@ -301,11 +299,11 @@ function logout() {
 async function loadPatients(){
     let res = await fetch(API+"/patients", { headers: { "Authorization": TOKEN } });
     if(res.status === 403) return logout();
-    allPatients = await res.json(); // Lưu danh sách tổng vào biến toàn cục phục vụ tìm kiếm
+    allPatients = await res.json();
     renderPatientList(allPatients);
 }
 
-// Hàm hiển thị danh sách ra màn hình (hỗ trợ lọc khi gõ tìm kiếm)
+// KHẮC PHỤC LỖI CLICK: Sử dụng cơ chế lưu dataset Object an toàn tuyệt đối
 function renderPatientList(data) {
     const listEl = document.getElementById("list");
     listEl.innerHTML = "";
@@ -320,26 +318,42 @@ function renderPatientList(data) {
         li.id = `p-${p.cccd}`;
         if(currentPatient && currentPatient.cccd === p.cccd) li.className = "active";
         
-        li.innerHTML = `
-            <div class="info" onclick="selectPatient(${JSON.stringify(p).eco()})">
-                <div style="color:var(--text);">${p.name}</div>
-                <span>${p.cccd}</span>
-            </div>
-            <button class="btn-delete" onclick="deletePatient('${p.cccd}', '${p.name}')">Xóa</button>
-        `;
+        // Tạo thẻ chứa thông tin độc lập
+        let infoDiv = document.createElement("div");
+        infoDiv.className = "info";
+        infoDiv.innerHTML = `<div style="color:var(--text); text-transform: capitalize;">${p.name}</div><span>CCCD: ${p.cccd}</span>`;
+        
+        // Đính kèm dữ liệu cứng vào DOM element (Fix lỗi treo click)
+        li.dataset.patientData = JSON.stringify(p);
+        
+        li.appendChild(infoDiv);
+        
+        // Thêm nút xóa hồ sơ
+        let delBtn = document.createElement("button");
+        delBtn.className = "btn-delete";
+        delBtn.innerText = "Xóa";
+        delBtn.onclick = (e) => {
+            e.stopPropagation();
+            deletePatient(p.cccd, p.name);
+        };
+        li.appendChild(delBtn);
+
+        // Đăng ký sự kiện click chọn mượt mà
+        li.onclick = function() {
+            const parsedData = JSON.parse(this.dataset.patientData);
+            selectPatient(parsedData);
+        };
+
         listEl.appendChild(li);
     });
 }
 
-// XỬ LÝ LỌC REALTIME THÔNG QUA TÊN HOẶC SỐ CCCD
 function filterPatients() {
     const keyword = document.getElementById("p_search").value.trim().toLowerCase();
     if(!keyword) {
         renderPatientList(allPatients);
         return;
     }
-    
-    // Tìm kiếm khớp chuỗi Tên hoặc CCCD
     const filtered = allPatients.filter(p => 
         p.name.toLowerCase().includes(keyword) || 
         p.cccd.toLowerCase().includes(keyword)
@@ -347,7 +361,6 @@ function filterPatients() {
     renderPatientList(filtered);
 }
 
-String.prototype.eco = function() { return this; };
 function selectPatient(p) {
     currentPatient = p;
     document.querySelectorAll(".patient-list li").forEach(li => li.classList.remove("active"));
@@ -359,7 +372,6 @@ function selectPatient(p) {
 }
 
 async function deletePatient(cccd, name) {
-    event.stopPropagation();
     if(!confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn hồ sơ và mọi bản ghi đo của bệnh nhân: ${name}?`)) return;
 
     let res = await fetch(API + `/delete_patient/${cccd}`, {
@@ -458,12 +470,10 @@ socket.on("newData", (msg) => {
         currentPatient.records.push(msg.data);
         updateDashboardUI(currentPatient.records);
     }
-    // Cập nhật mảng tổng ngầm khi có dữ liệu Socket đổ về
     allPatients.forEach(p => {
         if(p.cccd === msg.cccd) p.records.push(msg.data);
     });
 });
-
 </script>
 </body>
 </html>
