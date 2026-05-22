@@ -157,7 +157,7 @@
     .vital-unit { font-size: 12px; color: var(--text-muted); }
 
     .center-panel { overflow-y: auto; gap: 20px; }
-    .chart-container { background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid #1e293b; height: 180px; }
+    .chart-container { background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid #1e293b; height: 220px; }
     
     table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
     th { background: #0f172a; color: var(--accent-blue); padding: 10px; text-align: center; font-weight: 600; }
@@ -199,7 +199,10 @@
     </div>
 
     <div class="panel center-panel">
-        <h3 id="pname">Bệnh nhân: Chưa chọn</h3>
+        <h3 id="pname" style="line-height: 1.7; text-transform: uppercase; font-size: 15px; letter-spacing: 0.3px;">
+            BỆNH NHÂN: CHƯA CHỌN
+        </h3>
+        
         <div class="chart-container">
             <canvas id="liveChart"></canvas>
         </div>
@@ -241,22 +244,33 @@
 </div>
 
 <script>
-// ĐẶT MẶC ĐỊNH CHUẨN ĐƯỜNG DẪN LOCAL LOCALHOST NHƯ CŨ
+// ĐẶT MẶC ĐỊNH CHUẨN ĐƯỜNG DẪN LOCAL LOCALHOST THEO YÊU CẦU
 const API = "http://127.0.0.1:5000"; 
 const socket = io(API);
 let IS_LOGGED = false, allPatients = [], currentPatient = null;
 
+// Khởi tạo đồ thị tích hợp 3 đường dữ liệu (SYS, DIA, và thêm đường mạch mạch HR)
 const ctx = document.getElementById('liveChart').getContext('2d');
 const chart = new Chart(ctx, {
     type: 'line',
     data: {
         labels: [],
         datasets: [
-            { label: 'SYS', data: [], borderColor: '#f87171', tension: 0.2, borderWidth: 2 },
-            { label: 'DIA', data: [], borderColor: '#38bdf8', tension: 0.2, borderWidth: 2 }
+            { label: 'SYS (Tâm thu)', data: [], borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.1)', tension: 0.2, borderWidth: 2 },
+            { label: 'DIA (Tâm trương)', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.1)', tension: 0.2, borderWidth: 2 },
+            { label: 'HR (Nhịp tim)', data: [], borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.05)', tension: 0.2, borderWidth: 2 }
         ]
     },
-    options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { labels: { color: '#fff' } } } }
+    options: { 
+        responsive: true, 
+        maintainAspectRatio: false, 
+        animation: false, 
+        plugins: { legend: { labels: { color: '#fff', font: { size: 11 } } } },
+        scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+        }
+    }
 });
 
 window.onload = () => {
@@ -266,13 +280,12 @@ window.onload = () => {
         document.getElementById("login-screen").style.display = "none";
         currentPatient = null; 
         updateDashboardUI([]);
-        document.getElementById("pname").innerText = "Bệnh nhân: Chưa chọn";
+        document.getElementById("pname").innerHTML = "BỆNH NHÂN: CHƯA CHỌN";
         loadPatients();
     }
 };
 
 function login() {
-    // Quay lại kiểm tra trực tiếp chuỗi thuần túy như ban đầu, loại bỏ Token lỗi kẹt
     if (u.value === "admin" && p.value === "123456") {
         IS_LOGGED = true;
         localStorage.setItem("icu_logged_status", "true");
@@ -346,13 +359,19 @@ function filterPatients() {
     renderPatientList(filtered);
 }
 
+// FIX HIỂN THỊ: Phân dòng rõ ràng và tô màu nhãn thông tin
 function selectPatient(p) {
     currentPatient = p;
     document.querySelectorAll(".patient-list li").forEach(li => li.classList.remove("active"));
     const activeLi = document.getElementById(`p-${p.cccd}`);
     if(activeLi) activeLi.classList.add("active");
     
-    document.getElementById("pname").innerText = `Bệnh nhân: ${p.name} (Sinh năm: ${p.dob || 'Chưa rõ'})`;
+    document.getElementById("pname").innerHTML = `
+        <span style="color: var(--accent-blue);">HỌ VÀ TÊN:</span> ${p.name}<br>
+        <span style="color: var(--accent-blue);">NGÀY THÁNG NĂM SINH:</span> ${p.dob || 'Chưa rõ'}<br>
+        <span style="color: var(--accent-blue);">CCCD:</span> ${p.cccd}<br>
+        <span style="color: var(--accent-blue);">NƠI Ở:</span> ${p.address || 'Chưa rõ'}
+    `;
     updateDashboardUI(p.records);
 }
 
@@ -376,7 +395,7 @@ async function deletePatient(cccd, name) {
         if(currentPatient && currentPatient.cccd === cccd) {
             currentPatient = null;
             updateDashboardUI([]);
-            document.getElementById("pname").innerText = "Bệnh nhân: Chưa chọn";
+            document.getElementById("pname").innerHTML = "BỆNH NHÂN: CHƯA CHỌN";
         }
         loadPatients();
     }
@@ -416,7 +435,11 @@ function updateDashboardUI(records) {
         document.getElementById("dia").innerText = "--";
         document.getElementById("hr").innerText = "--";
         document.getElementById("table-body").innerHTML = `<tr><td colspan="4" style="color:var(--text-muted);">Bệnh nhân này chưa có dữ liệu đo</td></tr>`;
-        chart.data.labels = []; chart.data.datasets[0].data = []; chart.data.datasets[1].data = []; chart.update();
+        chart.data.labels = []; 
+        chart.data.datasets[0].data = []; 
+        chart.data.datasets[1].data = []; 
+        chart.data.datasets[2].data = []; 
+        chart.update();
         return;
     }
 
@@ -435,10 +458,12 @@ function updateDashboardUI(records) {
         </tr>
     `).join('');
 
+    // Nạp đồng thời dữ liệu của cả 3 đường vào Chart để vẽ mô hình đồ thị liên hoàn
     const chartData = records.slice(-10);
     chart.data.labels = chartData.map(r => r.time.split('_')[1] || r.time);
     chart.data.datasets[0].data = chartData.map(r => r.sys);
     chart.data.datasets[1].data = chartData.map(r => r.dia);
+    chart.data.datasets[2].data = chartData.map(r => r.hr); // Vẽ đường nhịp tim mượt mà
     chart.update();
 }
 
