@@ -37,14 +37,14 @@
     #login-screen { 
         position: fixed; 
         inset: 0; 
-        background: var(--bg); 
+        background: var(--bg);
         display: flex; 
         justify-content: center; 
         align-items: center; 
         z-index: 1000; 
     }
     .login-box { 
-        background: var(--panel); 
+        background: var(--panel);
         padding: 40px; 
         border-radius: 15px; 
         text-align: center; 
@@ -131,7 +131,7 @@
     .patient-list li span { font-size: 12px; color: var(--text-muted); }
     
     .btn-delete { 
-        background: rgba(248, 113, 113, 0.15); 
+        background: rgba(248, 113, 113, 0.15);
         color: var(--accent-red); 
         padding: 6px 10px; 
         font-size: 11px; 
@@ -199,7 +199,7 @@
     </div>
 
     <div class="panel center-panel">
-        <h3 id="pname" style="line-height: 1.7; text-transform: uppercase; font-size: 15px; letter-spacing: 0.3px;">
+        <h3 id="pname" style="line-height: 1.7; text-transform: uppercase; font-size: 15px; letter-spacing: 0.3px; position: relative;">
             BỆNH NHÂN: CHƯA CHỌN
         </h3>
         
@@ -221,7 +221,12 @@
     </div>
 
     <div class="panel">
-        <h3>📺 Chỉ số trực quan (Realtime)</h3>
+        <h3 style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📺 Chỉ số trực quan (Realtime)</span>
+            <span id="live-p-status" style="font-size: 12px; color: var(--accent-blue); font-weight: bold; visibility: hidden; border: 1px solid var(--accent-blue); padding: 2px 6px; border-radius: 4px; animation: pulse 1.5s infinite;">
+                🎈 <span id="live-p-value">0</span> mmHg
+            </span>
+        </h3>
         <div class="vitals-container">
             <div class="vital-box sys">
                 <div class="vital-label">HUYẾT ÁP TÂM THU</div>
@@ -239,17 +244,15 @@
                 <div class="vital-unit">bpm</div>
             </div>
         </div>
-        <button class="btn-start-measure" onclick="triggerHardwareMeasure()">⚡ BẮT ĐẦU ĐO TRỰC TUYẾN</button>
+        <button id="btn-measure" class="btn-start-measure" onclick="triggerHardwareMeasure()">⚡ BẮT ĐẦU ĐO TRỰC TUYẾN</button>
     </div>
 </div>
 
 <script>
-// ĐẶT MẶC ĐỊNH CHUẨN ĐƯỜNG DẪN LOCAL LOCALHOST THEO YÊU CẦU
-const API = "http://127.0.0.1:5000"; 
+const API = "http://127.0.0.1:5000";
 const socket = io(API);
 let IS_LOGGED = false, allPatients = [], currentPatient = null;
 
-// Khởi tạo đồ thị tích hợp 3 đường dữ liệu (SYS, DIA, và thêm đường mạch mạch HR)
 const ctx = document.getElementById('liveChart').getContext('2d');
 const chart = new Chart(ctx, {
     type: 'line',
@@ -310,7 +313,6 @@ async function loadPatients(){
 function renderPatientList(data) {
     const listEl = document.getElementById("list");
     listEl.innerHTML = "";
-    
     if(data.length === 0) {
         listEl.innerHTML = `<div style="color:var(--text-muted); text-align:center; margin-top:10px; font-size:14px;">Không tìm thấy kết quả</div>`;
         return;
@@ -335,6 +337,7 @@ function renderPatientList(data) {
             e.stopPropagation();
             deletePatient(p.cccd, p.name);
         };
+    
         li.appendChild(delBtn);
 
         li.onclick = function() {
@@ -359,36 +362,43 @@ function filterPatients() {
     renderPatientList(filtered);
 }
 
-// FIX HIỂN THỊ: Phân dòng rõ ràng và tô màu nhãn thông tin
-function selectPatient(p) {
+async function selectPatient(p) {
     currentPatient = p;
     document.querySelectorAll(".patient-list li").forEach(li => li.classList.remove("active"));
     const activeLi = document.getElementById(`p-${p.cccd}`);
     if(activeLi) activeLi.classList.add("active");
-    
     document.getElementById("pname").innerHTML = `
         <span style="color: var(--accent-blue);">HỌ VÀ TÊN:</span> ${p.name}<br>
         <span style="color: var(--accent-blue);">NĂM SINH:</span> ${p.dob || 'Chưa rõ'}<br>
         <span style="color: var(--accent-blue);">CCCD:</span> ${p.cccd}<br>
         <span style="color: var(--accent-blue);">NƠI Ở:</span> ${p.address || 'Chưa rõ'}
     `;
+    
+    // Đồng bộ hóa với Server biết bệnh nhân này đang mở
+    await fetch(API + `/api/set_active_patient/${p.cccd}`, { method: "POST" });
+    
     updateDashboardUI(p.records);
 }
 
 async function triggerHardwareMeasure() {
     if(!currentPatient) return alert("Vui lòng chọn bệnh nhân trước khi ấn đo!");
+    
+    document.getElementById("btn-measure").innerText = "⏳ ĐANG TIẾN HÀNH ĐO...";
+    document.getElementById("btn-measure").disabled = true;
+    
     let res = await fetch(API + "/api/trigger_measure", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cccd: currentPatient.cccd, name: currentPatient.name })
     });
     let data = await res.json();
-    if(data.msg === "triggered") alert(`🚀 Đã gửi lệnh kích hoạt phần cứng đo cho: ${currentPatient.name}`);
+    if(data.msg === "triggered") {
+        console.log(`🚀 Đã gửi lệnh kích hoạt phần cứng đo cho: ${currentPatient.name}`);
+    }
 }
 
 async function deletePatient(cccd, name) {
     if(!confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn hồ sơ và mọi bản ghi đo của bệnh nhân: ${name}?`)) return;
-
     let res = await fetch(API + `/delete_patient/${cccd}`, { method: "DELETE" });
     let result = await res.json();
     if(result.msg === "ok") {
@@ -408,7 +418,6 @@ async function addPatient(){
     const addrInput = document.getElementById("p_address");
 
     if(!nameInput.value || !cccdInput.value) return alert("Vui lòng nhập đầy đủ Tên và CCCD!");
-
     let res = await fetch(API+"/create_patient", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -419,12 +428,12 @@ async function addPatient(){
             address: addrInput.value
         })
     });
-    
     let result = await res.json();
     if(result.error) {
         alert(result.error);
     } else {
-        nameInput.value = ""; cccdInput.value = ""; dobInput.value = ""; addrInput.value = "";
+        nameInput.value = ""; cccdInput.value = ""; dobInput.value = "";
+        addrInput.value = "";
         loadPatients();
     }
 }
@@ -447,7 +456,7 @@ function updateDashboardUI(records) {
     document.getElementById("sys").innerText = Math.round(latest.sys);
     document.getElementById("dia").innerText = Math.round(latest.dia);
     document.getElementById("hr").innerText = Math.round(latest.hr);
-
+    
     const reversedLogs = [...records].reverse().slice(0, 15);
     document.getElementById("table-body").innerHTML = reversedLogs.map(r => `
         <tr>
@@ -457,21 +466,42 @@ function updateDashboardUI(records) {
             <td style="color:var(--accent-green); font-weight:bold;">${Math.round(r.hr)}</td>
         </tr>
     `).join('');
-
-    // Nạp đồng thời dữ liệu của cả 3 đường vào Chart để vẽ mô hình đồ thị liên hoàn
+    
     const chartData = records.slice(-10);
     chart.data.labels = chartData.map(r => r.time.split('_')[1] || r.time);
     chart.data.datasets[0].data = chartData.map(r => r.sys);
     chart.data.datasets[1].data = chartData.map(r => r.dia);
-    chart.data.datasets[2].data = chartData.map(r => r.hr); // Vẽ đường nhịp tim mượt mà
+    chart.data.datasets[2].data = chartData.map(r => r.hr); 
     chart.update();
 }
 
+// 📡 LẮNG NGHE ĐƯỜNG TRUYỀN SOCKET.IO REALTIME TỪ ESP32 QUA SERVER
+
+// Kênh 1: Nhận áp suất ống khí nhảy số liên tục khi đang bơm/xả hơi
+socket.on("live_pressure_data", (msg) => {
+    const statusBox = document.getElementById("live-p-status");
+    const valueLabel = document.getElementById("live-p-value");
+    if(msg.pressure > 2) {
+        statusBox.style.visibility = "visible";
+        valueLabel.innerText = Math.round(msg.pressure);
+    } else {
+        statusBox.style.visibility = "hidden";
+    }
+});
+
+// Kênh 2: Khi nhận gói dữ liệu đo kết quả hoàn chỉnh dội về
 socket.on("newData", (msg) => {
+    // Ẩn vùng nhảy số áp suất live và khôi phục trạng thái nút bấm đo trực tuyến
+    document.getElementById("live-p-status").style.visibility = "hidden";
+    document.getElementById("btn-measure").innerText = "⚡ BẮT ĐẦU ĐO TRỰC TUYẾN";
+    document.getElementById("btn-measure").disabled = false;
+
+    // Nếu trang Web đang trỏ đúng vào bệnh nhân vừa đo xong -> Cập nhật UI ngay tại chỗ
     if(currentPatient && msg.cccd === currentPatient.cccd) {
         currentPatient.records.push(msg.data);
         updateDashboardUI(currentPatient.records);
     }
+    // Cập nhật ngầm dữ liệu trong mảng tổng danh sách
     allPatients.forEach(p => {
         if(p.cccd === msg.cccd) p.records.push(msg.data);
     });
