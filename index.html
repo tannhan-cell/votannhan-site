@@ -255,9 +255,9 @@ const chart = new Chart(ctx, {
     data: {
         labels: [],
         datasets: [
-            { label: 'SYS (Tâm thu)', data: [], borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.03)', tension: 0, borderWidth: 2 },
-            { label: 'DIA (Tâm trương)', data: [], borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.03)', tension: 0, borderWidth: 2 },
-            { label: 'MAP (Huyết áp TB)', data: [], borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,0.03)', tension: 0, borderWidth: 2 }
+            { label: 'SYS (Tâm thu)', data: [], borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.03)', tension: 0.3, borderWidth: 2 },
+            { label: 'DIA (Tâm trương)', data: [], borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.03)', tension: 0.3, borderWidth: 2 },
+            { label: 'MAP (Huyết áp TB)', data: [], borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,0.03)', tension: 0.3, borderWidth: 2 }
         ]
     },
     options: { 
@@ -267,7 +267,7 @@ const chart = new Chart(ctx, {
         plugins: { legend: { labels: { color: '#fff', font: { size: 11 } } } },
         scales: {
             x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' }, min: 50, max: 130 }
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' }, min: 50, max: 140 }
         }
     }
 });
@@ -358,6 +358,11 @@ function filterPatients() {
     renderPatientList(filtered);
 }
 
+// Hàm bổ trợ sinh số ngẫu nhiên trong khoảng chỉ định
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 function selectPatient(p) {
     currentPatient = p;
     document.querySelectorAll(".patient-list li").forEach(li => li.classList.remove("active"));
@@ -371,19 +376,23 @@ function selectPatient(p) {
         <span style="color: var(--accent-blue);">NƠI Ở:</span> ${p.address || 'Chưa rõ'}
     `;
     
-    // FIX CỐ ĐỊNH CHUẨN SỐ LIỆU ĐỂ HIỂN THỊ ĐƯỜNG THẲNG ĐỀU TRÊN BIỂU ĐỒ 
+    // TẠO CHUỖI RANDOM CHO CÁC MỐC CŨ, NHƯNG MỐC CUỐI CÙNG (INDEX = 0) SẼ LUÔN LÀ KHỚP CHUẨN 108, 83, 92
     let mockRecords = [];
     let now = new Date();
-    for(let i = 9; i >= 0; i--) {
-        let mockTime = new Date(now.getTime() - i * 15000); 
+    for(let i = 14; i >= 0; i--) {
+        let mockTime = new Date(now.getTime() - i * 20000); 
         let timeStr = `Hôm_nay ${mockTime.toLocaleTimeString('vi-VN', {hour12:false})}`;
         
-        mockRecords.push({
-            time: timeStr,
-            sys: 108,
-            dia: 83,
-            map: 92
-        });
+        if (i === 0) {
+            // Mốc cuối cùng (Realtime hiện tại) cố định tuyệt đối số liệu chuẩn
+            mockRecords.push({ time: timeStr, sys: 108, dia: 83, map: 92 });
+        } else {
+            // Các mốc cũ trước đó nhảy random ngẫu nhiên hợp lý sinh học xung quanh vùng đo
+            let randSys = getRandomInt(102, 118);
+            let randDia = getRandomInt(75, 88);
+            let randMap = Math.round((randSys + 2 * randDia) / 3);
+            mockRecords.push({ time: timeStr, sys: randSys, dia: randDia, map: randMap });
+        }
     }
     p.records = mockRecords;
     
@@ -460,39 +469,22 @@ function updateDashboardUI(records) {
 
     const latest = records[records.length - 1];
     
-    document.getElementById("sys").innerText = 108;
-    document.getElementById("dia").innerText = 83;
-    document.getElementById("map").innerText = 92;
+    // Hiển thị trực quan mốc cuối luôn bám theo giá trị thực tế của phần tử cuối mảng (108, 83, 92)
+    document.getElementById("sys").innerText = Math.round(latest.sys);
+    document.getElementById("dia").innerText = Math.round(latest.dia);
+    document.getElementById("map").innerText = Math.round(latest.map);
 
     const reversedLogs = [...records].reverse().slice(0, 15);
     document.getElementById("table-body").innerHTML = reversedLogs.map(r => `
         <tr>
             <td>${r.time.replace('_', ' ')}</td>
-            <td style="color:var(--accent-green); font-weight:bold;">108</td>
-            <td style="color:var(--accent-green); font-weight:bold;">83</td>
-            <td style="color:var(--accent-map); font-weight:bold;">92</td>
+            <td style="color:var(--accent-green); font-weight:bold;">${Math.round(r.sys)}</td>
+            <td style="color:var(--accent-green); font-weight:bold;">${Math.round(r.dia)}</td>
+            <td style="color:var(--accent-map); font-weight:bold;">${Math.round(r.map)}</td>
         </tr>
     `).join('');
 
+    // Đổ dữ liệu động (gồm cả các đoạn random uốn lượn và điểm kết thúc chuẩn) lên Chart.js
     const chartData = records.slice(-10);
     chart.data.labels = chartData.map(r => r.time.split('_')[1] || r.time);
-    chart.data.datasets[0].data = chartData.map(() => 108);
-    chart.data.datasets[1].data = chartData.map(() => 83);
-    chart.data.datasets[2].data = chartData.map(() => 92);
-    chart.update();
-}
-
-socket.on("newData", (msg) => {
-    if(currentPatient && msg.cccd === currentPatient.cccd) {
-        currentPatient.records.push({
-            time: `Hôm_nay ${new Date().toLocaleTimeString('vi-VN', {hour12:false})}`,
-            sys: 108,
-            dia: 83,
-            map: 92
-        });
-        updateDashboardUI(currentPatient.records);
-    }
-});
-</script>
-</body>
-</html>
+    chart.
