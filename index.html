@@ -249,7 +249,6 @@ const API = "http://127.0.0.1:5000";
 const socket = io(API);
 let IS_LOGGED = false, allPatients = [], currentPatient = null;
 
-// Khởi tạo đồ thị tích hợp 3 đường dữ liệu MAP thay cho HR cũ
 const ctx = document.getElementById('liveChart').getContext('2d');
 const chart = new Chart(ctx, {
     type: 'line',
@@ -268,7 +267,7 @@ const chart = new Chart(ctx, {
         plugins: { legend: { labels: { color: '#fff', font: { size: 11 } } } },
         scales: {
             x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' }, min: 50, max: 140 }
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' }, min: 40, max: 150 }
         }
     }
 });
@@ -306,6 +305,12 @@ async function loadPatients(){
         let res = await fetch(API+"/patients");
         allPatients = await res.json();
         renderPatientList(allPatients);
+        
+        // Cập nhật lại data thực của bệnh nhân đang chọn (nếu có) khi tải lại danh sách
+        if(currentPatient) {
+            const updated = allPatients.find(p => p.cccd === currentPatient.cccd);
+            if(updated) currentPatient = updated;
+        }
     } catch(e) {
         console.log("Lỗi kết nối API Server:", e);
     }
@@ -363,10 +368,7 @@ function filterPatients() {
     renderPatientList(filtered);
 }
 
-function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
+// KHÔNG CÒN VÒNG LẶP FOR MOCK NGẪU NHIÊN 15 LẦN NỮA
 function selectPatient(p) {
     currentPatient = p;
     document.querySelectorAll(".patient-list li").forEach(li => li.classList.remove("active"));
@@ -380,34 +382,11 @@ function selectPatient(p) {
         <span style="color: var(--accent-blue);">NƠI Ở:</span> ${p.address || 'Chưa rõ'}
     `;
     
-    let mockRecords = [];
-    let baseTime = new Date(); 
-    let totalMsBack = 0; 
-
-    // Logic sinh thời gian ngẫu nhiên lùi từ 3-6 phút, số giây khác nhau hoàn toàn
-    for(let i = 0; i < 15; i++) {
-        let mockTime = new Date(baseTime.getTime() - totalMsBack); 
-        let timeStr = `Hôm_nay ${mockTime.toLocaleTimeString('vi-VN', {hour12:false})}`;
-        
-        if (i === 0) {
-            // Mốc cuối (Realtime) luôn cố định bộ số chuẩn
-            mockRecords.push({ time: timeStr, sys: 108, dia: 83, map: 92 });
-        } else {
-            // Các mốc cũ lượn sóng ngẫu nhiên
-            let randSys = getRandomInt(102, 118);
-            let randDia = getRandomInt(75, 88);
-            let randMap = Math.round((randSys + 2 * randDia) / 3);
-            mockRecords.push({ time: timeStr, sys: randSys, dia: randDia, map: randMap });
-        }
-
-        // Tạo khoảng cách ngẫu nhiên 3-6 phút & giây ngẫu nhiên từ 1-59 giây để tránh trùng giây
-        let nextMinutesGap = getRandomInt(3, 6);
-        let nextSecondsGap = getRandomInt(1, 59);
-        totalMsBack += (nextMinutesGap * 60 * 1000) + (nextSecondsGap * 1000);
-    }
-
-    p.records = mockRecords.reverse(); 
+    // Đưa dữ liệu thực lưu trong file text (p.records) hiển thị lên Dashboard UI
     updateDashboardUI(p.records);
+    
+    // Gửi lệnh báo Server biết đang tập trung xem bệnh nhân này
+    fetch(API + `/api/set_active_patient/${p.cccd}`, { method: "POST" });
 }
 
 async function triggerHardwareMeasure() {
@@ -469,7 +448,7 @@ function updateDashboardUI(records) {
         document.getElementById("sys").innerText = "--";
         document.getElementById("dia").innerText = "--";
         document.getElementById("map").innerText = "--";
-        document.getElementById("table-body").innerHTML = `<tr><td colspan="4" style="color:var(--text-muted);">Bệnh nhân này chưa có dữ liệu đo</td></tr>`;
+        document.getElementById("table-body").innerHTML = `<tr><td colspan="4" style="color:var(--text-muted);">Bệnh nhân này chưa có dữ liệu đo thực tế nào</td></tr>`;
         chart.data.labels = []; 
         chart.data.datasets[0].data = []; 
         chart.data.datasets[1].data = []; 
@@ -478,37 +457,58 @@ function updateDashboardUI(records) {
         return;
     }
 
+    // Lấy bản ghi thực tế mới nhất hiển thị lên 3 ô số lớn
     const latest = records[records.length - 1];
     document.getElementById("sys").innerText = Math.round(latest.sys);
     document.getElementById("dia").innerText = Math.round(latest.dia);
     document.getElementById("map").innerText = Math.round(latest.map);
 
+    // Cập nhật Nhật ký bảng hiển thị tối đa 15 bản ghi thực từ mới đến cũ
     const reversedLogs = [...records].reverse().slice(0, 15);
-    document.getElementById("table-body").innerHTML = reversedLogs.map(r => `
-        <tr>
-            <td>${r.time.replace('_', ' ')}</td>
-            <td style="color:var(--accent-red); font-weight:bold;">${Math.round(r.sys)}</td>
-            <td style="color:var(--accent-blue); font-weight:bold;">${Math.round(r.dia)}</td>
-            <td style="color:var(--accent-map); font-weight:bold;">${Math.round(r.map)}</td>
-        </tr>
-    `).join('');
+    document.getElementById("table-body").innerHTML = reversedLogs.map(r => {
+        // Format hiển thị thời gian từ DD-MM-YYYY_HH-MM-SS sang DD-MM-YYYY HH:MM:SS để dễ nhìn
+        let displayTime = r.time.replace('_', ' ').replaceAll('-', ':');
+        if(displayTime.includes(' ')) {
+            let parts = displayTime.split(' ');
+            displayTime = parts[0].replaceAll(':', '-') + ' ' + parts[1];
+        }
+        return `
+            <tr>
+                <td>${displayTime}</td>
+                <td style="color:var(--accent-red); font-weight:bold;">${Math.round(r.sys)}</td>
+                <td style="color:var(--accent-blue); font-weight:bold;">${Math.round(r.dia)}</td>
+                <td style="color:var(--accent-map); font-weight:bold;">${Math.round(r.map)}</td>
+            </tr>
+        `;
+    }).join('');
 
+    // Đồ thị hiển thị tối đa 10 kết quả đo thực tế gần nhất
     const chartData = records.slice(-10);
-    chart.data.labels = chartData.map(r => r.time.split('_')[1] || r.time);
+    chart.data.labels = chartData.map(r => r.time.split('_')[1]?.replaceAll('-', ':') || r.time);
     chart.data.datasets[0].data = chartData.map(r => Math.round(r.sys));
     chart.data.datasets[1].data = chartData.map(r => Math.round(r.dia));
     chart.data.datasets[2].data = chartData.map(r => Math.round(r.map)); 
     chart.update();
 }
 
+// LẮNG NGHE DỮ LIỆU TỪ MẠCH ESP32 THÔNG QUA SERVER BẮN QUA SOCKET
 socket.on("newData", (msg) => {
+    // Tìm và cập nhật dữ liệu vào biến bộ nhớ cục bộ app để không phải reload trang
+    allPatients.forEach(p => {
+        if(p.cccd === msg.cccd) {
+            // Kiểm tra xem bản ghi đã tồn tại chưa để tránh trùng lặp hiển thị
+            if(!p.records.some(r => r.time === msg.data.time)) {
+                p.records.push(msg.data);
+            }
+        }
+    });
+
     if(currentPatient && msg.cccd === currentPatient.cccd) {
-        currentPatient.records.push(msg.data);
+        if(!currentPatient.records.some(r => r.time === msg.data.time)) {
+            currentPatient.records.push(msg.data);
+        }
         updateDashboardUI(currentPatient.records);
     }
-    allPatients.forEach(p => {
-        if(p.cccd === msg.cccd) p.records.push(msg.data);
-    });
 });
 </script>
 </body>
