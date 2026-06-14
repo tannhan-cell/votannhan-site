@@ -238,7 +238,7 @@ const chart = new Chart(ctx, {
     }
 });
 
-// Vào trang tự động lấy danh sách bệnh nhân ngay lập tức
+// Tự động tải dữ liệu hệ thống ngay khi mở trang
 window.onload = () => {
     updateDashboardUI([]);
     document.getElementById("pname").innerHTML = "BỆNH NHÂN: CHƯA CHỌN";
@@ -325,21 +325,32 @@ function selectPatient(p) {
     `;
     
     let mockRecords = [];
-    let now = new Date();
-    for(let i = 14; i >= 0; i--) {
-        let mockTime = new Date(now.getTime() - i * 20000); 
+    let baseTime = new Date(); 
+    let totalMinutesBack = 0;   
+
+    // Tạo chuỗi dữ liệu gồm 15 bản ghi lùi dần về quá khứ
+    for(let i = 0; i < 15; i++) {
+        let mockTime = new Date(baseTime.getTime() - totalMinutesBack * 60 * 1000); 
         let timeStr = `Hôm_nay ${mockTime.toLocaleTimeString('vi-VN', {hour12:false})}`;
         
         if (i === 0) {
+            // Mốc cuối cùng thời gian thực (Realtime mới nhất) cố định số liệu chuẩn
             mockRecords.push({ time: timeStr, sys: 108, dia: 83, map: 92 });
         } else {
+            // Các mốc cũ trước đó nhảy số ngẫu nhiên lượn sóng cho đẹp biểu đồ
             let randSys = getRandomInt(102, 118);
             let randDia = getRandomInt(75, 88);
             let randMap = Math.round((randSys + 2 * randDia) / 3);
             mockRecords.push({ time: timeStr, sys: randSys, dia: randDia, map: randMap });
         }
+
+        // Tích lũy khoảng cách ngẫu nhiên từ 10 đến 20 phút cho mốc tiếp theo
+        let nextGap = getRandomInt(10, 20);
+        totalMinutesBack += nextGap;
     }
-    p.records = mockRecords;
+
+    // Đảo ngược mảng để Chart.js sắp xếp và vẽ đúng trình tự từ trái (Cũ) sang phải (Mới)
+    p.records = mockRecords.reverse(); 
     updateDashboardUI(p.records);
 }
 
@@ -417,6 +428,7 @@ function updateDashboardUI(records) {
     document.getElementById("dia").innerText = Math.round(latest.dia);
     document.getElementById("map").innerText = Math.round(latest.map);
 
+    // Đảo ngược mảng để đưa dữ liệu mới nhất (108, 83, 92) lên dòng đầu tiên của bảng nhật ký
     const reversedLogs = [...records].reverse().slice(0, 15);
     document.getElementById("table-body").innerHTML = reversedLogs.map(r => `
         <tr>
@@ -427,6 +439,7 @@ function updateDashboardUI(records) {
         </tr>
     `).join('');
 
+    // Đổ dữ liệu mượt mà lên biểu đồ (10 mốc gần nhất)
     const chartData = records.slice(-10);
     chart.data.labels = chartData.map(r => r.time.split('_')[1] || r.time);
     chart.data.datasets[0].data = chartData.map(r => Math.round(r.sys));
