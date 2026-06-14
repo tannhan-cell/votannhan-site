@@ -35,6 +35,28 @@
 
     h2 { margin: 0 0 20px 0; font-size: 24px; display: flex; align-items: center; gap: 10px; }
 
+    #login-screen { 
+        position: fixed; 
+        inset: 0; 
+        background: var(--bg); 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        z-index: 1000; 
+    }
+    .login-box { 
+        background: var(--panel); 
+        padding: 40px; 
+        border-radius: 15px; 
+        text-align: center; 
+        width: 400px; 
+        border: 1px solid #243552;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.5);
+    }
+    .login-box h2 { justify-content: center; margin-bottom: 25px; color: var(--accent-blue); }
+    .login-box input { width: 90%; margin: 10px 0; }
+    .login-box button { width: 98%; margin-top: 15px; }
+
     .dashboard-grid {
         display: grid;
         grid-template-columns: 320px 1fr 350px;
@@ -89,6 +111,7 @@
     }
     button:hover { opacity: 0.9; transform: translateY(-1px); }
     button.btn-start-measure { background: #eab308; color: #0f172a; margin-top: 10px; font-size: 15px; box-shadow: 0 0 15px rgba(234,179,8,0.3); }
+    button.btn-logout { background: var(--accent-red); color: white; padding: 8px; margin-bottom: 15px; width: 100%; }
 
     .patient-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
     .patient-list li {
@@ -127,8 +150,8 @@
         border: 1px solid #1e293b;
         position: relative;
     }
-    .vital-box.sys { border-top: 4px solid var(--accent-green); } 
-    .vital-box.dia { border-top: 4px solid var(--accent-green); } 
+    .vital-box.sys { border-top: 4px solid var(--accent-red); }
+    .vital-box.dia { border-top: 4px solid var(--accent-blue); }
     .vital-box.map { border-top: 4px solid var(--accent-map); }
     .vital-label { font-size: 12px; color: var(--text-muted); font-weight: bold; }
     .vital-value { font-size: 48px; font-weight: bold; font-family: monospace; margin: 5px 0; }
@@ -145,10 +168,21 @@
 </head>
 <body>
 
+<div id="login-screen">
+    <div class="login-box">
+        <h2>🔒 Admin Security Login</h2>
+        <input id="u" placeholder="Tên tài khoản (Admin)">
+        <input id="p" type="password" placeholder="Mật khẩu">
+        <button onclick="login()">ĐĂNG NHẬP HỆ THỐNG</button>
+    </div>
+</div>
+
 <h2>🏥 Hệ Thống Theo Dõi Trung Tâm ICU</h2>
 
 <div class="dashboard-grid">
     <div class="panel">
+        <button class="btn-logout" onclick="logout()">🚪 Đăng Xuất Admin</button>
+        
         <h3>➕ Thêm bệnh nhân</h3>
         <div class="form-group">
             <input id="p_name" placeholder="Họ và tên">
@@ -178,7 +212,7 @@
         <div style="overflow-x:auto; flex:1;">
             <table>
                 <thead>
-                    <tr><th>Thời gian</th><th>SYS</th><th>DIA</th><th>MAP</th></tr>
+                    <tr><th>Thời gian</th><th>Tâm thu (SYS)</th><th>Tâm trương (DIA)</th><th>Huyết áp TB (MAP)</th></tr>
                 </thead>
                 <tbody id="table-body">
                     <tr><td colspan="4" style="color:var(--text-muted);">Vui lòng chọn bệnh nhân để xem lịch sử</td></tr>
@@ -191,17 +225,17 @@
         <h3>📺 Chỉ số trực quan (Realtime)</h3>
         <div class="vitals-container">
             <div class="vital-box sys">
-                <div class="vital-label">SYS</div>
-                <div id="sys" class="vital-value" style="color: var(--accent-green);">--</div>
+                <div class="vital-label">HUYẾT ÁP TÂM THU (SYS)</div>
+                <div id="sys" class="vital-value" style="color: var(--accent-red);">--</div>
                 <div class="vital-unit">mmHg</div>
             </div>
             <div class="vital-box dia">
-                <div class="vital-label">DIA</div>
-                <div id="dia" class="vital-value" style="color: var(--accent-green);">--</div>
+                <div class="vital-label">HUYẾT ÁP TÂM TRƯƠNG (DIA)</div>
+                <div id="dia" class="vital-value" style="color: var(--accent-blue);">--</div>
                 <div class="vital-unit">mmHg</div>
             </div>
             <div class="vital-box map">
-                <div class="vital-label">MAP</div>
+                <div class="vital-label">HUYẾT ÁP TRUNG BÌNH (MAP)</div>
                 <div id="map" class="vital-value" style="color: var(--accent-map);">--</div>
                 <div class="vital-unit">mmHg</div>
             </div>
@@ -213,17 +247,18 @@
 <script>
 const API = "http://127.0.0.1:5000"; 
 const socket = io(API);
-let allPatients = [], currentPatient = null;
+let IS_LOGGED = false, allPatients = [], currentPatient = null;
 
+// Khởi tạo đồ thị tích hợp 3 đường dữ liệu MAP thay cho HR cũ
 const ctx = document.getElementById('liveChart').getContext('2d');
 const chart = new Chart(ctx, {
     type: 'line',
     data: {
         labels: [],
         datasets: [
-            { label: 'SYS', data: [], borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.03)', tension: 0.3, borderWidth: 2 },
-            { label: 'DIA', data: [], borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.03)', tension: 0.3, borderWidth: 2 },
-            { label: 'MAP', data: [], borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,0.03)', tension: 0.3, borderWidth: 2 }
+            { label: 'SYS (Tâm thu)', data: [], borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.05)', tension: 0.2, borderWidth: 2 },
+            { label: 'DIA (Tâm trương)', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.05)', tension: 0.2, borderWidth: 2 },
+            { label: 'MAP (Huyết áp TB)', data: [], borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,0.05)', tension: 0.2, borderWidth: 2 }
         ]
     },
     options: { 
@@ -239,18 +274,40 @@ const chart = new Chart(ctx, {
 });
 
 window.onload = () => {
-    updateDashboardUI([]);
-    document.getElementById("pname").innerHTML = "BỆNH NHÂN: CHƯA CHỌN";
-    loadPatients();
+    const savedLogin = localStorage.getItem("icu_logged_status");
+    if (savedLogin === "true") {
+        IS_LOGGED = true;
+        document.getElementById("login-screen").style.display = "none";
+        currentPatient = null; 
+        updateDashboardUI([]);
+        document.getElementById("pname").innerHTML = "BỆNH NHÂN: CHƯA CHỌN";
+        loadPatients();
+    }
 };
+
+function login() {
+    if (u.value === "admin" && p.value === "123456") {
+        IS_LOGGED = true;
+        localStorage.setItem("icu_logged_status", "true");
+        document.getElementById("login-screen").style.display = "none";
+        loadPatients();
+    } else {
+        alert("Sai tài khoản hoặc mật khẩu đăng nhập!");
+    }
+}
+
+function logout() {
+    localStorage.removeItem("icu_logged_status");
+    location.reload();
+}
 
 async function loadPatients(){
     try {
         let res = await fetch(API+"/patients");
         allPatients = await res.json();
         renderPatientList(allPatients);
-    } catch(err) {
-        console.log("Không kết nối được API Server Backend:", err);
+    } catch(e) {
+        console.log("Lỗi kết nối API Server:", e);
     }
 }
 
@@ -325,35 +382,30 @@ function selectPatient(p) {
     
     let mockRecords = [];
     let baseTime = new Date(); 
-    let totalMsBack = 0; // Tích lũy mili-giây lùi về quá khứ
+    let totalMsBack = 0; 
 
+    // Logic sinh thời gian ngẫu nhiên lùi từ 3-6 phút, số giây khác nhau hoàn toàn
     for(let i = 0; i < 15; i++) {
-        // Tạo đối tượng thời gian lùi dựa trên tổng mili-giây tích lũy
         let mockTime = new Date(baseTime.getTime() - totalMsBack); 
         let timeStr = `Hôm_nay ${mockTime.toLocaleTimeString('vi-VN', {hour12:false})}`;
         
         if (i === 0) {
-            // Mốc mới nhất (kết quả cuối cùng) luôn cố định 108, 83, 92
+            // Mốc cuối (Realtime) luôn cố định bộ số chuẩn
             mockRecords.push({ time: timeStr, sys: 108, dia: 83, map: 92 });
         } else {
-            // Các mốc cũ trước đó nhảy số ngẫu nhiên uốn lượn
+            // Các mốc cũ lượn sóng ngẫu nhiên
             let randSys = getRandomInt(102, 118);
             let randDia = getRandomInt(75, 88);
             let randMap = Math.round((randSys + 2 * randDia) / 3);
             mockRecords.push({ time: timeStr, sys: randSys, dia: randDia, map: randMap });
         }
 
-        // TÍNH TOÁN KHOẢNG CÁCH CHO MỐC TIẾP THEO:
-        // Random phút từ 3 đến 6
+        // Tạo khoảng cách ngẫu nhiên 3-6 phút & giây ngẫu nhiên từ 1-59 giây để tránh trùng giây
         let nextMinutesGap = getRandomInt(3, 6);
-        // Random thêm số giây từ 1 đến 59 để đảm bảo số giây của các mốc không bao giờ giống nhau
         let nextSecondsGap = getRandomInt(1, 59);
-        
-        // Quy đổi tất cả ra mili-giây và cộng dồn vào biến tích lũy lùi thời gian
         totalMsBack += (nextMinutesGap * 60 * 1000) + (nextSecondsGap * 1000);
     }
 
-    // Đảo ngược mảng để Chart.js sắp xếp theo trục thời gian từ trái sang phải hợp lý
     p.records = mockRecords.reverse(); 
     updateDashboardUI(p.records);
 }
@@ -427,7 +479,6 @@ function updateDashboardUI(records) {
     }
 
     const latest = records[records.length - 1];
-    
     document.getElementById("sys").innerText = Math.round(latest.sys);
     document.getElementById("dia").innerText = Math.round(latest.dia);
     document.getElementById("map").innerText = Math.round(latest.map);
@@ -436,8 +487,8 @@ function updateDashboardUI(records) {
     document.getElementById("table-body").innerHTML = reversedLogs.map(r => `
         <tr>
             <td>${r.time.replace('_', ' ')}</td>
-            <td style="color:var(--accent-green); font-weight:bold;">${Math.round(r.sys)}</td>
-            <td style="color:var(--accent-green); font-weight:bold;">${Math.round(r.dia)}</td>
+            <td style="color:var(--accent-red); font-weight:bold;">${Math.round(r.sys)}</td>
+            <td style="color:var(--accent-blue); font-weight:bold;">${Math.round(r.dia)}</td>
             <td style="color:var(--accent-map); font-weight:bold;">${Math.round(r.map)}</td>
         </tr>
     `).join('');
@@ -446,20 +497,18 @@ function updateDashboardUI(records) {
     chart.data.labels = chartData.map(r => r.time.split('_')[1] || r.time);
     chart.data.datasets[0].data = chartData.map(r => Math.round(r.sys));
     chart.data.datasets[1].data = chartData.map(r => Math.round(r.dia));
-    chart.data.datasets[2].data = chartData.map(r => Math.round(r.map));
+    chart.data.datasets[2].data = chartData.map(r => Math.round(r.map)); 
     chart.update();
 }
 
 socket.on("newData", (msg) => {
     if(currentPatient && msg.cccd === currentPatient.cccd) {
-        currentPatient.records.push({
-            time: `Hôm_nay ${new Date().toLocaleTimeString('vi-VN', {hour12:false})}`,
-            sys: 108,
-            dia: 83,
-            map: 92
-        });
+        currentPatient.records.push(msg.data);
         updateDashboardUI(currentPatient.records);
     }
+    allPatients.forEach(p => {
+        if(p.cccd === msg.cccd) p.records.push(msg.data);
+    });
 });
 </script>
 </body>
