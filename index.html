@@ -1,515 +1,464 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🏥 Hệ Thống Theo Dõi ICU Realtime</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Gia Sư</title>
+    <!-- NHÚNG THƯ VIỆN ICON FONT AWESOME -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Thiết lập cơ bản */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --dark-text: #1f2937;
+            --light-text: #f9fafb;
+            --gray-text: #4b5563;
+            --bg-color: #e5e7eb;
+        }
 
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-<style>
-    :root {
-        --bg: #090d16;
-        --panel: #131c2e;
-        --card: #1e293b;
-        --accent-blue: #38bdf8;
-        --accent-green: #4ade80;
-        --accent-red: #f87171;
-        --accent-map: #22d3ee; 
-        --text: #f8fafc;
-        --text-muted: #94a3b8;
-    }
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            color: var(--dark-text);
+        }
 
-    body {
-        background: var(--bg);
-        color: var(--text);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        box-sizing: border-box;
-    }
+        /* Khung CV chính */
+        .cv-wrapper {
+            display: flex;
+            max-width: 1000px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
 
-    h2 { margin: 0 0 20px 0; font-size: 24px; display: flex; align-items: center; gap: 10px; }
+        /* Cột bên trái (Sidebar) */
+        .sidebar {
+            width: 35%;
+            background: var(--primary-gradient);
+            color: var(--light-text);
+            padding: 50px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
 
-    #login-screen { 
-        position: fixed; 
-        inset: 0; 
-        background: var(--bg); 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-        z-index: 1000; 
-    }
-    .login-box { 
-        background: var(--panel); 
-        padding: 40px; 
-        border-radius: 15px; 
-        text-align: center; 
-        width: 400px; 
-        border: 1px solid #243552;
-        box-shadow: 0 4px 25px rgba(0,0,0,0.5);
-    }
-    .login-box h2 { justify-content: center; margin-bottom: 25px; color: var(--accent-blue); }
-    .login-box input { width: 90%; margin: 10px 0; }
-    .login-box button { width: 98%; margin-top: 15px; }
+        /* Ảnh đại diện */
+        .avatar-container {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        .avatar-container:hover {
+            transform: scale(1.05);
+        }
+        .avatar-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 4px solid #ffffff;
+        }
 
-    .dashboard-grid {
-        display: grid;
-        grid-template-columns: 320px 1fr 350px;
-        gap: 20px;
-        flex: 1;
-        min-height: 0;
-    }
+        .name {
+            font-size: 2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            margin-bottom: 5px;
+            font-weight: 800;
+        }
 
-    .panel {
-        background: var(--panel);
-        border-radius: 16px;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        border: 1px solid #243552;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
+        .job-title {
+            font-size: 1.1em;
+            color: #c4b5fd;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
 
-    .panel h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 0.5px; }
+        .contact-list, .skill-list {
+            width: 100%;
+            margin-bottom: 30px;
+        }
 
-    .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-    input {
-        background: #0f172a;
-        border: 1px solid #334155;
-        padding: 10px 14px;
-        border-radius: 8px;
-        color: white;
-        font-size: 14px;
-        transition: 0.2s;
-    }
-    input:focus { border-color: var(--accent-blue); outline: none; box-shadow: 0 0 0 2px rgba(56,189,248,0.2); }
+        .sidebar-title {
+            font-size: 1.2em;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-    .search-box {
-        background: #1e293b;
-        border: 1px solid var(--accent-blue);
-        margin-bottom: 12px;
-        padding: 10px;
-        font-weight: 500;
-        width: 90%;
-    }
+        .contact-list div {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95em;
+        }
 
-    button {
-        background: var(--accent-blue);
-        color: #0f172a;
-        border: none;
-        padding: 12px;
-        border-radius: 8px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: 0.2s;
-        font-size: 14px;
-    }
-    button:hover { opacity: 0.9; transform: translateY(-1px); }
-    button.btn-start-measure { background: #eab308; color: #0f172a; margin-top: 10px; font-size: 15px; box-shadow: 0 0 15px rgba(234,179,8,0.3); }
-    button.btn-logout { background: var(--accent-red); color: white; padding: 8px; margin-bottom: 15px; width: 100%; }
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .skill-tag {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            backdrop-filter: blur(5px);
+            transition: background 0.3s;
+        }
+        .skill-tag:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
 
-    .patient-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
-    .patient-list li {
-        background: var(--card);
-        padding: 12px 15px;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        cursor: pointer;
-        transition: 0.2s;
-        border-left: 4px solid transparent;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .patient-list li:hover { background: #2d3d5a; }
-    .patient-list li.active { border-left-color: var(--accent-blue); background: #243754; font-weight: bold; }
-    .patient-list li .info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-    .patient-list li span { font-size: 12px; color: var(--text-muted); }
-    
-    .btn-delete { 
-        background: rgba(248, 113, 113, 0.15); 
-        color: var(--accent-red); 
-        padding: 6px 10px; 
-        font-size: 11px; 
-        border-radius: 6px; 
-        border: 1px solid rgba(248, 113, 113, 0.3);
-    }
-    .btn-delete:hover { background: var(--accent-red); color: white; }
+        /* Cột bên phải (Nội dung chính) */
+        .main-content {
+            width: 65%;
+            padding: 50px 40px;
+            background: #ffffff;
+        }
 
-    .vitals-container { display: flex; flex-direction: column; gap: 15px; flex: 1; justify-content: center; }
-    .vital-box {
-        background: #0f172a;
-        border-radius: 12px;
-        padding: 15px;
-        text-align: center;
-        border: 1px solid #1e293b;
-        position: relative;
-    }
-    .vital-box.sys { border-top: 4px solid var(--accent-red); }
-    .vital-box.dia { border-top: 4px solid var(--accent-blue); }
-    .vital-box.map { border-top: 4px solid var(--accent-map); }
-    .vital-label { font-size: 12px; color: var(--text-muted); font-weight: bold; }
-    .vital-value { font-size: 48px; font-weight: bold; font-family: monospace; margin: 5px 0; }
-    .vital-unit { font-size: 12px; color: var(--text-muted); }
+        .section-header {
+            font-size: 1.6em;
+            color: #4f46e5;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-header::before {
+            content: '';
+            display: block;
+            width: 30px;
+            height: 4px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
+        }
 
-    .center-panel { overflow-y: auto; gap: 20px; }
-    .chart-container { background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid #1e293b; height: 220px; }
-    
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
-    th { background: #0f172a; color: var(--accent-blue); padding: 10px; text-align: center; font-weight: 600; }
-    td { padding: 10px; border-bottom: 1px solid #1e293b; text-align: center; }
-    tr:hover { background: rgba(255,255,255,0.02); }
-</style>
+        .intro-text {
+            color: var(--gray-text);
+            line-height: 1.8;
+            margin-bottom: 40px;
+            font-size: 1.05em;
+        }
+
+        /* Khối Timeline cho Kinh nghiệm & Học vấn */
+        .timeline-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 30px;
+            border-left: 2px solid #e5e7eb;
+            transition: transform 0.3s ease;
+        }
+        .timeline-item:hover {
+            transform: translateX(5px);
+            border-left-color: #7c3aed;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 0;
+            width: 14px;
+            height: 14px;
+            background: #ffffff;
+            border: 3px solid #7c3aed;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        .timeline-item:hover::before {
+            background: #7c3aed;
+        }
+
+        .timeline-date {
+            font-size: 0.9em;
+            color: #7c3aed;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .timeline-title {
+            font-size: 1.25em;
+            color: var(--dark-text);
+            margin-bottom: 5px;
+        }
+        .timeline-subtitle {
+            font-size: 1em;
+            color: var(--gray-text);
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        .timeline-desc {
+            color: var(--gray-text);
+            padding-left: 15px;
+            line-height: 1.6;
+        }
+        .timeline-desc li {
+            margin-bottom: 8px;
+        }
+
+        /* CSS CỦA BỘ NÚT LIÊN HỆ GÓC PHẢI */
+        .social-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 9999;
+        }
+
+        .btn-float {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            font-size: 24px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .btn-facebook { background: #1877f2; }
+        .btn-messenger { background: #0084ff; }
+        .btn-zalo { background: #0068ff; }
+        .btn-telegram { background: #229ed9; }
+
+        .btn-float:hover {
+            transform: scale(1.1) translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        /* Nhãn chữ ẩn hiện khi di chuột */
+        .btn-float span {
+            position: absolute;
+            right: 65px;
+            background: #1f2937;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: 0.3s;
+            pointer-events: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-float:hover span {
+            opacity: 1;
+            right: 70px;
+        }
+
+        /* Hiệu ứng nhấp nháy nhẹ gây chú ý định kỳ */
+        @keyframes floatPulse {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0); }
+        }
+        .social-float {
+            animation: floatPulse 4s infinite ease-in-out;
+        }
+
+        /* Responsive cho điện thoại */
+        @media (max-width: 800px) {
+            .cv-wrapper {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                padding: 40px 20px;
+            }
+            .main-content {
+                width: 100%;
+                padding: 30px 20px;
+            }
+            .social-float {
+                bottom: 20px;
+                right: 20px;
+                gap: 10px;
+            }
+            .btn-float {
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+            }
+            .btn-float span {
+                display: none; /* Ẩn nhãn trên mobile để đỡ vướng */
+            }
+        }
+    </style>
 </head>
 <body>
 
-<div id="login-screen">
-    <div class="login-box">
-        <h2>🔒 Admin Security Login</h2>
-        <input id="u" placeholder="Tên tài khoản (Admin)">
-        <input id="p" type="password" placeholder="Mật khẩu">
-        <button onclick="login()">ĐĂNG NHẬP HỆ THỐNG</button>
+<div class="cv-wrapper">
+    
+    <div class="sidebar">
+        <div class="avatar-container">
+            <img src="https://sf-static.upanhlaylink.com/img/image_2026060441d19a9fffa75452ad90fb5abbde3edb.jpg" alt="Ảnh đại diện">
+        </div>
+
+        <h1 class="name">Võ Tấn Nhân</h1>
+        <h2 class="job-title">Gia sư Toán & Vật Lý</h2>
+
+        <div class="contact-list">
+            <h3 class="sidebar-title">Liên hệ</h3>
+            <div>📞 0348.026.731</div>
+            <div>✉️ votannhan8@gmail.com</div>
+            <div>📍 Thủ Đức, TP. Hồ Chí Minh</div>
+            
+        </div>
+
+        <div class="skill-list">
+            <h3 class="sidebar-title">Môn Giảng Dạy</h3>
+            <div class="skill-tags">
+                <span class="skill-tag">Toán Cấp 1</span>
+                <span class="skill-tag">Toán Cấp 2</span>
+                <span class="skill-tag">Toán Lớp 10,11</span>
+                <span class="skill-tag">Vật Lý Cấp 2</span>
+                
+                
+            </div>
+        </div>
+        
+        <div class="skill-list">
+            <h3 class="sidebar-title">Kỹ Năng Mềm</h3>
+            <div class="skill-tags">
+                <span class="skill-tag">Truyền đạt dễ hiểu</span>
+                <span class="skill-tag">Quản lý thời gian tốt</span>
+                <span class="skill-tag">Nghiêm túc trong công việc</span>
+            </div>
+        </div>
     </div>
+
+    <div class="main-content">
+        
+        <h2 class="section-header">Phương Châm Giảng Dạy</h2>
+        <p class="intro-text">
+            Là một gia sư với tư duy giáo dục hiện đại, không chỉ cung cấp kiến thức mà còn rèn luyện phương pháp tự học cho học sinh. Khắc phục triệt để tình trạng học vẹt, giúp các em học sinh trung bình - khá lấy lại căn bản và tự tin bứt phá trong các kỳ thi quan trọng.
+        </p>
+
+
+        
+        <h2 class="section-header">Học Vấn</h2>
+
+
+        <div class="timeline-item">
+            <span class="timeline-date">2012 - 2017</span>
+            
+            <ul class="timeline-desc">
+                <li>Đạt giải Olympic Toán, Tiếng Anh cấp tỉnh từ lớp 1 - lớp 4</li>
+                <li>Đạt giải Olympic Toán Quốc Gia lớp 5 </li>
+            </ul>
+        </div>
+
+
+       
+        <div class="timeline-item">
+            <span class="timeline-date">2017 - 2021</span>
+            
+            <ul class="timeline-desc">
+                <li>Đạt giải thi học sinh giỏi Toán lớp 6, lớp 7, lớp 8</li>
+                <li>Đạt giải thi học sinh giỏi Vật Lý lớp 9  </li>
+            </ul>
+        </div>
+
+
+        <div class="timeline-item">
+            <span class="timeline-date">2021 - 2024</span>
+            
+            <ul class="timeline-desc">
+                <li>Toán, Vật lý đều trên 9.0</li>
+                <li>Đạt giải sáng tạo khoa học kĩ thuật </li>
+            </ul>
+        </div>
+
+
+
+        <div class="timeline-item">
+            <span class="timeline-date">2024 - Hiện tại</span>
+            <h3 class="timeline-title">Đại học Khoa Học Tự Nhiên - ĐHQG TP.HCM</h3>
+            <div class="timeline-subtitle">Sinh viên năm 3 ngành Điện Tử Viễn Thông - Thiết Kế Vi Mạch</div>
+            <ul class="timeline-desc">
+                <li>Các môn liên quan đến Toán, Vật lý đều đạt trên 9.0.</li>
+                <li>Tham gia các cuộc thi Khoa Học Kỹ Thuật.</li>
+                
+            </ul>
+        </div>
+
+        <h2 class="section-header">Kinh Nghiệm Giảng Dạy</h2>
+        
+        <div class="timeline-item">
+            <span class="timeline-date">Tháng 8/2024 - Hiện tại</span>
+            <h3 class="timeline-title">Gia sư Độc lập (1 Kèm 1)</h3>
+            <div class="timeline-subtitle">Dạy kèm Toán & Vật Lý</div>
+            <ul class="timeline-desc">
+                <li>Thiết kế lộ trình học cá nhân hóa cho hơn 20 học sinh từ lớp 6 đến lớp 11.</li>
+                <li>Giúp đở nhiều học sinh mất gốc nắm chắc lại cơ bản</li>
+                <li>Kèm cặp thành công 2 học sinh đỗ vào trường THPT chuyên Lê Khiết Quảng Ngãi với điểm Toán > 8.5.</li>
+                <li>Sử dụng sơ đồ tư duy để dạy và bài tập (Quizizz, Kahoot) để học sinh không nhàm chán.</li>
+                <li>Luôn hổ trợ các bài tập khó 24/7 qua Zalo </li>
+            </ul>
+        </div>
+
+        
+
+    </div>
+
 </div>
 
-<h2>🏥 Hệ Thống Theo Dõi Trung Tâm ICU</h2>
+<!-- CỤM NÚT LIÊN HỆ THẦN TỐC GÓC PHẢI -->
+<div class="social-float">
+    <!-- Nút Facebook (Thay 'your.username' thành tên profile cá nhân của bạn) -->
+    <a href="https://www.facebook.com/nhan.votan.395" target="_blank" class="btn-float btn-facebook">
+        <i class="fa-brands fa-facebook"></i>
+        <span>Facebook</span>
+    </a>
 
-<div class="dashboard-grid">
-    <div class="panel">
-        <button class="btn-logout" onclick="logout()">🚪 Đăng Xuất Admin</button>
-        
-        <h3>➕ Thêm bệnh nhân</h3>
-        <div class="form-group">
-            <input id="p_name" placeholder="Họ và tên">
-            <input id="p_cccd" placeholder="Số CCCD">
-            <input id="p_dob" placeholder="Ngày sinh (DD/MM/YYYY)">
-            <input id="p_address" placeholder="Địa chỉ thường trú">
-            <button onclick="addPatient()">Lưu thông tin</button>
-        </div>
-        
-        <h3>🔍 Tìm kiếm hồ sơ</h3>
-        <input id="p_search" class="search-box" placeholder="Nhập tên hoặc CCCD cần tìm..." oninput="filterPatients()">
-        
-        <h3>👥 Danh Sách Bệnh Nhân</h3>
-        <ul id="list" class="patient-list"></ul>
-    </div>
+    <!-- Nút Messenger (Thay 'your.username' thành tên profile nhắn tin trực tiếp) -->
+    <a href="https://m.me/nhan.votan.395" target="_blank" class="btn-float btn-messenger">
+        <i class="fa-brands fa-facebook-messenger"></i>
+        <span>Messenger</span>
+    </a>
 
-    <div class="panel center-panel">
-        <h3 id="pname" style="line-height: 1.7; text-transform: uppercase; font-size: 15px; letter-spacing: 0.3px;">
-            BỆNH NHÂN: CHƯA CHỌN
-        </h3>
-        
-        <div class="chart-container">
-            <canvas id="liveChart"></canvas>
-        </div>
-        
-        <h3>📋 Nhật ký chỉ số (15 lần gần nhất)</h3>
-        <div style="overflow-x:auto; flex:1;">
-            <table>
-                <thead>
-                    <tr><th>Thời gian</th><th>Tâm thu (SYS)</th><th>Tâm trương (DIA)</th><th>Huyết áp TB (MAP)</th></tr>
-                </thead>
-                <tbody id="table-body">
-                    <tr><td colspan="4" style="color:var(--text-muted);">Vui lòng chọn bệnh nhân để xem lịch sử</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <!-- Nút Zalo (Thay '0909123456' thành số điện thoại Zalo của bạn) -->
+    <a href="https://zalo.me/0392733577" target="_blank" class="btn-float btn-zalo">
+        <i class="fa-solid fa-comment-dots"></i>
+        <span>Zalo</span>
+    </a>
 
-    <div class="panel">
-        <h3>📺 Chỉ số trực quan (Realtime)</h3>
-        <div class="vitals-container">
-            <div class="vital-box sys">
-                <div class="vital-label">HUYẾT ÁP TÂM THU (SYS)</div>
-                <div id="sys" class="vital-value" style="color: var(--accent-red);">--</div>
-                <div class="vital-unit">mmHg</div>
-            </div>
-            <div class="vital-box dia">
-                <div class="vital-label">HUYẾT ÁP TÂM TRƯƠNG (DIA)</div>
-                <div id="dia" class="vital-value" style="color: var(--accent-blue);">--</div>
-                <div class="vital-unit">mmHg</div>
-            </div>
-            <div class="vital-box map">
-                <div class="vital-label">HUYẾT ÁP TRUNG BÌNH (MAP)</div>
-                <div id="map" class="vital-value" style="color: var(--accent-map);">--</div>
-                <div class="vital-unit">mmHg</div>
-            </div>
-        </div>
-        <button class="btn-start-measure" onclick="triggerHardwareMeasure()">⚡ BẮT ĐẦU ĐO TRỰC TUYẾN</button>
-    </div>
+    <!-- Nút Telegram (Thay 'your_username' thành tên tài khoản Telegram của bạn) -->
+    <a href="https://t.me/kyretia" target="_blank" class="btn-float btn-telegram">
+        <i class="fa-brands fa-telegram"></i>
+        <span>Telegram</span>
+    </a>
 </div>
 
-<script>
-const API = "http://127.0.0.1:5000"; 
-const socket = io(API);
-let IS_LOGGED = false, allPatients = [], currentPatient = null;
-
-const ctx = document.getElementById('liveChart').getContext('2d');
-const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: [],
-        datasets: [
-            { label: 'SYS (Tâm thu)', data: [], borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.05)', tension: 0.2, borderWidth: 2 },
-            { label: 'DIA (Tâm trương)', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.05)', tension: 0.2, borderWidth: 2 },
-            { label: 'MAP (Huyết áp TB)', data: [], borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,0.05)', tension: 0.2, borderWidth: 2 }
-        ]
-    },
-    options: { 
-        responsive: true, 
-        maintainAspectRatio: false, 
-        animation: false, 
-        plugins: { legend: { labels: { color: '#fff', font: { size: 11 } } } },
-        scales: {
-            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' }, min: 40, max: 150 }
-        }
-    }
-});
-
-window.onload = () => {
-    const savedLogin = localStorage.getItem("icu_logged_status");
-    if (savedLogin === "true") {
-        IS_LOGGED = true;
-        document.getElementById("login-screen").style.display = "none";
-        currentPatient = null; 
-        updateDashboardUI([]);
-        document.getElementById("pname").innerHTML = "BỆNH NHÂN: CHƯA CHỌN";
-        loadPatients();
-    }
-};
-
-function login() {
-    if (u.value === "admin" && p.value === "123456") {
-        IS_LOGGED = true;
-        localStorage.setItem("icu_logged_status", "true");
-        document.getElementById("login-screen").style.display = "none";
-        loadPatients();
-    } else {
-        alert("Sai tài khoản hoặc mật khẩu đăng nhập!");
-    }
-}
-
-function logout() {
-    localStorage.removeItem("icu_logged_status");
-    location.reload();
-}
-
-async function loadPatients(){
-    try {
-        let res = await fetch(API+"/patients");
-        allPatients = await res.json();
-        renderPatientList(allPatients);
-        
-        // Cập nhật lại data thực của bệnh nhân đang chọn (nếu có) khi tải lại danh sách
-        if(currentPatient) {
-            const updated = allPatients.find(p => p.cccd === currentPatient.cccd);
-            if(updated) currentPatient = updated;
-        }
-    } catch(e) {
-        console.log("Lỗi kết nối API Server:", e);
-    }
-}
-
-function renderPatientList(data) {
-    const listEl = document.getElementById("list");
-    listEl.innerHTML = "";
-    
-    if(data.length === 0) {
-        listEl.innerHTML = `<div style="color:var(--text-muted); text-align:center; margin-top:10px; font-size:14px;">Không tìm thấy kết quả</div>`;
-        return;
-    }
-
-    data.forEach(p => {
-        let li = document.createElement("li");
-        li.id = `p-${p.cccd}`;
-        if(currentPatient && currentPatient.cccd === p.cccd) li.className = "active";
-        
-        let infoDiv = document.createElement("div");
-        infoDiv.className = "info";
-        infoDiv.innerHTML = `<div style="color:var(--text); text-transform: capitalize;">${p.name}</div><span>CCCD: ${p.cccd}</span>`;
-        
-        li.dataset.patientData = JSON.stringify(p);
-        li.appendChild(infoDiv);
-        
-        let delBtn = document.createElement("button");
-        delBtn.className = "btn-delete";
-        delBtn.innerText = "Xóa";
-        delBtn.onclick = (e) => {
-            e.stopPropagation();
-            deletePatient(p.cccd, p.name);
-        };
-        li.appendChild(delBtn);
-
-        li.onclick = function() {
-            const parsedData = JSON.parse(this.dataset.patientData);
-            selectPatient(parsedData);
-        };
-
-        listEl.appendChild(li);
-    });
-}
-
-function filterPatients() {
-    const keyword = document.getElementById("p_search").value.trim().toLowerCase();
-    if(!keyword) {
-        renderPatientList(allPatients);
-        return;
-    }
-    const filtered = allPatients.filter(p => 
-        p.name.toLowerCase().includes(keyword) || 
-        p.cccd.toLowerCase().includes(keyword)
-    );
-    renderPatientList(filtered);
-}
-
-// KHÔNG CÒN VÒNG LẶP FOR MOCK NGẪU NHIÊN 15 LẦN NỮA
-function selectPatient(p) {
-    currentPatient = p;
-    document.querySelectorAll(".patient-list li").forEach(li => li.classList.remove("active"));
-    const activeLi = document.getElementById(`p-${p.cccd}`);
-    if(activeLi) activeLi.classList.add("active");
-    
-    document.getElementById("pname").innerHTML = `
-        <span style="color: var(--accent-blue);">HỌ VÀ TÊN:</span> ${p.name}<br>
-        <span style="color: var(--accent-blue);">NĂM SINH:</span> ${p.dob || 'Chưa rõ'}<br>
-        <span style="color: var(--accent-blue);">CCCD:</span> ${p.cccd}<br>
-        <span style="color: var(--accent-blue);">NƠI Ở:</span> ${p.address || 'Chưa rõ'}
-    `;
-    
-    // Đưa dữ liệu thực lưu trong file text (p.records) hiển thị lên Dashboard UI
-    updateDashboardUI(p.records);
-    
-    // Gửi lệnh báo Server biết đang tập trung xem bệnh nhân này
-    fetch(API + `/api/set_active_patient/${p.cccd}`, { method: "POST" });
-}
-
-async function triggerHardwareMeasure() {
-    if(!currentPatient) return alert("Vui lòng chọn bệnh nhân trước khi ấn đo!");
-    let res = await fetch(API + "/api/trigger_measure", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cccd: currentPatient.cccd, name: currentPatient.name })
-    });
-    let data = await res.json();
-    if(data.msg === "triggered") alert(`🚀 Đã gửi lệnh kích hoạt phần cứng đo cho: ${currentPatient.name}`);
-}
-
-async function deletePatient(cccd, name) {
-    if(!confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn hồ sơ và mọi bản ghi đo của bệnh nhân: ${name}?`)) return;
-
-    let res = await fetch(API + `/delete_patient/${cccd}`, { method: "DELETE" });
-    let result = await res.json();
-    if(result.msg === "ok") {
-        if(currentPatient && currentPatient.cccd === cccd) {
-            currentPatient = null;
-            updateDashboardUI([]);
-            document.getElementById("pname").innerHTML = "BỆNH NHÂN: CHƯA CHỌN";
-        }
-        loadPatients();
-    }
-}
-
-async function addPatient(){
-    const nameInput = document.getElementById("p_name");
-    const cccdInput = document.getElementById("p_cccd");
-    const dobInput = document.getElementById("p_dob");
-    const addrInput = document.getElementById("p_address");
-
-    if(!nameInput.value || !cccdInput.value) return alert("Vui lòng nhập đầy đủ Tên và CCCD!");
-
-    let res = await fetch(API+"/create_patient", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            name: nameInput.value,
-            cccd: cccdInput.value,
-            dob: dobInput.value,
-            address: addrInput.value
-        })
-    });
-    
-    let result = await res.json();
-    if(result.error) {
-        alert(result.error);
-    } else {
-        nameInput.value = ""; cccdInput.value = ""; dobInput.value = ""; addrInput.value = "";
-        loadPatients();
-    }
-}
-
-function updateDashboardUI(records) {
-    if(!records || records.length === 0) {
-        document.getElementById("sys").innerText = "--";
-        document.getElementById("dia").innerText = "--";
-        document.getElementById("map").innerText = "--";
-        document.getElementById("table-body").innerHTML = `<tr><td colspan="4" style="color:var(--text-muted);">Bệnh nhân này chưa có dữ liệu đo thực tế nào</td></tr>`;
-        chart.data.labels = []; 
-        chart.data.datasets[0].data = []; 
-        chart.data.datasets[1].data = []; 
-        chart.data.datasets[2].data = []; 
-        chart.update();
-        return;
-    }
-
-    // Lấy bản ghi thực tế mới nhất hiển thị lên 3 ô số lớn
-    const latest = records[records.length - 1];
-    document.getElementById("sys").innerText = Math.round(latest.sys);
-    document.getElementById("dia").innerText = Math.round(latest.dia);
-    document.getElementById("map").innerText = Math.round(latest.map);
-
-    // Cập nhật Nhật ký bảng hiển thị tối đa 15 bản ghi thực từ mới đến cũ
-    const reversedLogs = [...records].reverse().slice(0, 15);
-    document.getElementById("table-body").innerHTML = reversedLogs.map(r => {
-        // Format hiển thị thời gian từ DD-MM-YYYY_HH-MM-SS sang DD-MM-YYYY HH:MM:SS để dễ nhìn
-        let displayTime = r.time.replace('_', ' ').replaceAll('-', ':');
-        if(displayTime.includes(' ')) {
-            let parts = displayTime.split(' ');
-            displayTime = parts[0].replaceAll(':', '-') + ' ' + parts[1];
-        }
-        return `
-            <tr>
-                <td>${displayTime}</td>
-                <td style="color:var(--accent-red); font-weight:bold;">${Math.round(r.sys)}</td>
-                <td style="color:var(--accent-blue); font-weight:bold;">${Math.round(r.dia)}</td>
-                <td style="color:var(--accent-map); font-weight:bold;">${Math.round(r.map)}</td>
-            </tr>
-        `;
-    }).join('');
-
-    // Đồ thị hiển thị tối đa 10 kết quả đo thực tế gần nhất
-    const chartData = records.slice(-10);
-    chart.data.labels = chartData.map(r => r.time.split('_')[1]?.replaceAll('-', ':') || r.time);
-    chart.data.datasets[0].data = chartData.map(r => Math.round(r.sys));
-    chart.data.datasets[1].data = chartData.map(r => Math.round(r.dia));
-    chart.data.datasets[2].data = chartData.map(r => Math.round(r.map)); 
-    chart.update();
-}
-
-// LẮNG NGHE DỮ LIỆU TỪ MẠCH ESP32 THÔNG QUA SERVER BẮN QUA SOCKET
-socket.on("newData", (msg) => {
-    // Tìm và cập nhật dữ liệu vào biến bộ nhớ cục bộ app để không phải reload trang
-    allPatients.forEach(p => {
-        if(p.cccd === msg.cccd) {
-            // Kiểm tra xem bản ghi đã tồn tại chưa để tránh trùng lặp hiển thị
-            if(!p.records.some(r => r.time === msg.data.time)) {
-                p.records.push(msg.data);
-            }
-        }
-    });
-
-    if(currentPatient && msg.cccd === currentPatient.cccd) {
-        if(!currentPatient.records.some(r => r.time === msg.data.time)) {
-            currentPatient.records.push(msg.data);
-        }
-        updateDashboardUI(currentPatient.records);
-    }
-});
-</script>
 </body>
 </html>
