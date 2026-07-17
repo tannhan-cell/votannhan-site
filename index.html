@@ -1,464 +1,678 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Gia Sư</title>
-    <!-- NHÚNG THƯ VIỆN ICON FONT AWESOME -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Thiết lập cơ bản */
-        :root {
-            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            --dark-text: #1f2937;
-            --light-text: #f9fafb;
-            --gray-text: #4b5563;
-            --bg-color: #e5e7eb;
-        }
+# ========================================================================
+# CheckCrack.ps1
+# Công cụ kiểm tra crack & bản quyền Windows/Office và hiển thị phần cứng
+# Nhấn 'H' để ẩn/hiện Product Key, 'Q' hoặc 'ESC' để thoát.
+# ========================================================================
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+# Chế độ kiểm thử tự động (mặc định tắt)
+$testMode = $false
 
-        body {
-            background-color: var(--bg-color);
-            display: flex;
-            justify-content: center;
-            padding: 40px 20px;
-            color: var(--dark-text);
-        }
+# Thiết lập bảng mã UTF-8 cho console để hiển thị tiếng Việt có dấu
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
-        /* Khung CV chính */
-        .cv-wrapper {
-            display: flex;
-            max-width: 1000px;
-            width: 100%;
-            background: #ffffff;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
+Clear-Host
+Write-Host "========================================================================" -ForegroundColor Gray
+Write-Host "   ____ _               _     ____                 _      " -ForegroundColor Cyan
+Write-Host "  / ___| |__   ___  ___| | __/ ___|_ __ __ _  ___| | __  " -ForegroundColor Cyan
+Write-Host " | |   | '_ \ / _ \/ __| |/ / |   | '__/ _` |/ __| |/ /  " -ForegroundColor Cyan
+Write-Host " | |___| | | |  __/ (__|   <| |___| | | (_| | (__|   <   " -ForegroundColor Cyan
+Write-Host "  \____|_| |_|\___|\___|_|\_\\____|_|  \__,_|\___|_|\_\  " -ForegroundColor Cyan
+Write-Host "                                                         " -ForegroundColor Cyan
+Write-Host "  CÔNG CỤ KIỂM TRA CRACK & BẢN QUYỀN WINDOWS/OFFICE v1.0" -ForegroundColor White
+Write-Host "                 Developed by Vo Tan Nhan"               -ForegroundColor White
+Write-Host "========================================================================" -ForegroundColor Gray
+Write-Host ""
+Write-Host "[*] Đang quét hệ thống và thu thập dữ liệu phần cứng/bản quyền. Vui lòng chờ..." -ForegroundColor Yellow
 
-        /* Cột bên trái (Sidebar) */
-        .sidebar {
-            width: 35%;
-            background: var(--primary-gradient);
-            color: var(--light-text);
-            padding: 50px 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
+# ========================================================================
+# 1. THU THẬP THÔNG TIN PHẦN CỨNG (HARDWARE INFO)
+# ========================================================================
 
-        /* Ảnh đại diện */
-        .avatar-container {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            padding: 5px;
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-            transition: transform 0.3s ease;
-        }
-        .avatar-container:hover {
-            transform: scale(1.05);
-        }
-        .avatar-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 4px solid #ffffff;
-        }
+# Mainboard
+$boardObj = Get-CimInstance Win32_BaseBoard -ErrorAction SilentlyContinue
+$motherboard = "Không xác định"
+if ($boardObj) {
+    $motherboard = "$($boardObj.Manufacturer.Trim()) $($boardObj.Product.Trim())"
+}
 
-        .name {
-            font-size: 2em;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-align: center;
-            margin-bottom: 5px;
-            font-weight: 800;
-        }
+# CPU
+$cpuObj = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue
+$cpuName = "Không xác định"
+$cpuCores = 0
+$cpuThreads = 0
+if ($cpuObj) {
+    # Lấy tên CPU và rút gọn khoảng trắng thừa
+    $cpuName = ($cpuObj.Name -replace '\s+', ' ').Trim()
+    $cpuCores = $cpuObj.NumberOfCores
+    $cpuThreads = $cpuObj.NumberOfLogicalProcessors
+}
 
-        .job-title {
-            font-size: 1.1em;
-            color: #c4b5fd;
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: 500;
-            letter-spacing: 1px;
-        }
+# RAM
+$memDevices = Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue
+$ramTotalBytes = 0
+$ramSpeed = 0
+$ramSlots = 0
+if ($memDevices) {
+    $ramSlots = ($memDevices | Measure-Object).Count
+    foreach ($mem in $memDevices) {
+        $ramTotalBytes += $mem.Capacity
+        if ($mem.Speed -gt $ramSpeed) { $ramSpeed = $mem.Speed }
+    }
+}
+$ramTotalGB = [Math]::Round($ramTotalBytes / 1GB, 1)
 
-        .contact-list, .skill-list {
-            width: 100%;
-            margin-bottom: 30px;
-        }
+# GPU
+$gpuDevices = Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue
+$gpuNames = @()
+if ($gpuDevices) {
+    foreach ($gpu in $gpuDevices) {
+        $gpuNames += $gpu.Name.Trim()
+    }
+}
+$gpuStr = if ($gpuNames.Count -gt 0) { $gpuNames -join " / " } else { "Không xác định" }
 
-        .sidebar-title {
-            font-size: 1.2em;
-            border-bottom: 2px solid rgba(255,255,255,0.3);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .contact-list div {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.95em;
-        }
-
-        .skill-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .skill-tag {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.85em;
-            backdrop-filter: blur(5px);
-            transition: background 0.3s;
-        }
-        .skill-tag:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        /* Cột bên phải (Nội dung chính) */
-        .main-content {
-            width: 65%;
-            padding: 50px 40px;
-            background: #ffffff;
-        }
-
-        .section-header {
-            font-size: 1.6em;
-            color: #4f46e5;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .section-header::before {
-            content: '';
-            display: block;
-            width: 30px;
-            height: 4px;
-            background: var(--primary-gradient);
-            border-radius: 2px;
-        }
-
-        .intro-text {
-            color: var(--gray-text);
-            line-height: 1.8;
-            margin-bottom: 40px;
-            font-size: 1.05em;
-        }
-
-        /* Khối Timeline cho Kinh nghiệm & Học vấn */
-        .timeline-item {
-            position: relative;
-            padding-left: 30px;
-            margin-bottom: 30px;
-            border-left: 2px solid #e5e7eb;
-            transition: transform 0.3s ease;
-        }
-        .timeline-item:hover {
-            transform: translateX(5px);
-            border-left-color: #7c3aed;
-        }
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -8px;
-            top: 0;
-            width: 14px;
-            height: 14px;
-            background: #ffffff;
-            border: 3px solid #7c3aed;
-            border-radius: 50%;
-            transition: background 0.3s;
-        }
-        .timeline-item:hover::before {
-            background: #7c3aed;
-        }
-
-        .timeline-date {
-            font-size: 0.9em;
-            color: #7c3aed;
-            font-weight: 600;
-            margin-bottom: 5px;
-            display: block;
-        }
-        .timeline-title {
-            font-size: 1.25em;
-            color: var(--dark-text);
-            margin-bottom: 5px;
-        }
-        .timeline-subtitle {
-            font-size: 1em;
-            color: var(--gray-text);
-            font-style: italic;
-            margin-bottom: 10px;
-        }
-        .timeline-desc {
-            color: var(--gray-text);
-            padding-left: 15px;
-            line-height: 1.6;
-        }
-        .timeline-desc li {
-            margin-bottom: 8px;
-        }
-
-        /* CSS CỦA BỘ NÚT LIÊN HỆ GÓC PHẢI */
-        .social-float {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            z-index: 9999;
-        }
-
-        .btn-float {
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            text-decoration: none;
-            font-size: 24px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-        }
-
-        .btn-facebook { background: #1877f2; }
-        .btn-messenger { background: #0084ff; }
-        .btn-zalo { background: #0068ff; }
-        .btn-telegram { background: #229ed9; }
-
-        .btn-float:hover {
-            transform: scale(1.1) translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
-
-        /* Nhãn chữ ẩn hiện khi di chuột */
-        .btn-float span {
-            position: absolute;
-            right: 65px;
-            background: #1f2937;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: 0.3s;
-            pointer-events: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .btn-float:hover span {
-            opacity: 1;
-            right: 70px;
-        }
-
-        /* Hiệu ứng nhấp nháy nhẹ gây chú ý định kỳ */
-        @keyframes floatPulse {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-            100% { transform: translateY(0); }
-        }
-        .social-float {
-            animation: floatPulse 4s infinite ease-in-out;
-        }
-
-        /* Responsive cho điện thoại */
-        @media (max-width: 800px) {
-            .cv-wrapper {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                padding: 40px 20px;
-            }
-            .main-content {
-                width: 100%;
-                padding: 30px 20px;
-            }
-            .social-float {
-                bottom: 20px;
-                right: 20px;
-                gap: 10px;
-            }
-            .btn-float {
-                width: 48px;
-                height: 48px;
-                font-size: 20px;
-            }
-            .btn-float span {
-                display: none; /* Ẩn nhãn trên mobile để đỡ vướng */
+# Disk Drives (HDD/SSD)
+$disks = @()
+$disksObj = Get-CimInstance Win32_DiskDrive -ErrorAction SilentlyContinue
+if ($disksObj) {
+    foreach ($disk in $disksObj) {
+        $sizeGB = [Math]::Round($disk.Size / 1GB, 1)
+        $mediaType = "Unknown"
+        # Thử lấy loại ổ cứng qua MSFT_PhysicalDisk (chỉ hỗ trợ từ Win8 trở lên)
+        $pDisk = Get-CimInstance -Namespace ROOT/Microsoft/Windows/Storage -ClassName MSFT_PhysicalDisk -ErrorAction SilentlyContinue | Where-Object { $_.DeviceId -eq $disk.Index -or $_.FriendlyName -eq $disk.Model }
+        if ($pDisk) {
+            if ($pDisk.MediaType -eq 3) { $mediaType = "HDD" }
+            elseif ($pDisk.MediaType -eq 4) { $mediaType = "SSD" }
+            elseif ($pDisk.MediaType -eq 5) { $mediaType = "SCM" }
+            else { $mediaType = "SSD/HDD" }
+        } else {
+            # Dự phòng nếu không truy vấn được MSFT_PhysicalDisk
+            if ($disk.Model -like "*SSD*" -or $disk.Model -like "*NVMe*" -or $disk.Model -like "*Solid State*" -or $disk.Model -like "*eMMC*") {
+                $mediaType = "SSD"
+            } else {
+                $mediaType = "HDD"
             }
         }
-    </style>
-</head>
-<body>
+        $disks += "$($disk.Model.Trim()) ($sizeGB GB - $mediaType)"
+    }
+}
+$diskStr = if ($disks.Count -gt 0) { $disks -join ", " } else { "Không xác định" }
 
-<div class="cv-wrapper">
+
+# ========================================================================
+# 2. THU THẬP THÔNG TIN BẢN QUYỀN (LICENSING INFO)
+# ========================================================================
+
+# Hệ điều hành Windows
+$osObj = Get-CimInstance Win32_OperatingSystem -ErrorAction SilentlyContinue
+$winEdition = "Không xác định"
+if ($osObj) {
+    $winEdition = $osObj.Caption.Trim()
+}
+
+# UEFI BIOS Key
+$oemKey = "Không tìm thấy"
+$oemKeyRaw = (Get-CimInstance SoftwareLicensingService -ErrorAction SilentlyContinue).OA3xOriginalProductKey
+if ($oemKeyRaw -and $oemKeyRaw.Trim() -ne "") {
+    $oemKey = $oemKeyRaw.Trim()
+}
+
+# Registry Decoded Product Key (Windows 10/11)
+function Get-DecodedRegistryKey {
+    try {
+        $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+        $digitalProductId = (Get-ItemProperty -Path $regPath -Name "DigitalProductId" -ErrorAction SilentlyContinue).DigitalProductId
+        if (-not $digitalProductId -or $digitalProductId.Count -lt 67) { return "Không tìm thấy" }
+        
+        $isWin8 = ([System.Math]::Truncate($digitalProductId[66] / 6)) -band 1
+        $digitalProductId[66] = ($digitalProductId[66] -band 0xF7) -bor (($isWin8 -band 2) * 4)
+        
+        $chars = "BCDFGHJKMPQRTVWXY2346789"
+        $keyOffset = 52
+        $productKey = ""
+        $last = 0
+        
+        for ($i = 24; $i -ge 0; $i--) {
+            $current = 0
+            for ($j = 14; $j -ge 0; $j--) {
+                $current = $current * 256
+                $current = $digitalProductId[$j + $keyOffset] + $current
+                $digitalProductId[$j + $keyOffset] = [System.Math]::Truncate($current / 24)
+                $current = $current % 24
+            }
+            $productKey = $chars[$current] + $productKey
+            $last = $current
+        }
+        
+        if ($isWin8 -eq 1) {
+            $keypart1 = $productKey.Substring(1, $last)
+            $keypart2 = $productKey.Substring($last + 1, $productKey.Length - ($last + 1))
+            $productKey = $keypart1 + "N" + $keypart2
+        }
+        
+        # Định dạng key dạng XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
+        $formattedKey = ""
+        for ($i = 0; $i -lt 25; $i++) {
+            $formattedKey += $productKey[$i]
+            if (($i + 1) % 5 -eq 0 -and ($i -ne 24)) {
+                $formattedKey += "-"
+            }
+        }
+        return $formattedKey
+    } catch {
+        return "Không thể giải mã (Registry bị ẩn)"
+    }
+}
+$registryKey = Get-DecodedRegistryKey
+
+# Trạng thái kích hoạt và Kênh phân phối Windows
+$winStatus = "Không xác định"
+$winChannel = "Không xác định"
+$winIsKMS = $false
+$winIsKMS38 = $false
+$winKmsServer = ""
+$winKmsPort = 0
+$winGraceMinutes = 0
+
+# Truy vấn thông tin kích hoạt Windows từ SoftwareLicensingProduct (ApplicationID của Windows là 55c92734-d682-4d71-983e-d6ec3f16059f)
+$winLicObj = Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "ApplicationID = '55c92734-d682-4d71-983e-d6ec3f16059f' AND PartialProductKey IS NOT NULL" -ErrorAction SilentlyContinue | Where-Object { $_.LicenseStatus -eq 1 }
+if (-not $winLicObj) {
+    # Nếu không tìm thấy sản phẩm đã kích hoạt, lấy sản phẩm đầu tiên có key
+    $winLicObj = Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "ApplicationID = '55c92734-d682-4d71-983e-d6ec3f16059f' AND PartialProductKey IS NOT NULL" -ErrorAction SilentlyContinue | Select-Object -First 1
+}
+
+if ($winLicObj) {
+    # Dịch trạng thái kích hoạt
+    $statusMap = @{
+        0 = "Chưa kích hoạt (Unlicensed)"
+        1 = "Đã kích hoạt (Licensed)"
+        2 = "Thời gian ân hạn (OOB Grace)"
+        3 = "Thời gian gia hạn (OOT Grace)"
+        4 = "Hết hạn ân hạn phi bản quyền (Non-Genuine Grace)"
+        5 = "Trạng thái thông báo (Notification)"
+        6 = "Thời gian gia hạn mở rộng (Extended Grace)"
+    }
+    $winStatus = $statusMap[[int]$winLicObj.LicenseStatus]
+    if (-not $winStatus) { $winStatus = "Chưa kích hoạt" }
     
-    <div class="sidebar">
-        <div class="avatar-container">
-            <img src="https://sf-static.upanhlaylink.com/img/image_2026060441d19a9fffa75452ad90fb5abbde3edb.jpg" alt="Ảnh đại diện">
-        </div>
+    # Xác định Kênh bản quyền từ Description
+    $desc = $winLicObj.Description
+    if ($desc -like "*RETAIL*") { $winChannel = "Retail Channel (Bán lẻ)" }
+    elseif ($desc -like "*OEM*") { $winChannel = "OEM Channel (Nhà sản xuất)" }
+    elseif ($desc -like "*VOLUME_MAK*") { $winChannel = "Volume:MAK (Khóa kích hoạt nhiều lần)" }
+    elseif ($desc -like "*VOLUME_KMS*") { 
+        $winChannel = "Volume:GVLK (KMS Client)" 
+        $winIsKMS = $true
+    } else {
+        $winChannel = "Volume Channel (Doanh nghiệp)"
+    }
+    
+    # Đọc thông tin máy chủ KMS cấu hình trong WMI
+    if ($winLicObj.KeyManagementServiceMachine) {
+        $winKmsServer = $winLicObj.KeyManagementServiceMachine
+        $winKmsPort = $winLicObj.KeyManagementServicePort
+    }
+    
+    # Kiểm tra KMS38 (KMS gia hạn đến 2038)
+    $winGraceMinutes = $winLicObj.GracePeriodRemaining
+    if ($winIsKMS -and $winGraceMinutes -gt 1000000) {
+        $winIsKMS38 = $true
+    }
+}
 
-        <h1 class="name">Võ Tấn Nhân</h1>
-        <h2 class="job-title">Gia sư Toán & Vật Lý</h2>
-
-        <div class="contact-list">
-            <h3 class="sidebar-title">Liên hệ</h3>
-            <div>📞 0348.026.731</div>
-            <div>✉️ votannhan8@gmail.com</div>
-            <div>📍 Thủ Đức, TP. Hồ Chí Minh</div>
-            
-        </div>
-
-        <div class="skill-list">
-            <h3 class="sidebar-title">Môn Giảng Dạy</h3>
-            <div class="skill-tags">
-                <span class="skill-tag">Toán Cấp 1</span>
-                <span class="skill-tag">Toán Cấp 2</span>
-                <span class="skill-tag">Toán Lớp 10,11</span>
-                <span class="skill-tag">Vật Lý Cấp 2</span>
-                
-                
-            </div>
-        </div>
-        
-        <div class="skill-list">
-            <h3 class="sidebar-title">Kỹ Năng Mềm</h3>
-            <div class="skill-tags">
-                <span class="skill-tag">Truyền đạt dễ hiểu</span>
-                <span class="skill-tag">Quản lý thời gian tốt</span>
-                <span class="skill-tag">Nghiêm túc trong công việc</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="main-content">
-        
-        <h2 class="section-header">Phương Châm Giảng Dạy</h2>
-        <p class="intro-text">
-            Là một gia sư với tư duy giáo dục hiện đại, không chỉ cung cấp kiến thức mà còn rèn luyện phương pháp tự học cho học sinh. Khắc phục triệt để tình trạng học vẹt, giúp các em học sinh trung bình - khá lấy lại căn bản và tự tin bứt phá trong các kỳ thi quan trọng.
-        </p>
-
-
-        
-        <h2 class="section-header">Học Vấn</h2>
-
-
-        <div class="timeline-item">
-            <span class="timeline-date">2012 - 2017</span>
-            
-            <ul class="timeline-desc">
-                <li>Đạt giải Olympic Toán, Tiếng Anh cấp tỉnh từ lớp 1 - lớp 4</li>
-                <li>Đạt giải Olympic Toán Quốc Gia lớp 5 </li>
-            </ul>
-        </div>
+# Truy vấn thông tin Microsoft Office (nếu có)
+$officeProducts = @()
+# Lấy Office qua SoftwareLicensingProduct (ApplicationID của Office là 0ff1ce15-a989-479d-afc2-fb5b53c84000)
+$offLicObj = Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "ApplicationID = '0ff1ce15-a989-479d-afc2-fb5b53c84000' AND PartialProductKey IS NOT NULL" -ErrorAction SilentlyContinue
+if ($offLicObj) {
+    foreach ($obj in $offLicObj) {
+        $statusText = if ($obj.LicenseStatus -eq 1) { "Đã kích hoạt" } else { "Chưa kích hoạt" }
+        $officeProducts += [PSCustomObject]@{
+            Name = $obj.Name
+            Status = $statusText
+            Description = $obj.Description
+            KmsServer = $obj.KeyManagementServiceMachine
+        }
+    }
+}
+# Lấy thêm qua OfficeSoftwareProtectionProduct (Office phiên bản cũ hơn)
+$offOspObj = Get-CimInstance -ClassName OfficeSoftwareProtectionProduct -Filter "PartialProductKey IS NOT NULL" -ErrorAction SilentlyContinue
+if ($offOspObj) {
+    foreach ($obj in $offOspObj) {
+        $statusText = if ($obj.LicenseStatus -eq 1) { "Đã kích hoạt" } else { "Chưa kích hoạt" }
+        $officeProducts += [PSCustomObject]@{
+            Name = $obj.Name
+            Status = $statusText
+            Description = $obj.Description
+            KmsServer = $obj.KeyManagementServiceMachine
+        }
+    }
+}
 
 
-       
-        <div class="timeline-item">
-            <span class="timeline-date">2017 - 2021</span>
-            
-            <ul class="timeline-desc">
-                <li>Đạt giải thi học sinh giỏi Toán lớp 6, lớp 7, lớp 8</li>
-                <li>Đạt giải thi học sinh giỏi Vật Lý lớp 9  </li>
-            </ul>
-        </div>
+# ========================================================================
+# 3. QUÉT VÀ PHÁT HIỆN CÔNG CỤ CRACK (CRACK SCANNING LOGIC)
+# ========================================================================
+
+$scanResults = @()
+$domainJoined = (Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).PartOfDomain
+
+# --- CHECK 1: Cấu hình KMS Server trong Registry (Windows & Office) ---
+$kmsRegWindows = ""
+$kmsRegOffice = ""
+
+# Windows KMS Reg
+if (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform") {
+    $kmsRegWindows = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" -Name "KeyManagementServiceServer" -ErrorAction SilentlyContinue).KeyManagementServiceServer
+}
+# Office KMS Reg
+if (Test-Path "HKLM:\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform") {
+    $kmsRegOffice = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform" -Name "KeyManagementServiceServer" -ErrorAction SilentlyContinue).KeyManagementServiceServer
+}
+if (-not $kmsRegOffice -and (Test-Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\OfficeSoftwareProtectionPlatform")) {
+    $kmsRegOffice = (Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\OfficeSoftwareProtectionPlatform" -Name "KeyManagementServiceServer" -ErrorAction SilentlyContinue).KeyManagementServiceServer
+}
+
+# Hàm phân tích KMS Server
+function Analyze-KmsServer {
+    param([string]$server, [string]$source)
+    if ($server -and $server.Trim() -ne "") {
+        $srv = $server.ToLower().Trim()
+        # Nếu là Localhost
+        if ($srv -eq "127.0.0.1" -or $srv -eq "localhost" -or $srv -eq "::1") {
+            return [PSCustomObject]@{
+                Name = "Máy chủ KMS trong Registry ($source)"
+                Status = "CRACK"
+                Details = "Phát hiện cấu hình máy chủ KMS nội bộ (loopback: $server). Đây là dấu hiệu của KMS Emulator cục bộ."
+            }
+        }
+        # Nếu không gia nhập Domain mà cấu hình KMS Server lạ
+        if (-not $domainJoined) {
+            return [PSCustomObject]@{
+                Name = "Máy chủ KMS trong Registry ($source)"
+                Status = "WARNING"
+                Details = "Phát hiện cấu hình KMS Server từ xa ($server) nhưng máy tính không thuộc Domain công ty. Rất có thể là KMS công cộng."
+            }
+        } else {
+            return [PSCustomObject]@{
+                Name = "Máy chủ KMS trong Registry ($source)"
+                Status = "OK"
+                Details = "Sử dụng máy chủ KMS doanh nghiệp ($server) thông qua kết nối Domain chính chủ."
+            }
+        }
+    }
+    return [PSCustomObject]@{
+        Name = "Máy chủ KMS trong Registry ($source)"
+        Status = "OK"
+        Details = "Sạch (Không cấu hình máy chủ KMS ngoài)"
+    }
+}
+
+$scanResults += Analyze-KmsServer -server $kmsRegWindows -source "Windows"
+$scanResults += Analyze-KmsServer -server $kmsRegOffice -source "Office"
+
+# --- CHECK 2: Kiểm tra KMS38 (Gia hạn kích hoạt tới năm 2038) ---
+if ($winIsKMS38) {
+    $scanResults += [PSCustomObject]@{
+        Name = "Kích hoạt dạng KMS38"
+        Status = "CRACK"
+        Details = "Phát hiện bản quyền kích hoạt bằng phương pháp hack KMS38 (Gia hạn thời gian dùng thử của KMS tới ngày 19/01/2038, thời gian còn lại: $winGraceMinutes phút)."
+    }
+} else {
+    $scanResults += [PSCustomObject]@{
+        Name = "Kích hoạt dạng KMS38"
+        Status = "OK"
+        Details = "Sạch (Không phát hiện hack thời gian KMS38)"
+    }
+}
+
+# --- CHECK 3: Kiểm tra tệp tin KMS Hook (DLL Hijack hệ thống) ---
+$kmsHookDetected = $false
+$hookDetails = ""
+$hookFiles = @(
+    "C:\Windows\System32\SppExtComObjHook.dll",
+    "C:\Windows\SppExtComObjHook.dll"
+)
+foreach ($file in $hookFiles) {
+    if (Test-Path $file) {
+        $sig = Get-AuthenticodeSignature -FilePath $file -ErrorAction SilentlyContinue
+        if ($sig.Status -ne "Valid" -or $sig.SignerCertificate.Subject -notlike "*Microsoft*") {
+            $kmsHookDetected = $true
+            $hookDetails += "Phát hiện tệp hook [$file] không có chữ ký số hợp lệ của Microsoft. "
+        }
+    }
+}
+
+if ($kmsHookDetected) {
+    $scanResults += [PSCustomObject]@{
+        Name = "Tệp tin KMS Hook hệ thống"
+        Status = "CRACK"
+        Details = $hookDetails
+    }
+} else {
+    $scanResults += [PSCustomObject]@{
+        Name = "Tệp tin KMS Hook hệ thống"
+        Status = "OK"
+        Details = "Sạch (Không phát hiện file hook SppExtComObjHook.dll)"
+    }
+}
+
+# --- CHECK 4: Kiểm tra tệp tin Office Ohook (DLL Hijack cho Office) ---
+$ohookDetected = $false
+$ohookDetails = ""
+$officeSppcPaths = @(
+    "$env:ProgramFiles\Microsoft Office\root\vfs\System\sppc.dll",
+    "${env:ProgramFiles(x86)}\Microsoft Office\root\vfs\System\sppc.dll"
+)
+foreach ($file in $officeSppcPaths) {
+    if (Test-Path $file) {
+        # Tập tin sppc.dll chỉ được nằm trong C:\Windows\System32\. 
+        # Việc nó xuất hiện trong thư mục cài đặt Microsoft Office là bất thường và là cách hoạt động của Ohook.
+        $sig = Get-AuthenticodeSignature -FilePath $file -ErrorAction SilentlyContinue
+        if ($sig.Status -ne "Valid" -or $sig.SignerCertificate.Subject -notlike "*Microsoft*") {
+            $ohookDetected = $true
+            $ohookDetails += "Phát hiện tệp tin sppc.dll giả mạo tại [$file] (Không có chữ ký số của Microsoft). Đây là công cụ Ohook kích hoạt lậu Office."
+        }
+    }
+}
+
+if ($ohookDetected) {
+    $scanResults += [PSCustomObject]@{
+        Name = "Tệp tin Office Ohook (sppc.dll)"
+        Status = "CRACK"
+        Details = $ohookDetails
+    }
+} else {
+    $scanResults += [PSCustomObject]@{
+        Name = "Tệp tin Office Ohook (sppc.dll)"
+        Status = "OK"
+        Details = "Sạch (Không phát hiện tệp Ohook sppc.dll trong thư mục Office)"
+    }
+}
+
+# --- CHECK 5: Kiểm tra Registry IFEO Chuyển hướng Debugger ---
+$ifeoDetected = $false
+$ifeoDetails = ""
+$ifeoPaths = @(
+    "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SppExtComObj.exe",
+    "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\osppsvc.exe"
+)
+foreach ($path in $ifeoPaths) {
+    if (Test-Path $path) {
+        $props = Get-ItemProperty -Path $path -ErrorAction SilentlyContinue
+        if ($props.Debugger -or $props.VerifierDlls -or $props.MonitorProcess) {
+            $ifeoDetected = $true
+            $val = if ($props.Debugger) { "Debugger=" + $props.Debugger } else { "VerifierDlls=" + $props.VerifierDlls }
+            $ifeoDetails += "Phát hiện cấu hình chuyển hướng tại [$(Split-Path $path -Leaf)]: $val. "
+        }
+    }
+}
+
+if ($ifeoDetected) {
+    $scanResults += [PSCustomObject]@{
+        Name = "Registry IFEO Hijack"
+        Status = "CRACK"
+        Details = $ifeoDetails + "Đây là kỹ thuật chiếm quyền kiểm soát tiến trình kích hoạt nhằm bẻ khóa bản quyền."
+    }
+} else {
+    $scanResults += [PSCustomObject]@{
+        Name = "Registry IFEO Hijack"
+        Status = "OK"
+        Details = "Sạch (Không phát hiện khóa chuyển hướng tiến trình kích hoạt)"
+    }
+}
+
+# --- CHECK 6: Kiểm tra Tác vụ tự động chạy (Scheduled Tasks ẩn) ---
+$detectedTasks = @()
+$suspiciousTaskNames = @("AutoKMS", "KMSAuto", "KMSConnectionMonitor", "KMS-Activator", "MAS_KMS", "KMSeldi")
+$tasksList = Get-ScheduledTask -ErrorAction SilentlyContinue
+if ($tasksList) {
+    foreach ($task in $tasksList) {
+        $isMatch = $false
+        foreach ($name in $suspiciousTaskNames) {
+            if ($task.TaskName -like "*$name*") {
+                $isMatch = $true
+                break
+            }
+        }
+        if (-not $isMatch) {
+            try {
+                $execStr = ($task.Actions.Execute -join " ").ToLower()
+                foreach ($name in $suspiciousTaskNames) {
+                    if ($execStr -like "*$($name.ToLower())*") {
+                        $isMatch = $true
+                        break
+                    }
+                }
+            } catch {}
+        }
+        if ($isMatch) {
+            $detectedTasks += "$($task.TaskPath)$($task.TaskName)"
+        }
+    }
+}
+
+if ($detectedTasks.Count -gt 0) {
+    $scanResults += [PSCustomObject]@{
+        Name = "Tác vụ ẩn gia hạn kích hoạt"
+        Status = "CRACK"
+        Details = "Phát hiện tác vụ tự động chạy của công cụ crack: " + ($detectedTasks -join ", ")
+    }
+} else {
+    $scanResults += [PSCustomObject]@{
+        Name = "Tác vụ ẩn gia hạn kích hoạt"
+        Status = "OK"
+        Details = "Sạch (Không phát hiện tác vụ tự động gia hạn KMS lậu)"
+    }
+}
+
+# --- CHECK 7: Kiểm tra Dịch vụ Windows (Services) ---
+$detectedServices = @()
+$suspiciousServices = @("AutoKMS", "KMSpico Service", "KMSeldi")
+foreach ($srvName in $suspiciousServices) {
+    $srvObj = Get-Service -Name $srvName -ErrorAction SilentlyContinue
+    if (-not $srvObj) {
+        $srvObj = Get-Service -DisplayName $srvName -ErrorAction SilentlyContinue
+    }
+    if ($srvObj) {
+        $detectedServices += "$($srvObj.Name) ($($srvObj.Status))"
+    }
+}
+
+if ($detectedServices.Count -gt 0) {
+    $scanResults += [PSCustomObject]@{
+        Name = "Dịch vụ crack chạy ngầm"
+        Status = "CRACK"
+        Details = "Phát hiện dịch vụ bẻ khóa bản quyền: " + ($detectedServices -join ", ")
+    }
+} else {
+    $scanResults += [PSCustomObject]@{
+        Name = "Dịch vụ crack chạy ngầm"
+        Status = "OK"
+        Details = "Sạch (Không phát hiện dịch vụ bẻ khóa chạy ngầm)"
+    }
+}
 
 
-        <div class="timeline-item">
-            <span class="timeline-date">2021 - 2024</span>
-            
-            <ul class="timeline-desc">
-                <li>Toán, Vật lý đều trên 9.0</li>
-                <li>Đạt giải sáng tạo khoa học kĩ thuật </li>
-            </ul>
-        </div>
+# ========================================================================
+# 4. GIAO DIỆN HIỂN THỊ TƯƠNG TÁC PHÍM H
+# ========================================================================
 
+# Hàm ẩn ký tự Key bản quyền
+function Mask-Key {
+    param([string]$key)
+    if ($key -eq "Không tìm thấy" -or $key -like "*Không thể*") {
+        return $key
+    }
+    # Nếu là key dạng BBBBB (Digital License) thì hiện đầy đủ vì nó là key mặc định không cần bảo mật
+    if ($key -like "BBBBB-BBBBB-BBBBB-BBBBB-BBBBB*") {
+        return $key
+    }
+    if ($key.Length -eq 29) {
+        return "XXXXX-XXXXX-XXXXX-XXXXX-" + $key.Substring(24, 5)
+    }
+    return "XXXXX-XXXXX-XXXXX-XXXXX-XXXXX"
+}
 
+# Trạng thái ẩn/hiện mặc định là ẨN (False)
+$showKeys = $false
 
-        <div class="timeline-item">
-            <span class="timeline-date">2024 - Hiện tại</span>
-            <h3 class="timeline-title">Đại học Khoa Học Tự Nhiên - ĐHQG TP.HCM</h3>
-            <div class="timeline-subtitle">Sinh viên năm 3 ngành Điện Tử Viễn Thông - Thiết Kế Vi Mạch</div>
-            <ul class="timeline-desc">
-                <li>Các môn liên quan đến Toán, Vật lý đều đạt trên 9.0.</li>
-                <li>Tham gia các cuộc thi Khoa Học Kỹ Thuật.</li>
-                
-            </ul>
-        </div>
+# Vòng lặp giao diện tương tác
+while ($true) {
+    Clear-Host
+    
+    # Tiêu đề
+    Write-Host "========================================================================" -ForegroundColor Gray
+    Write-Host "   ____ _               _     ____                 _      " -ForegroundColor Cyan
+    Write-Host "  / ___| |__   ___  ___| | __/ ___|_ __ __ _  ___| | __  " -ForegroundColor Cyan
+    Write-Host " | |   | '_ \ / _ \/ __| |/ / |   | '__/ _` |/ __| |/ /  " -ForegroundColor Cyan
+    Write-Host " | |___| | | |  __/ (__|   <| |___| | | (_| | (__|   <   " -ForegroundColor Cyan
+    Write-Host "  \____|_| |_|\___|\___|_|\_\\____|_|  \__,_|\___|_|\_\  " -ForegroundColor Cyan
+    Write-Host "                                                         " -ForegroundColor Cyan
+    Write-Host "  CÔNG CỤ KIỂM TRA CRACK & BẢN QUYỀN WINDOWS/OFFICE v1.0" -ForegroundColor White
+    Write-Host "                 Developed by Le Minh Khoi"               -ForegroundColor White
+    Write-Host "========================================================================" -ForegroundColor Gray
+    Write-Host ""
+    
+    # I. THÔNG TIN PHẦN CỨNG
+    Write-Host "[I. THÔNG TIN PHẦN CỨNG MÁY TÍNH]" -ForegroundColor Cyan
+    Write-Host "  • Mainboard   : " -NoNewline; Write-Host $motherboard -ForegroundColor White
+    Write-Host "  • Bộ vi xử lý : " -NoNewline; Write-Host "$cpuName ($cpuCores cores, $cpuThreads threads)" -ForegroundColor White
+    Write-Host "  • Bộ nhớ RAM  : " -NoNewline; Write-Host "$ramTotalGB GB (Tốc độ tối đa: $ramSpeed MHz, $ramSlots thanh cắm)" -ForegroundColor White
+    Write-Host "  • Card đồ họa : " -NoNewline; Write-Host $gpuStr -ForegroundColor White
+    Write-Host "  • Ổ lưu trữ   : " -NoNewline; Write-Host $diskStr -ForegroundColor White
+    Write-Host ""
+    
+    # II. THÔNG TIN BẢN QUYỀN HỆ THỐNG
+    Write-Host "[II. THÔNG TIN BẢN QUYỀN HỆ THỐNG]" -ForegroundColor Cyan
+    Write-Host "  • Phiên bản Windows   : " -NoNewline; Write-Host $winEdition -ForegroundColor White
+    Write-Host "  • Trạng thái kích hoạt: " -NoNewline
+    if ($winStatus -like "*Đã kích hoạt*") {
+        Write-Host $winStatus -ForegroundColor Green
+    } else {
+        Write-Host $winStatus -ForegroundColor Red
+    }
+    Write-Host "  • Kênh phân phối bản quyền: " -NoNewline; Write-Host $winChannel -ForegroundColor White
+    
+    # Cấu hình Key ẩn / hiện
+    $displayOemKey = if ($showKeys) { $oemKey } else { Mask-Key $oemKey }
+    $displayRegKey = if ($showKeys) { $registryKey } else { Mask-Key $registryKey }
+    
+    Write-Host "  • Product Key (BIOS OEM)  : " -NoNewline
+    if ($oemKey -eq "Không tìm thấy") {
+        Write-Host $displayOemKey -ForegroundColor DarkGray
+    } else {
+        Write-Host $displayOemKey -ForegroundColor Yellow
+    }
+    Write-Host "  • Product Key (Registry)  : " -NoNewline
+    if ($registryKey -like "*Không thể*") {
+        Write-Host $displayRegKey -ForegroundColor DarkGray
+    } else {
+        Write-Host $displayRegKey -ForegroundColor Yellow
+    }
+    
+    # Office
+    if ($officeProducts.Count -gt 0) {
+        Write-Host "  • Bản quyền MS Office : " -ForegroundColor Cyan
+        foreach ($off in $officeProducts) {
+            Write-Host "    - $($off.Name) : " -NoNewline
+            if ($off.Status -eq "Đã kích hoạt") {
+                Write-Host $off.Status -ForegroundColor Green -NoNewline
+            } else {
+                Write-Host $off.Status -ForegroundColor Red -NoNewline
+            }
+            if ($off.KmsServer) {
+                Write-Host " (Thông qua KMS: $($off.KmsServer))" -ForegroundColor Yellow
+            } else {
+                Write-Host " (Kênh chính chủ)" -ForegroundColor Gray
+            }
+        }
+    } else {
+        Write-Host "  • Bản quyền MS Office : " -NoNewline; Write-Host "Không phát hiện bản cài Office có bản quyền trên máy" -ForegroundColor DarkGray
+    }
+    Write-Host ""
+    
+    # III. KẾT QUẢ QUÉT CÔNG CỤ CRACK
+    Write-Host "[III. KẾT QUẢ QUÉT CÔNG CỤ CRACK / HACKTOOL]" -ForegroundColor Cyan
+    $crackDetectedList = @()
+    $warningDetectedList = @()
+    
+    foreach ($res in $scanResults) {
+        Write-Host "  " -NoNewline
+        if ($res.Status -eq "OK") {
+            Write-Host "[ SẠCH ] " -ForegroundColor Green -NoNewline
+            Write-Host "$($res.Name): $($res.Details)" -ForegroundColor White
+        } elseif ($res.Status -eq "WARNING") {
+            Write-Host "[ CẢNH BÁO ] " -ForegroundColor Yellow -NoNewline
+            Write-Host "$($res.Name): $($res.Details)" -ForegroundColor Yellow
+            $warningDetectedList += $res
+        } else {
+            Write-Host "[ PHÁT HIỆN ] " -ForegroundColor Red -NoNewline
+            Write-Host "$($res.Name): $($res.Details)" -ForegroundColor Red
+            $crackDetectedList += $res
+        }
+    }
+    Write-Host ""
+    
+    # IV. KẾT LUẬN CHUNG
+    Write-Host "[IV. KẾT LUẬN CHUNG]" -ForegroundColor Cyan
+    Write-Host "  " -NoNewline
+    if ($crackDetectedList.Count -gt 0) {
+        Write-Host "==========================================================================" -ForegroundColor Red
+        Write-Host "  KẾT LUẬN: HỆ THỐNG KHÔNG AN TOÀN! PHÁT HIỆN CÓ DẤU HIỆU CÀI ĐẶT CRACK." -ForegroundColor Red
+        Write-Host "  Các mối nguy hại được phát hiện:" -ForegroundColor Red
+        foreach ($crk in $crackDetectedList) {
+            Write-Host "  - $($crk.Name): $($crk.Details)" -ForegroundColor Red
+        }
+        Write-Host "  => Khuyên dùng: Gỡ bỏ các công cụ này và mua bản quyền chính hãng để đảm bảo an toàn." -ForegroundColor Yellow
+        Write-Host "==========================================================================" -ForegroundColor Red
+    } elseif ($warningDetectedList.Count -gt 0) {
+        Write-Host "==========================================================================" -ForegroundColor Yellow
+        Write-Host "  KẾT LUẬN: CÓ CẢNH BÁO. KHÔNG PHÁT HIỆN TRỰC TIẾP FILE CRACK HOẶC HOOK." -ForegroundColor Yellow
+        Write-Host "  Tuy nhiên, hệ thống cấu hình máy chủ KMS bên ngoài không rõ nguồn gốc." -ForegroundColor Yellow
+        Write-Host "  Kiểm tra xem máy tính này có thuộc sở hữu của doanh nghiệp/trường học không." -ForegroundColor White
+        Write-Host "==========================================================================" -ForegroundColor Yellow
+    } else {
+        Write-Host "==========================================================================" -ForegroundColor Green
+        Write-Host "  KẾT LUẬN: HỆ THỐNG SẠCH / BẢN QUYỀN HỢP LỆ." -ForegroundColor Green
+        # Thêm phân tích chi tiết về bản quyền sạch
+        if ($winStatus -like "*Đã kích hoạt*") {
+            if ($winChannel -like "*Retail*" -and $registryKey -like "BBBBB-BBBBB-BBBBB-BBBBB-BBBBB*") {
+                Write-Host "  - Windows kích hoạt hợp lệ bằng Bản quyền số (Digital License) liên kết phần cứng." -ForegroundColor Green
+                Write-Host "    (Kịch bản kích hoạt sạch của MAS HWID hoặc nâng cấp từ Win 7/8 chính thức)." -ForegroundColor Gray
+            } else {
+                Write-Host "  - Windows kích hoạt hợp lệ thông qua kênh chính thống ($winChannel)." -ForegroundColor Green
+            }
+        } else {
+            Write-Host "  - Hệ thống an toàn (không có file crack), tuy nhiên Windows chưa được kích hoạt." -ForegroundColor Yellow
+        }
+        Write-Host "==========================================================================" -ForegroundColor Green
+    }
+    Write-Host ""
+    
+    # Hướng dẫn thao tác phím nóng
+    Write-Host "  [ H ] Ẩn/Hiện Product Key  |  [ Q hoặc ESC ] Thoát chương trình" -ForegroundColor Cyan
+    Write-Host "------------------------------------------------------------------------" -ForegroundColor Gray
+    
+    # Đọc phím bấm không hiển thị lên màn hình (hoặc tự động đổi trạng thái nếu đang ở chế độ test)
+    if ($testMode) {
+        if (-not $showKeys) {
+            $showKeys = $true
+            Start-Sleep -Milliseconds 300
+            continue
+        } else {
+            break
+        }
+    }
+    
+    $key = [Console]::ReadKey($true)
+    if ($key.Key -eq 'H') {
+        $showKeys = -not $showKeys
+    } elseif ($key.Key -eq 'Q' -or $key.Key -eq 'Escape') {
+        break
+    }
+}
 
-        <h2 class="section-header">Kinh Nghiệm Giảng Dạy</h2>
-        
-        <div class="timeline-item">
-            <span class="timeline-date">Tháng 8/2024 - Hiện tại</span>
-            <h3 class="timeline-title">Gia sư Độc lập (1 Kèm 1)</h3>
-            <div class="timeline-subtitle">Dạy kèm Toán & Vật Lý</div>
-            <ul class="timeline-desc">
-                <li>Thiết kế lộ trình học cá nhân hóa cho hơn 20 học sinh từ lớp 6 đến lớp 11.</li>
-                <li>Giúp đở nhiều học sinh mất gốc nắm chắc lại cơ bản</li>
-                <li>Kèm cặp thành công 2 học sinh đỗ vào trường THPT chuyên Lê Khiết Quảng Ngãi với điểm Toán > 8.5.</li>
-                <li>Sử dụng sơ đồ tư duy để dạy và bài tập (Quizizz, Kahoot) để học sinh không nhàm chán.</li>
-                <li>Luôn hổ trợ các bài tập khó 24/7 qua Zalo </li>
-            </ul>
-        </div>
-
-        
-
-    </div>
-
-</div>
-
-<!-- CỤM NÚT LIÊN HỆ THẦN TỐC GÓC PHẢI -->
-<div class="social-float">
-    <!-- Nút Facebook (Thay 'your.username' thành tên profile cá nhân của bạn) -->
-    <a href="https://www.facebook.com/nhan.votan.395" target="_blank" class="btn-float btn-facebook">
-        <i class="fa-brands fa-facebook"></i>
-        <span>Facebook</span>
-    </a>
-
-    <!-- Nút Messenger (Thay 'your.username' thành tên profile nhắn tin trực tiếp) -->
-    <a href="https://m.me/nhan.votan.395" target="_blank" class="btn-float btn-messenger">
-        <i class="fa-brands fa-facebook-messenger"></i>
-        <span>Messenger</span>
-    </a>
-
-    <!-- Nút Zalo (Thay '0909123456' thành số điện thoại Zalo của bạn) -->
-    <a href="https://zalo.me/0392733577" target="_blank" class="btn-float btn-zalo">
-        <i class="fa-solid fa-comment-dots"></i>
-        <span>Zalo</span>
-    </a>
-
-    <!-- Nút Telegram (Thay 'your_username' thành tên tài khoản Telegram của bạn) -->
-    <a href="https://t.me/kyretia" target="_blank" class="btn-float btn-telegram">
-        <i class="fa-brands fa-telegram"></i>
-        <span>Telegram</span>
-    </a>
-</div>
-
-</body>
-</html>
+# Trả lại mã hóa ban đầu của console khi thoát
+Write-Host "Đã thoát chương trình. Cảm ơn bạn đã sử dụng!" -ForegroundColor Green
